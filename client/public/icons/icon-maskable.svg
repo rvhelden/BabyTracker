@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full-bleed background (required for maskable) -->
+  <rect width="512" height="512" fill="#4a6fa5"/>
+
+  <!--
+    Maskable safe zone = centre 80% = 102..410 (x and y).
+    All meaningful content stays within that region.
+  -->
+
+  <!-- Cap (top) -->
+  <rect x="218" y="108" width="76" height="22" rx="11" fill="#e8f0fb"/>
+
+  <!-- Nipple ring -->
+  <rect x="202" y="130" width="108" height="26" rx="10" fill="#c8d8f0"/>
+
+  <!-- Bottle body -->
+  <rect x="182" y="156" width="148" height="248" rx="40" fill="white"/>
+
+  <!-- Milk fill -->
+  <rect x="196" y="232" width="120" height="158" rx="30" fill="#a8c8f8" opacity="0.55"/>
+
+  <!-- Measurement lines -->
+  <line x1="216" y1="258" x2="252" y2="258" stroke="#6c8ebf" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="216" y1="300" x2="252" y2="300" stroke="#6c8ebf" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="216" y1="342" x2="252" y2="342" stroke="#6c8ebf" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Shine highlight -->
+  <rect x="200" y="168" width="20" height="80" rx="10" fill="white" opacity="0.32"/>
+
+  <!-- Nipple tip -->
+  <ellipse cx="256" cy="102" rx="24" ry="18" fill="#c8d8f0"/>
+  <ellipse cx="256" cy="97" rx="14" ry="12" fill="#e8f0fb"/>
+</svg>

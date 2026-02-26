@@ -1,0 +1,143 @@
+/* ── Hero card ──────────────────────────────────────────────── */
+.baby-hero {
+  margin-bottom: 0.85rem;
+}
+
+.baby-hero-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.baby-detail-avatar {
+  font-size: 3rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.baby-hero-text h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.baby-detail-age {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin-top: 0.1rem;
+}
+
+.baby-born {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+/* Parent chips */
+.baby-detail-parents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.parent-chip {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.parent-role {
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+/* Action row — icon + label buttons */
+.baby-action-row {
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+}
+
+.baby-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.6rem 0.25rem;
+  min-height: 58px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+.baby-action-btn span { font-size: 1.3rem; line-height: 1; }
+.baby-action-btn:hover, .baby-action-btn:active { background: var(--border); }
+.baby-action-btn.danger { color: var(--danger); }
+.baby-action-btn.danger:hover, .baby-action-btn.danger:active { background: #fdecea; }
+
+/* ── Summary stats ──────────────────────────────────────────── */
+.weight-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.summary-card {
+  text-align: center;
+  padding: 0.9rem 0.5rem;
+}
+
+.summary-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.summary-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.gain-positive { color: var(--success); }
+
+.summary-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+/* ── Chart & history cards ──────────────────────────────────── */
+.chart-card {
+  margin-bottom: 0.85rem;
+}
+
+.history-card {
+  margin-bottom: 0.85rem;
+}
+
+.chart-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}

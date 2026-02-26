@@ -1,0 +1,135 @@
+.weight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.weight-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 1.5rem 0;
+  font-size: 0.92rem;
+}
+
+/* ── Each weight entry card ─────────────────────────────────── */
+.weight-card {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+
+@media (hover: hover) {
+  .weight-card:hover { border-color: var(--primary); }
+}
+
+.weight-card-body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+}
+
+.weight-card-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.weight-date {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.weight-notes {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.weight-card-mid {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.weight-grams {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.weight-kg {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.weight-card-right {
+  flex-shrink: 0;
+  width: 58px;
+  text-align: right;
+}
+
+.weight-diff {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+.diff-pos { background: #e6f9ed; color: #2e7d46; }
+.diff-neg { background: #fdecea; color: #c62828; }
+
+/* ── Action row (sits below each entry) ─────────────────────── */
+.weight-card-actions {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.waction-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.55rem;
+  min-height: 44px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.waction-btn:last-child { border-right: none; }
+.waction-btn:hover, .waction-btn:active { background: var(--bg); color: var(--text); transform: none; }
+.waction-btn.danger { color: var(--danger); }
+.waction-btn.danger:hover, .waction-btn.danger:active { background: #fdecea; }
+.waction-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Edit form (expands in place of card content) ───────────── */
+.weight-card.editing {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.weight-edit-form {
+  padding: 1rem;
+}
+
+.weight-edit-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.weight-edit-actions .btn {
+  flex: 1;
+}
