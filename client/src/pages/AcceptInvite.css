@@ -1,0 +1,54 @@
+.invite-accept-card {
+  max-width: 440px;
+}
+
+.invite-status {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 1rem 0;
+}
+
+.invite-error {
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.invite-ready {}
+
+.invite-desc {
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+.invite-details {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+  border: 1px solid var(--border);
+}
+
+.invite-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.invite-detail-row:last-child { border-bottom: none; }
+.invite-detail-row span { color: var(--text-muted); }
+
+.invite-login-hint {
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.invite-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
