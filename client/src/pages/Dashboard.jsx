@@ -37,7 +37,7 @@ export default function Dashboard() {
     setShowAdd(false);
   }
 
-  if (loading) return <div className="loading">Loading babies...</div>;
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
     <div className="dashboard">
@@ -46,19 +46,13 @@ export default function Dashboard() {
           <h2>My Babies</h2>
           <p className="subtitle">Track growth and milestones</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
-          + Add Baby
-        </button>
       </div>
 
       {babies.length === 0 ? (
         <div className="empty-state card">
           <div className="empty-icon">🍼</div>
           <h3>No babies yet</h3>
-          <p>Add your first baby to start tracking their growth.</p>
-          <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
-            + Add Baby
-          </button>
+          <p>Tap the + button to add your first baby.</p>
         </div>
       ) : (
         <div className="babies-grid">
@@ -93,6 +87,11 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
+      {/* Floating Action Button */}
+      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add baby">
+        +
+      </button>
 
       {showAdd && <AddBabyModal onClose={() => setShowAdd(false)} onAdded={handleAdded} />}
     </div>

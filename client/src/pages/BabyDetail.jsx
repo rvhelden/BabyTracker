@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import WeightChart from '../components/WeightChart';
 import WeightList from '../components/WeightList';
@@ -50,7 +50,10 @@ export default function BabyDetail() {
   }
 
   function handleWeightUpdated(updated) {
-    setWeights(prev => prev.map(w => w.id === updated.id ? updated : w).sort((a, b) => a.measured_at.localeCompare(b.measured_at)));
+    setWeights(prev =>
+      prev.map(w => w.id === updated.id ? updated : w)
+        .sort((a, b) => a.measured_at.localeCompare(b.measured_at))
+    );
   }
 
   function handleBabyUpdated(updated) {
@@ -89,80 +92,85 @@ export default function BabyDetail() {
 
   return (
     <div className="baby-detail">
-      <div className="back-link">
-        <Link to="/">← All babies</Link>
-      </div>
-
-      <div className="baby-detail-header card">
-        <div className="baby-detail-info">
+      {/* ── Hero card ────────────────────────────────────────── */}
+      <div className="baby-hero card">
+        <div className="baby-hero-main">
           <div className="baby-detail-avatar">{genderIcon(baby.gender)}</div>
-          <div>
+          <div className="baby-hero-text">
             <h2>{baby.name}</h2>
-            <p className="baby-detail-age">{ageLabel(baby.birth_date)} · Born {baby.birth_date}</p>
-            <div className="baby-detail-parents">
-              {baby.parents?.map(p => (
-                <span key={p.id} className="parent-chip">
-                  {p.name} <span className="parent-role">({p.role})</span>
-                </span>
-              ))}
-            </div>
+            <p className="baby-detail-age">{ageLabel(baby.birth_date)}</p>
+            <p className="baby-born">Born {baby.birth_date}</p>
           </div>
         </div>
-        <div className="baby-detail-actions">
-          <button className="btn btn-secondary btn-sm" onClick={() => setModal('edit')}>Edit</button>
-          <button className="btn btn-secondary btn-sm" onClick={() => setModal('invite')}>
-            Share QR
+        <div className="baby-detail-parents">
+          {baby.parents?.map(p => (
+            <span key={p.id} className="parent-chip">
+              {p.name} <span className="parent-role">· {p.role}</span>
+            </span>
+          ))}
+        </div>
+        {/* Action row */}
+        <div className="baby-action-row">
+          <button className="baby-action-btn" onClick={() => setModal('edit')}>
+            <span>✏️</span> Edit
+          </button>
+          <button className="baby-action-btn" onClick={() => setModal('invite')}>
+            <span>📲</span> Share
           </button>
           {baby.role === 'owner'
-            ? <button className="btn btn-danger btn-sm" onClick={handleDelete}>Delete</button>
-            : <button className="btn btn-secondary btn-sm" onClick={handleLeave}>Leave</button>
+            ? <button className="baby-action-btn danger" onClick={handleDelete}>
+                <span>🗑️</span> Delete
+              </button>
+            : <button className="baby-action-btn" onClick={handleLeave}>
+                <span>👋</span> Leave
+              </button>
           }
         </div>
       </div>
 
+      {/* ── Summary stats ─────────────────────────────────────── */}
       <div className="weight-summary">
         <div className="summary-card card">
-          <div className="summary-label">Current Weight</div>
+          <div className="summary-label">Current</div>
           <div className="summary-value">
-            {latestWeight ? `${(latestWeight.weight_grams / 1000).toFixed(3)} kg` : '—'}
+            {latestWeight ? `${(latestWeight.weight_grams / 1000).toFixed(2)} kg` : '—'}
           </div>
-          {latestWeight && <div className="summary-sub">{latestWeight.weight_grams} g · {latestWeight.measured_at}</div>}
+          {latestWeight && <div className="summary-sub">{latestWeight.weight_grams} g</div>}
         </div>
         <div className="summary-card card">
-          <div className="summary-label">Birth Weight</div>
+          <div className="summary-label">At birth</div>
           <div className="summary-value">
-            {firstWeight ? `${(firstWeight.weight_grams / 1000).toFixed(3)} kg` : '—'}
+            {firstWeight ? `${(firstWeight.weight_grams / 1000).toFixed(2)} kg` : '—'}
           </div>
-          {firstWeight && <div className="summary-sub">{firstWeight.weight_grams} g · {firstWeight.measured_at}</div>}
+          {firstWeight && <div className="summary-sub">{firstWeight.weight_grams} g</div>}
         </div>
         <div className="summary-card card">
-          <div className="summary-label">Total Gain</div>
+          <div className="summary-label">Gained</div>
           <div className={`summary-value ${gainGrams !== null && gainGrams >= 0 ? 'gain-positive' : ''}`}>
             {gainGrams !== null ? `${gainGrams >= 0 ? '+' : ''}${gainGrams} g` : '—'}
           </div>
-          {gainGrams !== null && <div className="summary-sub">{weights.length} measurements</div>}
+          {gainGrams !== null && <div className="summary-sub">{weights.length} records</div>}
         </div>
       </div>
 
+      {/* ── Growth chart ──────────────────────────────────────── */}
       <div className="card chart-card">
         <div className="section-header">
           <h3>Growth Chart</h3>
-          <button className="btn btn-primary btn-sm" onClick={() => setModal('add-weight')}>
-            + Add Weight
-          </button>
         </div>
         {weights.length < 2 ? (
           <div className="chart-empty">
-            <p>Add at least 2 weight measurements to see the growth chart.</p>
+            <p>Add at least 2 measurements to see the chart.</p>
           </div>
         ) : (
           <WeightChart weights={weights} birthDate={baby.birth_date} />
         )}
       </div>
 
-      <div className="card">
+      {/* ── Weight history ────────────────────────────────────── */}
+      <div className="card history-card">
         <div className="section-header">
-          <h3>Weight History</h3>
+          <h3>History</h3>
         </div>
         <WeightList
           weights={weights}
@@ -171,6 +179,11 @@ export default function BabyDetail() {
           onUpdated={handleWeightUpdated}
         />
       </div>
+
+      {/* Floating Action Button — add weight */}
+      <button className="fab" onClick={() => setModal('add-weight')} aria-label="Add weight">
+        +
+      </button>
 
       {modal === 'add-weight' && (
         <AddWeightModal babyId={id} onClose={() => setModal(null)} onAdded={handleWeightAdded} />

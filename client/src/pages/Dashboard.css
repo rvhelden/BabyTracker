@@ -2,128 +2,136 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .dashboard-header h2 {
-  font-size: 1.6rem;
-  color: var(--text);
+  font-size: 1.5rem;
+  font-weight: 800;
 }
 
 .subtitle {
   color: var(--text-muted);
-  font-size: 0.92rem;
-  margin-top: 0.2rem;
-}
-
-.loading {
-  text-align: center;
-  color: var(--text-muted);
-  padding: 3rem;
+  font-size: 0.88rem;
+  margin-top: 0.15rem;
 }
 
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3.5rem 1.5rem;
+  margin-top: 0.5rem;
 }
 
-.empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-}
+.empty-icon { font-size: 3.5rem; margin-bottom: 0.75rem; }
 
 .empty-state h3 {
-  font-size: 1.3rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
 }
 
-.empty-state p {
-  color: var(--text-muted);
-  margin-bottom: 1.5rem;
-}
+.empty-state p { color: var(--text-muted); }
 
+/* ── Babies list (single column mobile, grid tablet+) ───────── */
 .babies-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+@media (min-width: 560px) {
+  .babies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
 }
 
 .baby-card {
   display: block;
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.2s, transform 0.2s;
   border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.baby-card:hover {
+.baby-card:active {
   box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  border-color: var(--primary);
   text-decoration: none;
+}
+
+@media (hover: hover) {
+  .baby-card:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+    text-decoration: none;
+  }
 }
 
 .baby-card-top {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
-  margin-bottom: 1rem;
+  gap: 0.85rem;
+  margin-bottom: 0.9rem;
 }
 
 .baby-avatar {
-  font-size: 2.5rem;
-  width: 3rem;
+  font-size: 2.4rem;
+  width: 2.8rem;
   text-align: center;
   flex-shrink: 0;
 }
 
 .baby-info {
   flex: 1;
+  min-width: 0;
 }
 
 .baby-info h3 {
   font-size: 1.1rem;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .baby-age {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
 }
 
 .baby-stats {
   display: flex;
-  gap: 1.5rem;
+  gap: 1.25rem;
   padding-top: 0.8rem;
   border-top: 1px solid var(--border);
 }
 
-.stat {
-  display: flex;
-  flex-direction: column;
-}
+.stat { display: flex; flex-direction: column; }
 
 .stat-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
+  letter-spacing: 0.05em;
+  font-weight: 700;
 }
 
 .stat-value {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--primary-dark);
 }
 
-.stat-sub {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
+.stat-sub { font-size: 0.75rem; color: var(--text-muted); }
 
 .no-data {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-style: italic;
 }
