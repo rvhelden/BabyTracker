@@ -20,7 +20,8 @@ function toLocalDateTime(d) {
 }
 
 export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVolume }) {
-  const startedAt = useMemo(() => new Date(), []);
+  const initialStart = useMemo(() => new Date(), []);
+  const [startedAt, setStartedAt] = useState(initialStart);
   const [elapsed, setElapsed] = useState(0);
   const [volume, setVolume] = useState(defaultVolume || '');
   const [notes, setNotes] = useState('');
@@ -32,10 +33,17 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setElapsed(Date.now() - startedAt.getTime());
+      setElapsed(Math.max(0, Date.now() - startedAt.getTime()));
     }, 1000);
     return () => clearInterval(timer);
   }, [startedAt]);
+
+  function handleStartTimeChange(e) {
+    const value = e.target.value;
+    if (!value) return;
+    const next = new Date(value);
+    if (!Number.isNaN(next.getTime())) setStartedAt(next);
+  }
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -66,7 +74,7 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
       }
     }
     startEntry();
-  }, [babyId, startedAt]);
+  }, [babyId]);
 
 
   async function handleStop() {
@@ -137,6 +145,14 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
           value={volume}
           onChange={e => setVolume(e.target.value)}
           placeholder="e.g. 120"
+        />
+      </div>
+      <div className="form-group">
+        <label>Start time</label>
+        <input
+          type="datetime-local"
+          value={toLocalDateTime(startedAt)}
+          onChange={handleStartTimeChange}
         />
       </div>
       <div className="form-group">

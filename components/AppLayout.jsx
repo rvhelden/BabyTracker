@@ -45,6 +45,9 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
           </Link>
         </div>
         <div className="navbar-right">
+          <Link href="/settings" className="navbar-link" aria-label="Settings">
+            ⚙️
+          </Link>
           <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle dark mode">
             {theme === 'dark' ? '🌙' : '☀️'}
           </button>
