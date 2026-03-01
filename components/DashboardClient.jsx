@@ -51,7 +51,11 @@ export default function DashboardClient({ babies }) {
           {babies.map(baby => (
             <Link key={baby.id} href={`/baby/${baby.id}`} className="baby-card card">
               <div className="baby-card-top">
-                <div className="baby-avatar">{genderIcon(baby.gender)}</div>
+                <div className="baby-avatar">
+                  {baby.photo_url
+                    ? <img src={baby.photo_url} alt={`${baby.name} photo`} />
+                    : genderIcon(baby.gender)}
+                </div>
                 <div className="baby-info">
                   <h3>{baby.name}</h3>
                   <span className="baby-age">{ageLabel(baby.birth_date)}</span>

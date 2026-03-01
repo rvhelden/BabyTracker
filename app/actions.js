@@ -85,8 +85,9 @@ export async function updateBabyAction(babyId, _prevState, formData) {
   const name = formData.get('name')?.toString().trim();
   const birth_date = formData.get('birth_date')?.toString();
   const gender = formData.get('gender')?.toString();
+  const photo_url = formData.get('photo_url')?.toString();
 
-  const updated = dal.updateBaby(babyId, user.id, { name, birth_date, gender });
+  const updated = dal.updateBaby(babyId, user.id, { name, birth_date, gender, photo_url });
   if (!updated) return { error: 'Baby not found' };
 
   revalidatePath(`/baby/${babyId}`);
@@ -157,6 +158,54 @@ export async function deleteWeightAction(babyId, entryId) {
   if (!user) return { error: 'Not authenticated' };
 
   const result = dal.deleteWeight(babyId, entryId);
+  if (result.error) return result;
+
+  revalidatePath(`/baby/${babyId}`);
+  return { success: true };
+}
+
+// ── Milk entries ───────────────────────────────────────────────────────────
+
+export async function addMilkAction(babyId, _prevState, formData) {
+  const user = await getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const volume_ml = parseInt(formData.get('volume_ml')?.toString() || '0', 10);
+  const fed_at = formData.get('fed_at')?.toString();
+  const notes = formData.get('notes')?.toString();
+
+  if (!volume_ml || !fed_at) return { error: 'Volume and time are required' };
+  if (volume_ml < 5 || volume_ml > 2000) return { error: 'Volume must be between 5 and 2000 ml' };
+
+  dal.addMilk(babyId, user.id, { volume_ml, fed_at, notes });
+  revalidatePath(`/baby/${babyId}`);
+  return { success: true };
+}
+
+export async function updateMilkAction(babyId, entryId, _prevState, formData) {
+  const user = await getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const volume_ml = parseInt(formData.get('volume_ml')?.toString() || '0', 10);
+  const fed_at = formData.get('fed_at')?.toString();
+  const notes = formData.get('notes')?.toString();
+
+  if (volume_ml && (volume_ml < 5 || volume_ml > 2000)) {
+    return { error: 'Volume must be between 5 and 2000 ml' };
+  }
+
+  const updated = dal.updateMilk(babyId, entryId, { volume_ml, fed_at, notes });
+  if (!updated) return { error: 'Entry not found' };
+
+  revalidatePath(`/baby/${babyId}`);
+  return { success: true };
+}
+
+export async function deleteMilkAction(babyId, entryId) {
+  const user = await getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const result = dal.deleteMilk(babyId, entryId);
   if (result.error) return result;
 
   revalidatePath(`/baby/${babyId}`);

@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ['*.devtunnels.ms'],
   serverExternalPackages: ['better-sqlite3'],
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        'zh8lf0hc-3000.euw.devtunnels.ms',
+        'localhost:3000',
+        '*.devtunnels.ms',
+      ],
+    },
+  },
 };
 
 export default nextConfig;
