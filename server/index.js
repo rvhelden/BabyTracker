@@ -1,7 +1,13 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+import express, { json } from 'express';
+import cors from 'cors';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import authRouter from './routes/auth.js';
+import babiesRouter from './routes/babies.js';
+import weightsRouter from './routes/weights.js';
+import { babyInviteRouter, publicInviteRouter } from './routes/invites.js';
 
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -9,22 +15,20 @@ app.use(cors({
   origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
   credentials: true
 }));
-app.use(express.json());
+app.use(json());
 
 // API routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/babies', require('./routes/babies'));
-app.use('/api/babies/:babyId/weights', require('./routes/weights'));
-
-const { babyInviteRouter, publicInviteRouter } = require('./routes/invites');
+app.use('/api/auth', authRouter);
+app.use('/api/babies', babiesRouter);
+app.use('/api/babies/:babyId/weights', weightsRouter);
 app.use('/api/babies/:babyId/invites', babyInviteRouter);
 app.use('/api/invites', publicInviteRouter);
 
 // Serve built React app in production
-const clientBuild = path.join(__dirname, '..', 'client', 'dist');
+const clientBuild = join(__dirname, '..', 'client', 'dist');
 app.use(express.static(clientBuild));
 app.get('*', (req, res) => {
-  res.sendFile(path.join(clientBuild, 'index.html'));
+  res.sendFile(join(clientBuild, 'index.html'));
 });
 
 app.listen(PORT, () => {

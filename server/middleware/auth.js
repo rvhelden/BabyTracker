@@ -1,4 +1,5 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
+const { verify } = jwt;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'baby-tracker-secret-change-in-production';
 
@@ -9,7 +10,7 @@ function authMiddleware(req, res, next) {
   }
   const token = authHeader.slice(7);
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    const payload = verify(token, JWT_SECRET);
     req.user = payload;
     next();
   } catch {
@@ -17,4 +18,4 @@ function authMiddleware(req, res, next) {
   }
 }
 
-module.exports = { authMiddleware, JWT_SECRET };
+export { authMiddleware, JWT_SECRET };

@@ -1,0 +1,38 @@
+{
+  "name": "Baby Tracker",
+  "short_name": "Baby Tracker",
+  "description": "Track your baby's weight and growth with multi-parent support",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#4a6fa5",
+  "theme_color": "#4a6fa5",
+  "categories": ["health", "lifestyle", "medical"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Weight",
+      "short_name": "Add Weight",
+      "description": "Log a new weight measurement",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    }
+  ],
+  "screenshots": []
+}

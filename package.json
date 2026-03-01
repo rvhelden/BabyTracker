@@ -1,24 +1,26 @@
 {
   "name": "baby-tracker",
   "version": "1.0.0",
-  "description": "Baby weight tracker application",
-  "main": "server/index.js",
+  "private": true,
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "concurrently \"node server/index.js\" \"npm run dev --prefix client\"",
-    "build": "npm run build --prefix client",
-    "install:all": "npm install && npm install --prefix client"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^9.4.3",
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "qrcode": "^1.5.3",
-    "uuid": "^9.0.0"
+    "better-sqlite3": "^12.6.2",
+    "bcryptjs": "^3.0.3",
+    "date-fns": "^4.1.0",
+    "iron-session": "^8.0.4",
+    "next": "^16.1.6",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.7.0",
+    "uuid": "^13.0.0"
   },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
+  "devDependencies": {},
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild"]
   }
 }
