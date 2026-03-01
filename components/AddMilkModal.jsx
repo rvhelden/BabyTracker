@@ -4,7 +4,7 @@ import { useEffect, useActionState } from 'react';
 import { addMilkAction } from '../app/actions.js';
 import Modal from './Modal.jsx';
 
-export default function AddMilkModal({ babyId, onClose, onAdded }) {
+export default function AddMilkModal({ babyId, onClose, onAdded, defaultVolume }) {
   const boundAction = addMilkAction.bind(null, babyId);
   const [state, action, pending] = useActionState(boundAction, null);
 
@@ -13,9 +13,8 @@ export default function AddMilkModal({ babyId, onClose, onAdded }) {
   }, [state?.success]);
 
   const now = new Date();
-  const isoDate = now.toISOString().split('T')[0];
-  const time = now.toTimeString().slice(0, 5);
-  const defaultDateTime = `${isoDate}T${time}`;
+  const pad = n => String(n).padStart(2, '0');
+  const defaultDateTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
   return (
     <Modal title="Add Milk Feeding" onClose={onClose}>
@@ -24,9 +23,12 @@ export default function AddMilkModal({ babyId, onClose, onAdded }) {
           <label>Time</label>
           <input type="datetime-local" name="fed_at" required defaultValue={defaultDateTime} />
         </div>
+        <input type="hidden" name="started_at" value="" />
+        <input type="hidden" name="ended_at" value="" />
+        <input type="hidden" name="duration_minutes" value="" />
         <div className="form-group">
           <label>Amount (ml)</label>
-          <input type="number" name="volume_ml" placeholder="e.g. 120" required min="5" max="2000" autoFocus />
+          <input type="number" name="volume_ml" placeholder="e.g. 120" required min="5" max="2000" autoFocus defaultValue={defaultVolume} />
         </div>
         <div className="form-group">
           <label>Notes (optional)</label>

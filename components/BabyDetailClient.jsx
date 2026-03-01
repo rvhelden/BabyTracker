@@ -7,6 +7,7 @@ import WeightChart from './WeightChart.jsx';
 import WeightList from './WeightList.jsx';
 import AddWeightModal from './AddWeightModal.jsx';
 import AddMilkModal from './AddMilkModal.jsx';
+import FeedingTimerModal from './FeedingTimerModal.jsx';
 import MilkChart from './MilkChart.jsx';
 import FeedingHourChart from './FeedingHourChart.jsx';
 import MilkList from './MilkList.jsx';
@@ -31,11 +32,16 @@ function genderIcon(gender) {
 }
 
 export default function BabyDetailClient({ baby, weights, milkEntries }) {
-  const [modal, setModal] = useState(null); // 'add-weight' | 'invite' | 'edit' | 'add-milk'
+  const [modal, setModal] = useState(null); // 'add-weight' | 'invite' | 'edit' | 'add-milk' | 'timer'
   const [fabOpen, setFabOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('weight');
   const router = useRouter();
   const [, startTransition] = useTransition();
+
+  const latestMilk = milkEntries.length
+    ? [...milkEntries].sort((a, b) => b.fed_at.localeCompare(a.fed_at))[0]
+    : null;
+  const latestMilkVolume = latestMilk?.volume_ml || '';
 
   const latestWeight = weights.length > 0 ? weights[weights.length - 1] : null;
   const firstWeight  = weights.length > 0 ? weights[0] : null;
@@ -203,8 +209,8 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
         <button className="fab-option" onClick={() => { setModal('add-weight'); setFabOpen(false); }}>
           <span>⚖️</span> Add Weight
         </button>
-        <button className="fab-option" onClick={() => { setModal('add-milk'); setFabOpen(false); }}>
-          <span>🍼</span> Add Feeding
+        <button className="fab-option" onClick={() => { setModal('timer'); setFabOpen(false); }}>
+          <span>⏱️</span> Start Feeding
         </button>
       </div>
       <button className="fab" onClick={() => setFabOpen(v => !v)} aria-label="Add entry">+</button>
@@ -214,7 +220,20 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
         <AddWeightModal babyId={baby.id} onClose={() => setModal(null)} onAdded={handleMutated} />
       )}
       {modal === 'add-milk' && (
-        <AddMilkModal babyId={baby.id} onClose={() => setModal(null)} onAdded={handleMutated} />
+        <AddMilkModal
+          babyId={baby.id}
+          onClose={() => setModal(null)}
+          onAdded={handleMutated}
+          defaultVolume={latestMilkVolume}
+        />
+      )}
+      {modal === 'timer' && (
+        <FeedingTimerModal
+          babyId={baby.id}
+          onClose={() => setModal(null)}
+          onAdded={handleMutated}
+          defaultVolume={latestMilkVolume}
+        />
       )}
       {modal === 'invite' && (
         <InviteModal babyId={baby.id} babyName={baby.name} onClose={() => setModal(null)} />

@@ -35,6 +35,14 @@ function EditForm({ entry, babyId, onDone }) {
     ? entry.fed_at
     : entry.fed_at?.replace(' ', 'T');
 
+  const defaultStartedAt = entry.started_at
+    ? (entry.started_at.includes('T') ? entry.started_at : entry.started_at.replace(' ', 'T'))
+    : '';
+
+  const defaultEndedAt = entry.ended_at
+    ? (entry.ended_at.includes('T') ? entry.ended_at : entry.ended_at.replace(' ', 'T'))
+    : '';
+
   return (
     <div className="milk-edit-form">
       <form action={action}>
@@ -45,6 +53,16 @@ function EditForm({ entry, babyId, onDone }) {
         <div className="form-group">
           <label>Amount (ml)</label>
           <input type="number" name="volume_ml" defaultValue={entry.volume_ml} min="5" max="2000" />
+        </div>
+        <div className="form-row">
+          <div className="form-group" style={{ flex: 1 }}>
+            <label>Started</label>
+            <input type="datetime-local" name="started_at" defaultValue={defaultStartedAt} />
+          </div>
+          <div className="form-group" style={{ flex: 1 }}>
+            <label>Ended</label>
+            <input type="datetime-local" name="ended_at" defaultValue={defaultEndedAt} />
+          </div>
         </div>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label>Notes</label>
@@ -116,6 +134,9 @@ export default function MilkList({ entries, babyId, onMutated }) {
                   <div className="milk-card-body">
                     <div className="milk-card-left">
                       <div className="milk-date">{formatDateTime(entry.fed_at)}</div>
+                      {entry.duration_minutes != null && (
+                        <div className="milk-duration">{entry.duration_minutes} min</div>
+                      )}
                       {entry.notes && <div className="milk-notes">{entry.notes}</div>}
                     </div>
                     <div className="milk-card-mid">
@@ -123,13 +144,13 @@ export default function MilkList({ entries, babyId, onMutated }) {
                     </div>
                   </div>
                   <div className="milk-card-actions">
-                    <button className="maction-btn" onClick={() => setEditing(entry.id)}>✏️ Edit</button>
+                    <button className="maction-btn" onClick={() => setEditing(entry.id)}>Edit</button>
                     <button
                       className="maction-btn danger"
                       onClick={() => handleDelete(entry.id)}
                       disabled={deleting === entry.id}
                     >
-                      {deleting === entry.id ? <span className="spinner" style={{ borderTopColor: 'var(--danger)' }} /> : '🗑️ Delete'}
+                      {deleting === entry.id ? <span className="spinner" style={{ borderTopColor: 'var(--danger)' }} /> : 'Delete'}
                     </button>
                   </div>
                 </div>
