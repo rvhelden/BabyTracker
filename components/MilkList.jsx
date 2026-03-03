@@ -6,21 +6,22 @@ import { deleteMilkAction, updateMilkAction } from '../app/actions.js';
 function formatDateTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  const yyyy = date.getFullYear();
-  const mm = `${date.getMonth() + 1}`.padStart(2, '0');
-  const dd = `${date.getDate()}`.padStart(2, '0');
-  const hh = `${date.getHours()}`.padStart(2, '0');
-  const min = `${date.getMinutes()}`.padStart(2, '0');
-  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+  return date.toLocaleString();
 }
 
-function formatDay(value) {
+function formatDayKey(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   const yyyy = date.getFullYear();
   const mm = `${date.getMonth() + 1}`.padStart(2, '0');
   const dd = `${date.getDate()}`.padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatDayLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
 }
 
 function EditForm({ entry, babyId, onDone }) {
@@ -103,10 +104,10 @@ export default function MilkList({ entries, babyId, onMutated }) {
   }
 
   const sorted = [...entries].sort((a, b) => b.fed_at.localeCompare(a.fed_at));
-  const days = Array.from(new Set(sorted.map(entry => formatDay(entry.fed_at))));
+  const days = Array.from(new Set(sorted.map(entry => formatDayKey(entry.fed_at))));
   const safeIndex = Math.min(selectedIndex, Math.max(days.length - 1, 0));
   const activeDay = days[safeIndex];
-  const dayEntries = activeDay ? sorted.filter(entry => formatDay(entry.fed_at) === activeDay) : [];
+  const dayEntries = activeDay ? sorted.filter(entry => formatDayKey(entry.fed_at) === activeDay) : [];
   const dayTotal = dayEntries.reduce((sum, entry) => sum + entry.volume_ml, 0);
 
   useEffect(() => {
@@ -205,7 +206,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
             <div key={entry.id} className="milk-row card">
               <div className="milk-row-main">
                 <span className="milk-row-icon">🍼</span>
-                <span className="milk-row-time">{formatDateTime(entry.fed_at)}</span>
+                <span className="milk-row-time">{new Date(entry.fed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 <span className="milk-row-amount">{entry.volume_ml} ml</span>
                 {entry.duration_minutes != null && (
                   <span className="milk-row-meta">⏱️ {entry.duration_minutes}m</span>

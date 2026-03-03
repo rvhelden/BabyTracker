@@ -3,6 +3,12 @@
 import { useState, useEffect, useActionState } from 'react';
 import { deleteWeightAction, updateWeightAction } from '../app/actions.js';
 
+function formatDateLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+}
+
 function EditForm({ entry, babyId, onDone }) {
   const boundUpdate = updateWeightAction.bind(null, babyId, entry.id);
   const [state, action, pending] = useActionState(boundUpdate, null);
@@ -80,31 +86,34 @@ export default function WeightList({ weights, babyId, onMutated }) {
         return (
           <div key={w.id} className="weight-card">
             <div className="weight-card-body">
-              <div className="weight-card-left">
-                <div className="weight-date">{w.measured_at}</div>
-                {w.notes && <div className="weight-notes">{w.notes}</div>}
+              <div className="weight-row-main">
+                <div className="weight-card-left">
+                  <div className="weight-date">{formatDateLabel(w.measured_at)}</div>
+                  {w.notes && <div className="weight-notes">{w.notes}</div>}
+                </div>
+                <div className="weight-card-mid">
+                  <div className="weight-grams">{w.weight_grams} g</div>
+                  <div className="weight-kg">{(w.weight_grams / 1000).toFixed(3)} kg</div>
+                </div>
+                <div className="weight-card-right">
+                  {diff !== null && (
+                    <span className={`weight-diff ${diff >= 0 ? 'diff-pos' : 'diff-neg'}`}>
+                      {diff >= 0 ? '+' : ''}{diff} g
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="weight-card-mid">
-                <div className="weight-grams">{w.weight_grams} g</div>
-                <div className="weight-kg">{(w.weight_grams / 1000).toFixed(3)} kg</div>
+              <div className="weight-row-actions">
+                <button className="maction-btn" onClick={() => setEditing(w.id)} aria-label="Edit entry">✏️</button>
+                <button
+                  className="maction-btn danger"
+                  onClick={() => handleDelete(w.id)}
+                  disabled={deleting === w.id}
+                  aria-label="Delete entry"
+                >
+                  {deleting === w.id ? <span className="spinner" style={{ borderTopColor: 'var(--danger)' }} /> : '🗑️'}
+                </button>
               </div>
-              <div className="weight-card-right">
-                {diff !== null && (
-                  <span className={`weight-diff ${diff >= 0 ? 'diff-pos' : 'diff-neg'}`}>
-                    {diff >= 0 ? '+' : ''}{diff} g
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="weight-card-actions">
-              <button className="waction-btn" onClick={() => setEditing(w.id)}>✏️ Edit</button>
-              <button
-                className="waction-btn danger"
-                onClick={() => handleDelete(w.id)}
-                disabled={deleting === w.id}
-              >
-                {deleting === w.id ? <span className="spinner" style={{ borderTopColor: 'var(--danger)' }} /> : '🗑️ Delete'}
-              </button>
             </div>
           </div>
         );

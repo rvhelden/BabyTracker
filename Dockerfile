@@ -1,32 +1,17 @@
-# Build stage for React client
-FROM node:20-alpine AS client-build
-WORKDIR /app/client
-COPY client/package*.json ./
-RUN npm install
-COPY client/ ./
-RUN npm run build
-
-# Production stage
-FROM node:20-alpine AS production
+FROM node:20-alpine AS build
 WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm build
 
-# Install server dependencies
-COPY package*.json ./
-RUN npm install --omit=dev
-
-# Copy server source
-COPY server/ ./server/
-
-# Copy built React client
-COPY --from=client-build /app/client/dist ./client/dist
-
-# Create data directory for SQLite
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/public ./public
 RUN mkdir -p /data
-
-EXPOSE 4000
-
 ENV NODE_ENV=production
-ENV PORT=4000
 ENV DATA_DIR=/data
-
-CMD ["node", "server/index.js"]
+EXPOSE 3000
+CMD ["node", "server.js"]

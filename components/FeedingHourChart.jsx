@@ -15,10 +15,22 @@ function dayKey(value) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function getLastDays(count) {
+  const days = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = count - 1; i >= 0; i -= 1) {
+    const d = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+    days.push(dayKey(d));
+  }
+  return days.filter(Boolean);
+}
+
 export default function FeedingHourChart({ entries }) {
-  const days = Array.from(new Set(entries.map(e => dayKey(e.fed_at)).filter(Boolean))).sort();
+  const days = getLastDays(7);
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const matrix = new Map();
+  const todayKey = dayKey(new Date());
 
   entries.forEach(entry => {
     const day = dayKey(entry.fed_at);
@@ -35,9 +47,15 @@ export default function FeedingHourChart({ entries }) {
     <div className="feed-matrix">
       <div className="matrix-header">
         <div className="matrix-corner" />
-        {days.map(day => (
-          <div key={day} className="matrix-day">{day}</div>
-        ))}
+        {days.map(day => {
+          const label = new Date(day).toLocaleDateString(undefined, { weekday: 'short' });
+          const isToday = day === todayKey;
+          return (
+            <div key={day} className={`matrix-day${isToday ? ' today' : ''}`}>
+              {label}
+            </div>
+          );
+        })}
       </div>
       <div className="matrix-body">
         {hours.map(hour => (

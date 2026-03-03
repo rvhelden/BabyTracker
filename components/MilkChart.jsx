@@ -8,17 +8,16 @@ import {
 function formatDayLabel(dateStr) {
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) return dateStr;
-  const mm = `${date.getMonth() + 1}`.padStart(2, '0');
-  const dd = `${date.getDate()}`.padStart(2, '0');
-  return `${mm}/${dd}`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
+  const dayLabel = d.day ? new Date(d.day).toLocaleDateString() : d.day;
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '0.6rem 1rem', boxShadow: 'var(--shadow)', fontSize: '0.88rem' }}>
-      <p style={{ fontWeight: 700, marginBottom: 2 }}>{d.day}</p>
+      <p style={{ fontWeight: 700, marginBottom: 2 }}>{dayLabel}</p>
       <p style={{ color: 'var(--primary-dark)' }}>{d.total_ml} ml total</p>
       {d.expected_ml && (
         <p style={{ color: 'var(--text-muted)', marginTop: 2 }}>Expected {d.expected_ml} ml</p>
@@ -34,6 +33,17 @@ function normalizeDate(value) {
   const mm = `${date.getMonth() + 1}`.padStart(2, '0');
   const dd = `${date.getDate()}`.padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
+}
+
+function getLastDays(count) {
+  const days = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = count - 1; i >= 0; i -= 1) {
+    const d = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+    days.push(normalizeDate(d));
+  }
+  return days.filter(Boolean);
 }
 
 function expectedForDay(date, weights) {
@@ -56,11 +66,11 @@ export default function MilkChart({ entries, weights }) {
     daily.set(day, current + entry.volume_ml);
   });
 
-  const days = Array.from(daily.keys()).sort();
+  const days = getLastDays(7);
   const data = days.map(day => ({
     day,
     label: formatDayLabel(day),
-    total_ml: daily.get(day),
+    total_ml: daily.get(day) || 0,
     expected_ml: expectedForDay(day, weights),
   }));
 
