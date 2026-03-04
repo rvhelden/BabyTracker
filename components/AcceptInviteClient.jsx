@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { acceptInviteAction } from "../app/actions.js";
+import { formatLocalDate, parseInstant } from "../lib/temporal.js";
 
 export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
   const [pending, startTransition] = useTransition();
@@ -43,7 +44,11 @@ export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
             </div>
             <div className='invite-detail-row'>
               <span>Expires</span>
-              <strong>{new Date(invite.expiresAt).toLocaleDateString()}</strong>
+              <strong>
+                {formatLocalDate(
+                  parseInstant(invite.expiresAt)?.toZonedDateTimeISO().toPlainDate(),
+                )}
+              </strong>
             </div>
           </div>
 

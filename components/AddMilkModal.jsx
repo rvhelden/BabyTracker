@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { addMilkAction } from "../app/actions.js";
+import { toLocalDateTimeInput } from "../lib/temporal.js";
 import Modal from "./Modal.jsx";
 
 export default function AddMilkModal({ babyId, onClose, onAdded, defaultVolume }) {
@@ -12,9 +13,7 @@ export default function AddMilkModal({ babyId, onClose, onAdded, defaultVolume }
     if (state?.success) onAdded();
   }, [state?.success]);
 
-  const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  const defaultDateTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const defaultDateTime = toLocalDateTimeInput();
 
   return (
     <Modal title='Add Milk Feeding' onClose={onClose}>

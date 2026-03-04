@@ -1,23 +1,37 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { deleteBabyAction, leaveBabyAction } from "../app/actions.js";
+import {
+  addMinutes,
+  daysBetween,
+  formatLocalDate,
+  formatLocalDateTime,
+  formatLocalTime,
+  formatWeekdayShort,
+  nowInstant,
+  nowZoned,
+  parsePlainDate,
+  parsePlainDateTime,
+  todayPlainDate,
+  zonedFromPlainDateTime,
+} from "../lib/temporal.js";
+import AddMilkModal from "./AddMilkModal.jsx";
+import AddWeightModal from "./AddWeightModal.jsx";
+import EditBabyModal from "./EditBabyModal.jsx";
+import FeedingHourChart from "./FeedingHourChart.jsx";
+import FeedingTimerModal from "./FeedingTimerModal.jsx";
+import InviteModal from "./InviteModal.jsx";
+import MilkChart from "./MilkChart.jsx";
+import MilkList from "./MilkList.jsx";
 import WeightChart from "./WeightChart.jsx";
 import WeightList from "./WeightList.jsx";
-import AddWeightModal from "./AddWeightModal.jsx";
-import AddMilkModal from "./AddMilkModal.jsx";
-import FeedingTimerModal from "./FeedingTimerModal.jsx";
-import MilkChart from "./MilkChart.jsx";
-import FeedingHourChart from "./FeedingHourChart.jsx";
-import MilkList from "./MilkList.jsx";
-import InviteModal from "./InviteModal.jsx";
-import EditBabyModal from "./EditBabyModal.jsx";
 
 function ageLabel(birthDate) {
-  const birth = new Date(birthDate);
-  const now = new Date();
-  const days = Math.floor((now - birth) / (1000 * 60 * 60 * 24));
+  const birth = parsePlainDate(birthDate);
+  const now = todayPlainDate();
+  const days = birth ? Math.floor(daysBetween(birth, now)) : 0;
   if (days < 30) return `${days} day${days !== 1 ? "s" : ""} old`;
   const months = Math.floor(days / 30.44);
   if (months < 24) return `${months} month${months !== 1 ? "s" : ""} old`;
@@ -39,13 +53,13 @@ function normalizeDateTime(value) {
 function parseDateTime(value) {
   const normalized = normalizeDateTime(value);
   if (!normalized) return null;
-  const date = new Date(normalized);
-  return Number.isNaN(date.getTime()) ? null : date;
+  const plain = parsePlainDateTime(normalized);
+  return plain ? zonedFromPlainDateTime(plain) : null;
 }
 
 function formatElapsedSince(date, nowTick) {
   if (!date) return "No feeds yet";
-  const diffMs = nowTick - date.getTime();
+  const diffMs = nowTick - date.epochMilliseconds;
   if (diffMs < 0) return "Just now";
   const totalMin = Math.floor(diffMs / 60000);
   const hours = Math.floor(totalMin / 60);
@@ -56,7 +70,7 @@ function formatElapsedSince(date, nowTick) {
 
 function formatEtaUntil(date, nowTick) {
   if (!date) return "";
-  const diffMs = date.getTime() - nowTick;
+  const diffMs = date.epochMilliseconds - nowTick;
   if (diffMs <= 0) return "due now";
   const totalMin = Math.ceil(diffMs / 60000);
   const hours = Math.floor(totalMin / 60);
@@ -67,14 +81,11 @@ function formatEtaUntil(date, nowTick) {
 
 function formatTimeOnly(date) {
   if (!date) return "";
-  return new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(date);
+  return formatLocalTime(date.toPlainDateTime ? date.toPlainDateTime() : date);
 }
 
 function formatDayKey(date) {
-  const yyyy = date.getFullYear();
-  const mm = `${date.getMonth() + 1}`.padStart(2, "0");
-  const dd = `${date.getDate()}`.padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  return date.toPlainDate().toString();
 }
 
 export default function BabyDetailClient({ baby, weights, milkEntries }) {
@@ -82,7 +93,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
   const [activeSection, setActiveSection] = useState("feeding");
   const [feedFabAction, setFeedFabAction] = useState("timer");
   const [feedingIntervalHours, setFeedingIntervalHours] = useState("3");
-  const [nowTick, setNowTick] = useState(Date.now());
+  const [nowTick, setNowTick] = useState(() => nowInstant().epochMilliseconds);
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -91,7 +102,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
     if (saved) setFeedFabAction(saved);
     const savedInterval = window.localStorage.getItem("feedingIntervalHours");
     if (savedInterval) setFeedingIntervalHours(savedInterval);
-    const timer = setInterval(() => setNowTick(Date.now()), 60000);
+    const timer = setInterval(() => setNowTick(nowInstant().epochMilliseconds), 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -102,9 +113,9 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
 
   const milkTotals = useMemo(() => {
     if (!milkEntries.length) return { dayTotal: 0, last24hTotal: 0, lastFeedAt: null };
-    const now = new Date(nowTick);
+    const now = nowZoned();
     const todayKey = formatDayKey(now);
-    const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const since24h = now.subtract({ hours: 24 });
     let dayTotal = 0;
     let last24hTotal = 0;
     let lastFeedAt = null;
@@ -112,9 +123,9 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
     for (const entry of milkEntries) {
       const when = parseDateTime(entry.fed_at);
       if (!when) continue;
-      if (!lastFeedAt || when > lastFeedAt) lastFeedAt = when;
+      if (!lastFeedAt || when.epochMilliseconds > lastFeedAt.epochMilliseconds) lastFeedAt = when;
       if (formatDayKey(when) === todayKey) dayTotal += entry.volume_ml;
-      if (when >= since24h) last24hTotal += entry.volume_ml;
+      if (when.epochMilliseconds >= since24h.epochMilliseconds) last24hTotal += entry.volume_ml;
     }
     return { dayTotal, last24hTotal, lastFeedAt };
   }, [milkEntries, nowTick]);
@@ -122,24 +133,22 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
   const nextFeedings = useMemo(() => {
     const intervalHours = Number.parseFloat(feedingIntervalHours);
     if (!milkTotals.lastFeedAt || !Number.isFinite(intervalHours) || intervalHours <= 0) return [];
-    const intervalMs = intervalHours * 60 * 60 * 1000;
-    const now = new Date(nowTick);
-    const dueAt = new Date(milkTotals.lastFeedAt.getTime() + intervalMs);
-    const start = dueAt <= now ? dueAt : dueAt;
-    return [0, 1, 2].map((step) => new Date(start.getTime() + step * intervalMs));
+    const intervalMinutes = intervalHours * 60;
+    const dueAt = addMinutes(milkTotals.lastFeedAt, intervalMinutes);
+    return [0, 1, 2].map((step) => addMinutes(dueAt, step * intervalMinutes));
   }, [feedingIntervalHours, milkTotals.lastFeedAt, nowTick]);
 
-  const feedingIntervalMs = useMemo(() => {
+  const feedingIntervalMinutes = useMemo(() => {
     const intervalHours = Number.parseFloat(feedingIntervalHours);
     if (!Number.isFinite(intervalHours) || intervalHours <= 0) return null;
-    return intervalHours * 60 * 60 * 1000;
+    return intervalHours * 60;
   }, [feedingIntervalHours]);
 
   const isFeedingLate = useMemo(() => {
-    if (!milkTotals.lastFeedAt || !feedingIntervalMs) return false;
-    const dueAt = milkTotals.lastFeedAt.getTime() + feedingIntervalMs;
-    return nowTick > dueAt;
-  }, [milkTotals.lastFeedAt, feedingIntervalMs, nowTick]);
+    if (!milkTotals.lastFeedAt || !feedingIntervalMinutes) return false;
+    const dueAt = addMinutes(milkTotals.lastFeedAt, feedingIntervalMinutes);
+    return nowTick > dueAt.epochMilliseconds;
+  }, [milkTotals.lastFeedAt, feedingIntervalMinutes, nowTick]);
 
   const latestWeight = weights.length > 0 ? weights[weights.length - 1] : null;
   const firstWeight = weights.length > 0 ? weights[0] : null;
@@ -185,7 +194,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             <div className='baby-hero-text'>
               <h2>{baby.name}</h2>
               <p className='baby-detail-age'>{ageLabel(baby.birth_date)}</p>
-              <p className='baby-born'>Born {new Date(baby.birth_date).toLocaleDateString()}</p>
+              <p className='baby-born'>Born {formatLocalDate(parsePlainDate(baby.birth_date))}</p>
             </div>
           </div>
           <div className='baby-hero-actions'>
@@ -320,7 +329,9 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                 {formatElapsedSince(milkTotals.lastFeedAt, nowTick)}
               </div>
               {milkTotals.lastFeedAt && (
-                <div className='last-feed-sub'>{milkTotals.lastFeedAt.toLocaleString()}</div>
+                <div className='last-feed-sub'>
+                  {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime())}
+                </div>
               )}
             </div>
           </div>
@@ -332,22 +343,21 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             <div className='next-feed-body'>
               {nextFeedings.length > 0 ? (
                 nextFeedings.map((time, idx) => {
-                  const now = new Date(nowTick);
+                  const now = nowZoned();
                   const isNextDay = formatDayKey(time) !== formatDayKey(now);
-                  const midnight = new Date(now);
-                  midnight.setHours(0, 0, 0, 0);
+                  const midnight = now.toPlainDate().toPlainDateTime({ hour: 0, minute: 0 });
                   const dayDiff = Math.round(
-                    (time.getTime() - midnight.getTime()) / (24 * 60 * 60 * 1000),
+                    daysBetween(midnight.toPlainDate(), time.toPlainDate()),
                   );
                   const dayLabel = isNextDay
                     ? dayDiff === 1
                       ? "tomorrow"
-                      : time.toLocaleDateString(undefined, { weekday: "short" })
+                      : formatWeekdayShort(time)
                     : null;
                   const etaLabel = formatEtaUntil(time, nowTick);
                   const isLate = idx === 0 && isFeedingLate;
                   return (
-                    <div key={`${time.getTime()}-${idx}`} className='next-feed-item'>
+                    <div key={`${time.toString()}-${idx}`} className='next-feed-item'>
                       <span className='next-feed-time'>{formatTimeOnly(time)}</span>
                       {isLate ? (
                         <span className='next-feed-eta late'>Late</span>

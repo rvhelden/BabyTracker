@@ -2,6 +2,7 @@ import Link from "next/link";
 import AcceptInviteClient from "../../../components/AcceptInviteClient.jsx";
 import { getInviteByToken } from "../../../lib/dal.js";
 import { getUser } from "../../../lib/session.js";
+import { nowInstant, parseInstant } from "../../../lib/temporal.js";
 
 export default async function InvitePage({ params }) {
   const { token } = await params;
@@ -32,7 +33,11 @@ export default async function InvitePage({ params }) {
     );
   }
 
-  if (invite.used_at || new Date(invite.expires_at) < new Date()) {
+  const expiresAt = parseInstant(invite.expires_at);
+  const now = nowInstant();
+  const isExpired = expiresAt ? expiresAt.epochMilliseconds < now.epochMilliseconds : true;
+
+  if (invite.used_at || isExpired) {
     return (
       <div className='auth-page'>
         <div className='auth-card card invite-accept-card'>

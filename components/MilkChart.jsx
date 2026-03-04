@@ -1,26 +1,32 @@
 "use client";
 
 import {
-  ResponsiveContainer,
-  LineChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ReferenceLine,
 } from "recharts";
+import {
+  formatLocalDate,
+  parsePlainDate,
+  parsePlainDateTime,
+  todayPlainDate,
+} from "../lib/temporal.js";
 
 function formatDayLabel(dateStr) {
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const date = parsePlainDate(dateStr);
+  if (!date) return dateStr;
+  return date.toLocaleString(undefined, { month: "short", day: "numeric" });
 }
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
-  const dayLabel = d.day ? new Date(d.day).toLocaleDateString() : d.day;
+  const dayLabel = d.day ? formatLocalDate(parsePlainDate(d.day)) : d.day;
   return (
     <div
       style={{
@@ -42,21 +48,17 @@ function CustomTooltip({ active, payload }) {
 }
 
 function normalizeDate(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  const yyyy = date.getFullYear();
-  const mm = `${date.getMonth() + 1}`.padStart(2, "0");
-  const dd = `${date.getDate()}`.padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  const date = parsePlainDateTime(value)?.toPlainDate();
+  if (!date) return null;
+  return date.toString();
 }
 
 function getLastDays(count) {
   const days = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = todayPlainDate();
   for (let i = count - 1; i >= 0; i -= 1) {
-    const d = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
-    days.push(normalizeDate(d));
+    const d = today.subtract({ days: i });
+    days.push(normalizeDate(d.toString()));
   }
   return days.filter(Boolean);
 }

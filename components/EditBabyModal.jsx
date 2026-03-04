@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { updateBabyAction } from "../app/actions.js";
+import { toLocalDateInput } from "../lib/temporal.js";
 import Modal from "./Modal.jsx";
 
 export default function EditBabyModal({ baby, onClose, onUpdated }) {
@@ -15,7 +16,7 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
     if (state?.success) onUpdated();
   }, [state?.success]);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = toLocalDateInput();
 
   async function handlePhotoChange(event) {
     const file = event.target.files?.[0];

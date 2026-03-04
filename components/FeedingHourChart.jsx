@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  formatDayKey,
+  formatWeekdayShort,
+  parsePlainDate,
+  parsePlainDateTime,
+  todayPlainDate,
+} from "../lib/temporal.js";
+
 function hourLabel(hour) {
   const suffix = hour >= 12 ? "PM" : "AM";
   const display = hour % 12 === 0 ? 12 : hour % 12;
@@ -7,20 +15,16 @@ function hourLabel(hour) {
 }
 
 function dayKey(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  const yyyy = date.getFullYear();
-  const mm = `${date.getMonth() + 1}`.padStart(2, "0");
-  const dd = `${date.getDate()}`.padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  const date = typeof value === "string" ? parsePlainDate(value) : value;
+  if (!date) return null;
+  return formatDayKey(date);
 }
 
 function getLastDays(count) {
   const days = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = todayPlainDate();
   for (let i = count - 1; i >= 0; i -= 1) {
-    const d = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+    const d = today.subtract({ days: i });
     days.push(dayKey(d));
   }
   return days.filter(Boolean);
@@ -30,14 +34,14 @@ export default function FeedingHourChart({ entries }) {
   const days = getLastDays(7);
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const matrix = new Map();
-  const todayKey = dayKey(new Date());
+  const todayKey = dayKey(todayPlainDate());
 
   entries.forEach((entry) => {
-    const day = dayKey(entry.fed_at);
+    const dateTime = parsePlainDateTime(entry.fed_at);
+    if (!dateTime) return;
+    const day = dayKey(dateTime.toPlainDate());
     if (!day) return;
-    const date = new Date(entry.fed_at);
-    if (Number.isNaN(date.getTime())) return;
-    const key = `${day}-${date.getHours()}`;
+    const key = `${day}-${dateTime.hour}`;
     matrix.set(key, (matrix.get(key) || 0) + 1);
   });
 
@@ -48,7 +52,7 @@ export default function FeedingHourChart({ entries }) {
       <div className='matrix-header'>
         <div className='matrix-corner' />
         {days.map((day) => {
-          const label = new Date(day).toLocaleDateString(undefined, { weekday: "short" });
+          const label = formatWeekdayShort(parsePlainDate(day));
           const isToday = day === todayKey;
           return (
             <div key={day} className={`matrix-day${isToday ? " today" : ""}`}>

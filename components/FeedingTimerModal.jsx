@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  durationMinutes,
+  nowInstant,
+  nowZoned,
+  parsePlainDateTime,
+  toLocalDateTimeInput,
+} from "../lib/temporal.js";
 import Modal from "./Modal.jsx";
 
 function formatElapsed(ms) {
@@ -13,14 +20,8 @@ function formatElapsed(ms) {
   return parts.join(":");
 }
 
-/** Format a Date as local datetime string suitable for DB storage (YYYY-MM-DD HH:MM) */
-function toLocalDateTime(d) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVolume }) {
-  const initialStart = useMemo(() => new Date(), []);
+  const initialStart = useMemo(() => nowZoned().toPlainDateTime(), []);
   const [startedAt, setStartedAt] = useState(initialStart);
   const [elapsed, setElapsed] = useState(0);
   const [volume, setVolume] = useState(defaultVolume || "");
@@ -33,7 +34,9 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setElapsed(Math.max(0, Date.now() - startedAt.getTime()));
+      setElapsed(
+        Math.max(0, nowInstant().epochMilliseconds - startedAt.toZonedDateTime().epochMilliseconds),
+      );
     }, 1000);
     return () => clearInterval(timer);
   }, [startedAt]);
@@ -41,8 +44,8 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
   function handleStartTimeChange(e) {
     const value = e.target.value;
     if (!value) return;
-    const next = new Date(value);
-    if (!Number.isNaN(next.getTime())) setStartedAt(next);
+    const next = parsePlainDateTime(value);
+    if (next) setStartedAt(next);
   }
 
   useEffect(() => {
@@ -52,7 +55,7 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
       setStarting(true);
       try {
         const initialVolume = parseInt(volume || "0", 10) || 0;
-        const start = toLocalDateTime(startedAt);
+        const start = toLocalDateTimeInput(startedAt);
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
         const res = await fetch(`/api/babies/${babyId}/milk`, {
@@ -81,9 +84,9 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
     setSaving(true);
     setError("");
     try {
-      const endedAt = new Date();
-      const durationMinutes = Math.max(1, Math.round((endedAt - startedAt) / 60000));
-      const fedAt = toLocalDateTime(endedAt);
+      const endedAt = nowZoned().toPlainDateTime();
+      const totalMinutes = Math.max(1, durationMinutes(startedAt, endedAt) || 0);
+      const fedAt = toLocalDateTimeInput(endedAt);
       let activeEntryId = entryId;
       if (!activeEntryId) {
         const startRes = await fetch(`/api/babies/${babyId}/milk`, {
@@ -91,7 +94,7 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             volume_ml: parseInt(volume || "0", 10) || 0,
-            started_at: toLocalDateTime(startedAt),
+            started_at: toLocalDateTimeInput(startedAt),
           }),
           credentials: "include",
         });
@@ -110,9 +113,9 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
           entryId: activeEntryId,
           volume_ml: parseInt(volume || "0", 10) || 0,
           fed_at: fedAt,
-          started_at: toLocalDateTime(startedAt),
-          ended_at: toLocalDateTime(endedAt),
-          duration_minutes: durationMinutes,
+          started_at: toLocalDateTimeInput(startedAt),
+          ended_at: toLocalDateTimeInput(endedAt),
+          duration_minutes: totalMinutes,
           notes,
         }),
         credentials: "include",
@@ -136,7 +139,9 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
         <div className='timer-meta'>
           {starting
             ? "Preparing entry…"
-            : `Started at ${startedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+            : `Started at ${startedAt.toZonedDateTime().toLocaleString(undefined, {
+                timeStyle: "short",
+              })}`}
         </div>
       </div>
       <div className='form-group'>
@@ -154,7 +159,7 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
         <label>Start time</label>
         <input
           type='datetime-local'
-          value={toLocalDateTime(startedAt)}
+          value={toLocalDateTimeInput(startedAt)}
           onChange={handleStartTimeChange}
         />
       </div>

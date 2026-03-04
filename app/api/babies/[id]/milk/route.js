@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import * as dal from "../../../../../lib/dal.js";
 import { getUser } from "../../../../../lib/session.js";
-
-function toLocalDateTime(d) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+import { nowZoned, toLocalDateTimeInput } from "../../../../../lib/temporal.js";
 
 export async function POST(request, { params }) {
   try {
@@ -21,7 +17,7 @@ export async function POST(request, { params }) {
     }
 
     const body = await request.json();
-    const started_at = body?.started_at || toLocalDateTime(new Date());
+    const started_at = body?.started_at || toLocalDateTimeInput(nowZoned().toPlainDateTime());
     const volume_ml = parseInt(body?.volume_ml || "0", 10) || 0;
 
     const entry = dal.addMilk(id, user.id, {

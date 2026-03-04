@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import unzipper from "unzipper";
 import * as dal from "../../../lib/dal.js";
 import { getUser } from "../../../lib/session.js";
+import { nowZoned, parsePlainDateTime, toLocalDateTimeInput } from "../../../lib/temporal.js";
 
 const importTypes = [
   {
@@ -14,11 +15,15 @@ const importTypes = [
     parseRow: (row) => {
       const [babyNameRaw, timeRaw, amountRaw, noteRaw] = row;
       const babyName = normalizeBabyName(babyNameRaw);
-      if (!babyName) return null;
+      if (!babyName) {
+        return null;
+      }
       const fed_at = parseDateTime(timeRaw);
       const volume_ml = parseInt(amountRaw || "0", 10) || 0;
       const notes = normalizeNote(noteRaw);
-      if (!fed_at || !volume_ml) return null;
+      if (!fed_at || !volume_ml) {
+        return null;
+      }
       return {
         babyName,
         payload: {
@@ -41,10 +46,14 @@ const importTypes = [
     parseRow: (row) => {
       const [babyNameRaw, timeRaw, _lengthRaw, weightRaw, _headRaw, noteRaw] = row;
       const babyName = normalizeBabyName(babyNameRaw);
-      if (!babyName) return null;
+      if (!babyName) {
+        return null;
+      }
       const measured_at = parseDateTime(timeRaw)?.split("T")[0];
       const weightKg = parseFloat(weightRaw || "0");
-      if (!measured_at || !weightKg) return null;
+      if (!measured_at || !weightKg) {
+        return null;
+      }
       const weight_grams = Math.round(weightKg * 1000);
       const notes = normalizeNote(noteRaw);
       return {
@@ -89,12 +98,16 @@ function parseCsvLine(line) {
 }
 
 function normalizeBabyName(value) {
-  if (!value) return "";
+  if (!value) {
+    return "";
+  }
   return String(value).replace(/^"|"$/g, "").trim();
 }
 
 function normalizeNote(value) {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   const cleaned = String(value).replace(/^"|"$/g, "").trim();
   return cleaned || null;
 }
@@ -118,8 +131,11 @@ function parseDateTime(value) {
     return null;
   }
   const yyyy = year < 100 ? 2000 + year : year;
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${yyyy}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}`;
+  const normalized = `${yyyy}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(
+    hour,
+  ).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  const parsed = parsePlainDateTime(normalized);
+  return parsed ? parsed.toString({ smallestUnit: "minute" }) : null;
 }
 
 async function readCsv(path) {
@@ -152,9 +168,13 @@ async function extractZip(buffer) {
   const extracted = [];
 
   for (const entry of directory.files) {
-    if (entry.type !== "File") continue;
+    if (entry.type !== "File") {
+      continue;
+    }
     const sanitized = safeEntryPath(entry.path);
-    if (!sanitized) continue;
+    if (!sanitized) {
+      continue;
+    }
     const destPath = join(tempDir, sanitized);
     await mkdir(dirname(destPath), { recursive: true });
     const content = await entry.buffer();
@@ -166,28 +186,34 @@ async function extractZip(buffer) {
 }
 
 function todayLocalDate() {
-  const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return toLocalDateTimeInput(nowZoned().toPlainDateTime()).split("T")[0];
 }
 
 function buildBabyLookup(existingBabies) {
   const lookup = new Map();
   for (const baby of existingBabies) {
     const key = babyKey(baby.name);
-    if (key) lookup.set(key, baby);
+    if (key) {
+      lookup.set(key, baby);
+    }
   }
   return lookup;
 }
 
 function trackBaby(state, name, status) {
   const key = babyKey(name);
-  if (!key) return;
-  if (status === "create") {
-    if (!state.babiesToCreate.has(key)) state.babiesToCreate.set(key, name);
+  if (!key) {
     return;
   }
-  if (!state.babiesToReuse.has(key)) state.babiesToReuse.set(key, name);
+  if (status === "create") {
+    if (!state.babiesToCreate.has(key)) {
+      state.babiesToCreate.set(key, name);
+    }
+    return;
+  }
+  if (!state.babiesToReuse.has(key)) {
+    state.babiesToReuse.set(key, name);
+  }
 }
 
 function initImportState() {
@@ -213,12 +239,16 @@ function finalizeImportState(state) {
 }
 
 function ensureCount(state, key) {
-  if (!state.countsByType[key]) state.countsByType[key] = 0;
+  if (!state.countsByType[key]) {
+    state.countsByType[key] = 0;
+  }
 }
 
 function resolveBaby({ name, user, lookup, mode, state }) {
   const key = babyKey(name);
-  if (!key) return null;
+  if (!key) {
+    return null;
+  }
   let baby = lookup.get(key);
   if (baby) {
     trackBaby(state, name, "reuse");
@@ -226,7 +256,9 @@ function resolveBaby({ name, user, lookup, mode, state }) {
     return baby;
   }
   trackBaby(state, name, "create");
-  if (mode === "preview") return null;
+  if (mode === "preview") {
+    return null;
+  }
   baby = dal.createBaby(name, todayLocalDate(), null, user.id);
   lookup.set(key, baby);
   return baby;
@@ -256,8 +288,12 @@ export async function POST(request) {
       for (const filePath of extractedFiles) {
         const fileName = basename(filePath);
         const type = importTypes.find((item) => item.matcher(fileName));
-        if (!type) continue;
-        if (!filesByType.has(type.key)) filesByType.set(type.key, []);
+        if (!type) {
+          continue;
+        }
+        if (!filesByType.has(type.key)) {
+          filesByType.set(type.key, []);
+        }
         filesByType.get(type.key).push(filePath);
       }
 
@@ -274,13 +310,17 @@ export async function POST(request) {
 
       for (const type of importTypes) {
         const filePaths = filesByType.get(type.key) || [];
-        if (filePaths.length === 0) continue;
+        if (filePaths.length === 0) {
+          continue;
+        }
         ensureCount(state, type.key);
         for (const filePath of filePaths) {
           const rows = await readCsv(filePath);
           for (const row of rows) {
             const parsed = type.parseRow(row);
-            if (!parsed) continue;
+            if (!parsed) {
+              continue;
+            }
             const baby = resolveBaby({
               name: parsed.babyName,
               user,

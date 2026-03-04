@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { daysBetween, parsePlainDate, todayPlainDate } from "../lib/temporal.js";
 import AddBabyModal from "./AddBabyModal.jsx";
 
 function ageLabel(birthDate) {
-  const birth = new Date(birthDate);
-  const now = new Date();
-  const days = Math.floor((now - birth) / (1000 * 60 * 60 * 24));
+  const birth = parsePlainDate(birthDate);
+  const now = todayPlainDate();
+  const days = birth ? Math.floor(daysBetween(birth, now)) : 0;
   if (days < 30) return `${days} day${days !== 1 ? "s" : ""} old`;
   const months = Math.floor(days / 30.44);
   if (months < 24) return `${months} month${months !== 1 ? "s" : ""} old`;

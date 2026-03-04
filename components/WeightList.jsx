@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { deleteWeightAction, updateWeightAction } from "../app/actions.js";
+import { formatLocalDate, parsePlainDate } from "../lib/temporal.js";
 
 function formatDateLabel(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
+  const date = parsePlainDate(value);
+  if (!date) return value;
+  return formatLocalDate(date);
 }
 
 function EditForm({ entry, babyId, onDone }) {

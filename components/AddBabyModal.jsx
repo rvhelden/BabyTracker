@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { createBabyAction } from "../app/actions.js";
+import { toLocalDateInput } from "../lib/temporal.js";
 import Modal from "./Modal.jsx";
 
 export default function AddBabyModal({ onClose, onAdded }) {
@@ -11,7 +12,7 @@ export default function AddBabyModal({ onClose, onAdded }) {
     if (state?.success) onAdded();
   }, [state?.success]);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = toLocalDateInput();
 
   return (
     <Modal title='Add Baby' onClose={onClose}>

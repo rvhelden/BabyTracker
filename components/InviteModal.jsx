@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createInviteAction } from "../app/actions.js";
+import { formatLocalDate, parseInstant } from "../lib/temporal.js";
 import Modal from "./Modal.jsx";
 
 export default function InviteModal({ babyId, babyName, onClose }) {
@@ -28,7 +29,9 @@ export default function InviteModal({ babyId, babyName, onClose }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const expiresLabel = invite ? new Date(invite.expiresAt).toLocaleDateString() : "";
+  const expiresLabel = invite
+    ? formatLocalDate(parseInstant(invite.expiresAt)?.toZonedDateTimeISO().toPlainDate())
+    : "";
 
   return (
     <Modal title={`Share ${babyName}'s Profile`} onClose={onClose}>

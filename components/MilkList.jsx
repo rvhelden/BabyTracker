@@ -1,27 +1,13 @@
 "use client";
 
-import { useState, useEffect, useActionState, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { deleteMilkAction, updateMilkAction } from "../app/actions.js";
-
-function formatDateTime(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
-}
+import { formatLocalTime, parsePlainDate, parsePlainDateTime } from "../lib/temporal.js";
 
 function formatDayKey(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  const yyyy = date.getFullYear();
-  const mm = `${date.getMonth() + 1}`.padStart(2, "0");
-  const dd = `${date.getDate()}`.padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function formatDayLabel(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
+  const date = parsePlainDate(value) || parsePlainDateTime(value)?.toPlainDate();
+  if (!date) return value;
+  return date.toString();
 }
 
 function EditForm({ entry, babyId, onDone }) {
@@ -32,20 +18,15 @@ function EditForm({ entry, babyId, onDone }) {
     if (state?.success) onDone();
   }, [state?.success]);
 
-  const defaultDateTime = entry.fed_at?.includes("T")
-    ? entry.fed_at
-    : entry.fed_at?.replace(" ", "T");
+  const defaultDateTime =
+    parsePlainDateTime(entry.fed_at)?.toString({ smallestUnit: "minute" }) || "";
 
   const defaultStartedAt = entry.started_at
-    ? entry.started_at.includes("T")
-      ? entry.started_at
-      : entry.started_at.replace(" ", "T")
+    ? parsePlainDateTime(entry.started_at)?.toString({ smallestUnit: "minute" }) || ""
     : "";
 
   const defaultEndedAt = entry.ended_at
-    ? entry.ended_at.includes("T")
-      ? entry.ended_at
-      : entry.ended_at.replace(" ", "T")
+    ? parsePlainDateTime(entry.ended_at)?.toString({ smallestUnit: "minute" }) || ""
     : "";
 
   return (
@@ -159,13 +140,13 @@ export default function MilkList({ entries, babyId, onMutated }) {
       return;
     }
     // If exact date isn't present, pick the closest earlier day
-    const target = new Date(value).getTime();
+    const target = parsePlainDate(value)?.toPlainDateTime({ hour: 0, minute: 0 }).toZonedDateTime();
     let closestIndex = 0;
     let closestDiff = Infinity;
     days.forEach((day, idx) => {
-      const ts = new Date(day).getTime();
-      if (isNaN(ts) || ts > target) return;
-      const diff = target - ts;
+      const ts = parsePlainDate(day)?.toPlainDateTime({ hour: 0, minute: 0 }).toZonedDateTime();
+      if (!ts || !target || ts.epochMilliseconds > target.epochMilliseconds) return;
+      const diff = target.epochMilliseconds - ts.epochMilliseconds;
       if (diff < closestDiff) {
         closestDiff = diff;
         closestIndex = idx;
@@ -233,10 +214,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
               <div className='milk-row-main'>
                 <span className='milk-row-icon'>🍼</span>
                 <span className='milk-row-time'>
-                  {new Date(entry.fed_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatLocalTime(parsePlainDateTime(entry.fed_at))}
                 </span>
                 <span className='milk-row-amount'>{entry.volume_ml} ml</span>
                 {entry.duration_minutes != null && (

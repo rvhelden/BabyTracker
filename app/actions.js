@@ -7,6 +7,7 @@ import QRCode from "qrcode";
 import { v4 as uuidv4 } from "uuid";
 import * as dal from "../lib/dal.js";
 import { getSession, getUser } from "../lib/session.js";
+import { nowInstant, nowZoned, parsePlainDateTime, toLocalDateTimeInput } from "../lib/temporal.js";
 
 const { hash, compare } = bcrypt;
 
@@ -249,9 +250,7 @@ export async function startMilkAction(babyId, volume_ml, started_at) {
     return { error: "Not authenticated" };
   }
 
-  const pad = (n) => String(n).padStart(2, "0");
-  const now = new Date();
-  const localNow = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const localNow = toLocalDateTimeInput(nowZoned().toPlainDateTime());
   const start = started_at || localNow;
   const volume = Number.isFinite(volume_ml) ? Math.max(0, Math.min(volume_ml, 2000)) : 0;
 
@@ -283,10 +282,14 @@ export async function updateMilkAction(babyId, entryId, _prevState, formData) {
 
   // Auto-calculate duration from start/end times if both provided
   if (started_at && ended_at && !duration_minutes) {
-    const startMs = new Date(started_at).getTime();
-    const endMs = new Date(ended_at).getTime();
-    if (!Number.isNaN(startMs) && !Number.isNaN(endMs) && endMs > startMs) {
-      duration_minutes = Math.max(1, Math.round((endMs - startMs) / 60000));
+    const start = parsePlainDateTime(started_at);
+    const end = parsePlainDateTime(ended_at);
+    if (start && end) {
+      const diff = end.since(start, { largestUnit: "minutes" });
+      const totalMinutes = Math.round(diff.total({ unit: "minutes" }));
+      if (totalMinutes > 0) {
+        duration_minutes = Math.max(1, totalMinutes);
+      }
     }
   }
 
@@ -334,7 +337,7 @@ export async function createInviteAction(babyId) {
   }
 
   const token = uuidv4();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = nowInstant().add({ days: 7 }).toString();
 
   dal.createInvite(babyId, user.id, token, expiresAt);
 

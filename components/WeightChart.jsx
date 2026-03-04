@@ -1,20 +1,21 @@
 "use client";
 
 import {
-  ResponsiveContainer,
-  LineChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ReferenceLine,
 } from "recharts";
+import { daysBetween, parsePlainDate } from "../lib/temporal.js";
 
 function daysSinceBirth(birthDate, measured_at) {
-  const birth = new Date(birthDate);
-  const date = new Date(measured_at);
-  return Math.floor((date - birth) / (1000 * 60 * 60 * 24));
+  const birth = parsePlainDate(birthDate);
+  const date = parsePlainDate(measured_at);
+  return birth && date ? Math.floor(daysBetween(birth, date)) : 0;
 }
 
 function CustomTooltip({ active, payload }) {
