@@ -1,14 +1,20 @@
-'use client';
+"use client";
 
 import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, ReferenceLine,
-} from 'recharts';
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+} from "recharts";
 
 function formatDayLabel(dateStr) {
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function CustomTooltip({ active, payload }) {
@@ -16,11 +22,20 @@ function CustomTooltip({ active, payload }) {
   const d = payload[0].payload;
   const dayLabel = d.day ? new Date(d.day).toLocaleDateString() : d.day;
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '0.6rem 1rem', boxShadow: 'var(--shadow)', fontSize: '0.88rem' }}>
+    <div
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 8,
+        padding: "0.6rem 1rem",
+        boxShadow: "var(--shadow)",
+        fontSize: "0.88rem",
+      }}
+    >
       <p style={{ fontWeight: 700, marginBottom: 2 }}>{dayLabel}</p>
-      <p style={{ color: 'var(--primary-dark)' }}>{d.total_ml} ml total</p>
+      <p style={{ color: "var(--primary-dark)" }}>{d.total_ml} ml total</p>
       {d.expected_ml && (
-        <p style={{ color: 'var(--text-muted)', marginTop: 2 }}>Expected {d.expected_ml} ml</p>
+        <p style={{ color: "var(--text-muted)", marginTop: 2 }}>Expected {d.expected_ml} ml</p>
       )}
     </div>
   );
@@ -30,8 +45,8 @@ function normalizeDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   const yyyy = date.getFullYear();
-  const mm = `${date.getMonth() + 1}`.padStart(2, '0');
-  const dd = `${date.getDate()}`.padStart(2, '0');
+  const mm = `${date.getMonth() + 1}`.padStart(2, "0");
+  const dd = `${date.getDate()}`.padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -48,7 +63,7 @@ function getLastDays(count) {
 
 function expectedForDay(date, weights) {
   if (!weights.length) return null;
-  const dayWeights = weights.filter(w => w.measured_at === date);
+  const dayWeights = weights.filter((w) => w.measured_at === date);
   if (dayWeights.length > 0) {
     const latest = dayWeights[dayWeights.length - 1];
     return Math.round((latest.weight_grams / 1000) * 150);
@@ -59,7 +74,7 @@ function expectedForDay(date, weights) {
 
 export default function MilkChart({ entries, weights }) {
   const daily = new Map();
-  entries.forEach(entry => {
+  entries.forEach((entry) => {
     const day = normalizeDate(entry.fed_at);
     if (!day) return;
     const current = daily.get(day) || 0;
@@ -67,33 +82,46 @@ export default function MilkChart({ entries, weights }) {
   });
 
   const days = getLastDays(7);
-  const data = days.map(day => ({
+  const data = days.map((day) => ({
     day,
     label: formatDayLabel(day),
     total_ml: daily.get(day) || 0,
     expected_ml: expectedForDay(day, weights),
   }));
 
-  const maxTotal = data.length ? Math.max(...data.map(d => d.total_ml)) : 0;
-  const maxExpected = data.length ? Math.max(...data.map(d => d.expected_ml || 0)) : 0;
+  const maxTotal = data.length ? Math.max(...data.map((d) => d.total_ml)) : 0;
+  const maxExpected = data.length ? Math.max(...data.map((d) => d.expected_ml || 0)) : 0;
   const maxY = Math.max(maxTotal, maxExpected, 50);
 
   return (
-    <div style={{ width: '100%', height: 260 }}>
+    <div style={{ width: "100%", height: 260 }}>
       <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
-          <YAxis domain={[0, maxY + 50]} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} width={65} />
+          <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' />
+          <XAxis dataKey='label' tick={{ fontSize: 12, fill: "var(--text-muted)" }} />
+          <YAxis
+            domain={[0, maxY + 50]}
+            tick={{ fontSize: 12, fill: "var(--text-muted)" }}
+            width={65}
+          />
           <Tooltip content={<CustomTooltip />} />
-          <Line type="monotone" dataKey="total_ml" stroke="var(--primary)" strokeWidth={2.5}
-            dot={{ fill: 'var(--primary)', r: 4, strokeWidth: 0 }}
-            activeDot={{ r: 6, fill: 'var(--primary-dark)' }} />
-          <Line type="monotone" dataKey="expected_ml" stroke="var(--accent)" strokeWidth={2}
-            dot={false} strokeDasharray="5 4" />
-          {data.length > 0 && (
-            <ReferenceLine y={0} stroke="transparent" />
-          )}
+          <Line
+            type='monotone'
+            dataKey='total_ml'
+            stroke='var(--primary)'
+            strokeWidth={2.5}
+            dot={{ fill: "var(--primary)", r: 4, strokeWidth: 0 }}
+            activeDot={{ r: 6, fill: "var(--primary-dark)" }}
+          />
+          <Line
+            type='monotone'
+            dataKey='expected_ml'
+            stroke='var(--accent)'
+            strokeWidth={2}
+            dot={false}
+            strokeDasharray='5 4'
+          />
+          {data.length > 0 && <ReferenceLine y={0} stroke='transparent' />}
         </LineChart>
       </ResponsiveContainer>
     </div>

@@ -141,5 +141,3 @@ vite.config.ts.timestamp-*
 # SQLite data directory
 data/
 
-# Built client
-client/dist/

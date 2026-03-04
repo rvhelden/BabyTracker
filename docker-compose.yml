@@ -4,15 +4,15 @@ services:
   app:
     build: .
     ports:
-      - "4000:4000"
+      - "3000:3000"
     volumes:
       - baby-tracker-data:/data
     environment:
       - NODE_ENV=production
-      - PORT=4000
+      - PORT=3000
       - DATA_DIR=/data
       - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production}
-      - APP_BASE_URL=${APP_BASE_URL:-http://localhost:4000}
+      - APP_BASE_URL=${APP_BASE_URL:-http://localhost:3000}
     restart: unless-stopped
 
 volumes:

@@ -2,8 +2,6 @@ node_modules
 .next
 .git
 data
-client
-server
 csv
 *.log
 *.sqlite

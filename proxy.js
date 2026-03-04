@@ -1,17 +1,17 @@
-import { NextResponse } from 'next/server';
-import { getIronSession } from 'iron-session';
+import { NextResponse } from "next/server";
+import { getIronSession } from "iron-session";
 
 const SESSION_OPTIONS = {
-  password: process.env.SESSION_SECRET || 'baby-tracker-session-secret-32chars!!xx',
-  cookieName: 'bt_session',
+  password: process.env.SESSION_SECRET || "baby-tracker-session-secret-32chars!!xx",
+  cookieName: "bt_session",
   cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: "lax",
   },
 };
 
-const PUBLIC_PATHS = ['/login', '/signup', '/invite'];
+const PUBLIC_PATHS = ["/login", "/signup", "/invite"];
 
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
@@ -22,8 +22,8 @@ export async function proxy(request) {
 
   const session = await getIronSession(request.cookies, SESSION_OPTIONS);
   if (!session.user) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -31,5 +31,5 @@ export async function proxy(request) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|icons|manifest\\.webmanifest|sw\\.js).*)'],
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|icons|manifest\\.webmanifest|sw\\.js).*)"],
 };
