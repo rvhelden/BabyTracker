@@ -309,6 +309,17 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           </div>
           <div className='feeding-summary'>
             <div className='summary-card card stat-big'>
+              <div className='summary-label'>Last Feeding</div>
+              <div className='summary-value'>
+                {formatElapsedSince(milkTotals.lastFeedAt, nowTick)}
+              </div>
+              {milkTotals.lastFeedAt && (
+                <div className='summary-sub'>
+                  {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime())}
+                </div>
+              )}
+            </div>
+            <div className='summary-card card stat-big'>
               <div className='summary-label'>Today</div>
               <div className='summary-value'>{milkTotals.dayTotal} ml</div>
               <div className='summary-sub'>Midnight to now</div>
@@ -317,22 +328,6 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
               <div className='summary-label'>Last 24h</div>
               <div className='summary-value'>{milkTotals.last24hTotal} ml</div>
               <div className='summary-sub'>Rolling total</div>
-            </div>
-          </div>
-
-          <div className='last-feed-card card'>
-            <div className='section-header'>
-              <h3>Last Feeding</h3>
-            </div>
-            <div className='last-feed-body'>
-              <div className='last-feed-value'>
-                {formatElapsedSince(milkTotals.lastFeedAt, nowTick)}
-              </div>
-              {milkTotals.lastFeedAt && (
-                <div className='last-feed-sub'>
-                  {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime())}
-                </div>
-              )}
             </div>
           </div>
 
