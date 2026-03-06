@@ -123,14 +123,14 @@ export default function WeightList({ weights, babyId, onMutated }) {
   }
 
   if (weights.length === 0) {
-    return <p className='weight-empty'>No measurements yet. Tap + to add one.</p>;
+    return <p className='history-empty'>No measurements yet. Tap + to add one.</p>;
   }
 
   const sorted = [...weights].sort((a, b) => b.measured_at.localeCompare(a.measured_at));
   const openDialogWeight = dialogEntry ? weights.find((w) => w.id === dialogEntry) : null;
 
   return (
-    <div className='weight-list'>
+    <div>
       {openDialogWeight && (
         <Modal title='Edit measurement' onClose={() => setDialogEntry(null)}>
           <EditForm
@@ -145,40 +145,43 @@ export default function WeightList({ weights, babyId, onMutated }) {
           />
         </Modal>
       )}
-      {sorted.map((w, idx) => {
-        const prev = sorted[idx + 1];
-        const diff = prev ? w.weight_grams - prev.weight_grams : null;
+      <div className='history-list'>
+        {sorted.map((w, idx) => {
+          const prev = sorted[idx + 1];
+          const diff = prev ? w.weight_grams - prev.weight_grams : null;
 
-        return (
-          <button
-            key={w.id}
-            type='button'
-            className='weight-card weight-card-btn'
-            onClick={() => setDialogEntry(w.id)}
-          >
-            <div className='weight-card-body'>
-              <div className='weight-row-main'>
-                <div className='weight-card-left'>
-                  <div className='weight-date'>{formatDateLabel(w.measured_at, locale)}</div>
-                  {w.notes && <div className='weight-notes'>{w.notes}</div>}
+          return (
+            <button
+              key={w.id}
+              type='button'
+              className='history-row'
+              onClick={() => setDialogEntry(w.id)}
+            >
+              <span className='history-row-icon'>⚖️</span>
+              <div className='history-row-body'>
+                <div className='history-row-title'>
+                  {formatDateLabel(w.measured_at, locale)}
                 </div>
-                <div className='weight-card-mid'>
-                  <div className='weight-grams'>{w.weight_grams} g</div>
-                  <div className='weight-kg'>{(w.weight_grams / 1000).toFixed(3)} kg</div>
-                </div>
-                <div className='weight-card-right'>
-                  {diff !== null && (
-                    <span className={`weight-diff ${diff >= 0 ? "diff-pos" : "diff-neg"}`}>
-                      {diff >= 0 ? "+" : ""}
-                      {diff} g
-                    </span>
-                  )}
+                {w.notes && <div className='history-row-sub'>{w.notes}</div>}
+              </div>
+              <div className='history-row-value'>
+                <div className='history-row-primary'>{w.weight_grams} g</div>
+                <div className='history-row-secondary'>
+                  {(w.weight_grams / 1000).toFixed(3)} kg
                 </div>
               </div>
-            </div>
-          </button>
-        );
-      })}
+              {diff !== null && (
+                <div className='history-row-end'>
+                  <span className={`history-badge ${diff >= 0 ? "pos" : "neg"}`}>
+                    {diff >= 0 ? "+" : ""}
+                    {diff} g
+                  </span>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

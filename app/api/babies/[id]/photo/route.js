@@ -8,7 +8,8 @@ import { getUser } from "../../../../../lib/session.js";
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const IMAGE_UPLOAD_DIR =
-  process.env.IMAGE_UPLOAD_DIR || join(process.cwd(), "public", "uploads", "babies");
+  process.env.IMAGE_UPLOAD_DIR ||
+  join(process.env.DATA_DIR || join(process.cwd(), "public"), "uploads", "babies");
 
 export async function POST(request, { params }) {
   const user = await getUser();

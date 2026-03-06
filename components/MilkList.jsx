@@ -167,7 +167,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
   }, [days.length]);
 
   if (entries.length === 0) {
-    return <p className='milk-empty'>No feedings yet. Tap + to start one.</p>;
+    return <p className='history-empty'>No feedings yet. Tap + to start one.</p>;
   }
 
   function handlePrevDay() {
@@ -217,7 +217,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
   const openDialogEntry = dialogEntry ? entries.find((e) => e.id === dialogEntry) : null;
 
   return (
-    <div className='milk-list'>
+    <div>
       {openDialogEntry && (
         <Modal title='Edit feeding' onClose={() => setDialogEntry(null)}>
           <EditForm
@@ -268,24 +268,29 @@ export default function MilkList({ entries, babyId, onMutated }) {
           ›
         </button>
       </div>
-      <div className='milk-day-entries single'>
+      <div className='history-list'>
         {dayEntries.map((entry) => (
           <button
             key={entry.id}
             type='button'
-            className='milk-row card milk-row-btn'
+            className='history-row'
             onClick={() => setDialogEntry(entry.id)}
           >
-            <div className='milk-row-main'>
-              <span className='milk-row-icon'>🍼</span>
-              <span className='milk-row-time'>
+            <span className='history-row-icon'>🍼</span>
+            <div className='history-row-body'>
+              <div className='history-row-title'>
                 {formatLocalTime(parsePlainDateTime(entry.fed_at), locale)}
-              </span>
-              <span className='milk-row-amount'>{entry.volume_ml} ml</span>
-              {entry.duration_minutes != null && (
-                <span className='milk-row-meta'>⏱️ {entry.duration_minutes}m</span>
+              </div>
+              {(entry.duration_minutes != null || entry.notes) && (
+                <div className='history-row-sub'>
+                  {entry.duration_minutes != null && `${entry.duration_minutes}m`}
+                  {entry.duration_minutes != null && entry.notes && " · "}
+                  {entry.notes}
+                </div>
               )}
-              {entry.notes && <span className='milk-row-notes'>💬 {entry.notes}</span>}
+            </div>
+            <div className='history-row-value'>
+              <div className='history-row-primary'>{entry.volume_ml} ml</div>
             </div>
           </button>
         ))}
