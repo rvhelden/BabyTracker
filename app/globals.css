@@ -1247,6 +1247,36 @@ select {
   margin: 0;
 }
 
+/* Clickable row buttons — reset button defaults, keep card appearance */
+.milk-row-btn,
+.weight-card-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+/* Delete section at the bottom of the edit dialog */
+.edit-dialog-delete {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.delete-confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.delete-confirm-row span {
+  flex: 1;
+}
 .milk-row-actions .maction-btn,
 .weight-row-actions .maction-btn {
   border: 1px solid var(--border);

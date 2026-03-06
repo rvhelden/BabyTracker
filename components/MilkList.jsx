@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { deleteMilkAction, updateMilkAction } from "../app/actions.js";
 import { formatLocalTime, parsePlainDate, parsePlainDateTime } from "../lib/temporal.js";
 import { useLocale } from "./LocaleContext.jsx";
+import Modal from "./Modal.jsx";
 
 function formatDayKey(value) {
   const date = parsePlainDate(value) || parsePlainDateTime(value)?.toPlainDate();
@@ -13,9 +14,10 @@ function formatDayKey(value) {
   return date.toString();
 }
 
-function EditForm({ entry, babyId, onDone }) {
+function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
   const boundUpdate = updateMilkAction.bind(null, babyId, entry.id);
   const [state, action, pending] = useActionState(boundUpdate, null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
     if (state?.success) {
@@ -92,26 +94,35 @@ function EditForm({ entry, babyId, onDone }) {
           </button>
         </div>
       </form>
-    </div>
-  );
-}
-
-function ConfirmDeleteBar({ onConfirm, onCancel, deleting }) {
-  return (
-    <div className='swipe-confirm-bar'>
-      <span className='swipe-confirm-msg'>Delete this entry?</span>
-      <div className='swipe-confirm-actions'>
-        <button type='button' className='btn btn-secondary btn-sm' onClick={onCancel}>
-          Cancel
-        </button>
-        <button
-          type='button'
-          className='btn btn-danger btn-sm'
-          onClick={onConfirm}
-          disabled={deleting}
-        >
-          {deleting ? <span className='spinner' /> : "Delete"}
-        </button>
+      <div className='edit-dialog-delete'>
+        {confirmingDelete ? (
+          <div className='delete-confirm-row'>
+            <span>Delete this entry?</span>
+            <button
+              type='button'
+              className='btn btn-secondary btn-sm'
+              onClick={() => setConfirmingDelete(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type='button'
+              className='btn btn-danger btn-sm'
+              onClick={onDelete}
+              disabled={deleting}
+            >
+              {deleting ? <span className='spinner' /> : "Delete"}
+            </button>
+          </div>
+        ) : (
+          <button
+            type='button'
+            className='btn btn-danger btn-sm'
+            onClick={() => setConfirmingDelete(true)}
+          >
+            Delete entry
+          </button>
+        )}
       </div>
     </div>
   );
@@ -119,13 +130,9 @@ function ConfirmDeleteBar({ onConfirm, onCancel, deleting }) {
 
 export default function MilkList({ entries, babyId, onMutated }) {
   const locale = useLocale()?.locale;
-  const [editing, setEditing] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [dialogEntry, setDialogEntry] = useState(null);
   const [deleting, setDeleting] = useState(null);
-  const [swipeState, setSwipeState] = useState({ id: null, offset: 0, isDragging: false });
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const rowTouchStartXRef = useRef(null);
-  const rowTouchIdRef = useRef(null);
   const dateInputRef = useRef(null);
 
   async function handleDelete(id) {
@@ -134,9 +141,8 @@ export default function MilkList({ entries, babyId, onMutated }) {
       const result = await deleteMilkAction(babyId, id);
       if (result?.error) {
         alert(result.error);
-        setConfirmDelete(null);
       } else {
-        setConfirmDelete(null);
+        setDialogEntry(null);
         onMutated();
       }
     } finally {
@@ -170,61 +176,6 @@ export default function MilkList({ entries, babyId, onMutated }) {
 
   function handleNextDay() {
     setSelectedIndex((idx) => Math.max(0, idx - 1));
-  }
-
-  function handleRowTouchStart(id, e) {
-    rowTouchStartXRef.current = e.touches[0]?.clientX ?? null;
-    rowTouchIdRef.current = id;
-    setSwipeState({ id, offset: 0, isDragging: true });
-  }
-
-  function handleRowTouchMove(id, e) {
-    if (rowTouchIdRef.current !== id || rowTouchStartXRef.current == null) {
-      return;
-    }
-    const currentX = e.touches[0]?.clientX;
-    if (typeof currentX !== "number") {
-      return;
-    }
-    const dx = currentX - rowTouchStartXRef.current;
-    const clamped = Math.max(-84, Math.min(84, dx));
-    setSwipeState({ id, offset: clamped, isDragging: true });
-  }
-
-  function handleRowTouchEnd(id, e) {
-    if (rowTouchIdRef.current !== id || rowTouchStartXRef.current == null) {
-      return;
-    }
-    const endX = e.changedTouches[0]?.clientX;
-    if (typeof endX !== "number") {
-      rowTouchStartXRef.current = null;
-      rowTouchIdRef.current = null;
-      return;
-    }
-    const dx = endX - rowTouchStartXRef.current;
-    setSwipeState({ id, offset: 0, isDragging: false });
-    // Swipe left → edit
-    if (dx <= -45) {
-      setTimeout(() => {
-        setConfirmDelete(null);
-        setEditing(id);
-      }, 120);
-    }
-    // Swipe right → delete with confirmation
-    if (dx >= 45) {
-      setTimeout(() => {
-        setEditing(null);
-        setConfirmDelete(id);
-      }, 120);
-    }
-    rowTouchStartXRef.current = null;
-    rowTouchIdRef.current = null;
-  }
-
-  function handleRowTouchCancel() {
-    setSwipeState({ id: null, offset: 0, isDragging: false });
-    rowTouchStartXRef.current = null;
-    rowTouchIdRef.current = null;
   }
 
   function handlePickDate(e) {
@@ -263,8 +214,24 @@ export default function MilkList({ entries, babyId, onMutated }) {
     dateInputRef.current.focus();
   }
 
+  const openDialogEntry = dialogEntry ? entries.find((e) => e.id === dialogEntry) : null;
+
   return (
     <div className='milk-list'>
+      {openDialogEntry && (
+        <Modal title='Edit feeding' onClose={() => setDialogEntry(null)}>
+          <EditForm
+            entry={openDialogEntry}
+            babyId={babyId}
+            onDone={() => {
+              setDialogEntry(null);
+              onMutated();
+            }}
+            onDelete={() => handleDelete(openDialogEntry.id)}
+            deleting={deleting === openDialogEntry.id}
+          />
+        </Modal>
+      )}
       <div className='milk-day-header single'>
         <button
           type='button'
@@ -302,74 +269,26 @@ export default function MilkList({ entries, babyId, onMutated }) {
         </button>
       </div>
       <div className='milk-day-entries single'>
-        {dayEntries.map((entry) => {
-          if (editing === entry.id) {
-            return (
-              <div key={entry.id} className='milk-card editing'>
-                <EditForm
-                  entry={entry}
-                  babyId={babyId}
-                  onDone={() => {
-                    setEditing(null);
-                    onMutated();
-                  }}
-                />
-              </div>
-            );
-          }
-
-          if (confirmDelete === entry.id) {
-            return (
-              <div key={entry.id} className='milk-row card'>
-                <ConfirmDeleteBar
-                  deleting={deleting === entry.id}
-                  onConfirm={() => handleDelete(entry.id)}
-                  onCancel={() => setConfirmDelete(null)}
-                />
-              </div>
-            );
-          }
-
-          return (
-            <div
-              key={entry.id}
-              className={`swipe-row${
-                swipeState.id === entry.id && swipeState.offset !== 0 ? " active" : ""
-              }`}
-            >
-              <div className='swipe-underlay'>
-                <div className='swipe-underlay-left'>Delete</div>
-                <div className='swipe-underlay-right'>Edit</div>
-              </div>
-              <div
-                className='milk-row card swipe-gesture-card'
-                style={{
-                  transform: `translateX(${swipeState.id === entry.id ? swipeState.offset : 0}px)`,
-                  transition:
-                    swipeState.id === entry.id && swipeState.isDragging
-                      ? "none"
-                      : "transform 160ms ease",
-                }}
-                onTouchStart={(e) => handleRowTouchStart(entry.id, e)}
-                onTouchMove={(e) => handleRowTouchMove(entry.id, e)}
-                onTouchEnd={(e) => handleRowTouchEnd(entry.id, e)}
-                onTouchCancel={handleRowTouchCancel}
-              >
-                <div className='milk-row-main'>
-                  <span className='milk-row-icon'>🍼</span>
-                  <span className='milk-row-time'>
-                    {formatLocalTime(parsePlainDateTime(entry.fed_at), locale)}
-                  </span>
-                  <span className='milk-row-amount'>{entry.volume_ml} ml</span>
-                  {entry.duration_minutes != null && (
-                    <span className='milk-row-meta'>⏱️ {entry.duration_minutes}m</span>
-                  )}
-                  {entry.notes && <span className='milk-row-notes'>💬 {entry.notes}</span>}
-                </div>
-              </div>
+        {dayEntries.map((entry) => (
+          <button
+            key={entry.id}
+            type='button'
+            className='milk-row card milk-row-btn'
+            onClick={() => setDialogEntry(entry.id)}
+          >
+            <div className='milk-row-main'>
+              <span className='milk-row-icon'>🍼</span>
+              <span className='milk-row-time'>
+                {formatLocalTime(parsePlainDateTime(entry.fed_at), locale)}
+              </span>
+              <span className='milk-row-amount'>{entry.volume_ml} ml</span>
+              {entry.duration_minutes != null && (
+                <span className='milk-row-meta'>⏱️ {entry.duration_minutes}m</span>
+              )}
+              {entry.notes && <span className='milk-row-notes'>💬 {entry.notes}</span>}
             </div>
-          );
-        })}
+          </button>
+        ))}
       </div>
     </div>
   );
