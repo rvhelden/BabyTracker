@@ -33,7 +33,7 @@ function getLastDays(count) {
 }
 
 export default function FeedingHourChart({ entries }) {
-  const days = getLastDays(7);
+  const days = getLastDays(30);
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const matrix = new Map();
   const todayKey = dayKey(todayPlainDate());
@@ -58,7 +58,10 @@ export default function FeedingHourChart({ entries }) {
       <div className='matrix-header'>
         <div className='matrix-corner' />
         {days.map((day) => {
-          const label = formatWeekdayShort(parsePlainDate(day));
+          const parsed = parsePlainDate(day);
+          const label = parsed
+            ? `${formatWeekdayShort(parsed)} ${parsed.day.toString().padStart(2, "0")}`
+            : formatWeekdayShort(parsePlainDate(day));
           const isToday = day === todayKey;
           return (
             <div key={day} className={`matrix-day${isToday ? " today" : ""}`}>

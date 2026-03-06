@@ -44,15 +44,16 @@ function CustomTooltip({ active, payload }) {
     >
       <p style={{ fontWeight: 700, marginBottom: 2 }}>{dayLabel}</p>
       <p style={{ color: "var(--primary-dark)" }}>{d.total_ml} ml total</p>
-      {d.expected_ml && (
-        <p style={{ color: "var(--text-muted)", marginTop: 2 }}>Expected {d.expected_ml} ml</p>
+      {d.suggested_ml && (
+        <p style={{ color: "var(--text-muted)", marginTop: 2 }}>Suggested {d.suggested_ml} ml</p>
       )}
+      {d.max_ml && <p style={{ color: "var(--text-muted)" }}>Max {d.max_ml} ml</p>}
     </div>
   );
 }
 
 function normalizeDate(value) {
-  const date = parsePlainDateTime(value)?.toPlainDate();
+  const date = parsePlainDateTime(value)?.toPlainDate() || parsePlainDate(value);
   if (!date) {
     return null;
   }
@@ -73,13 +74,26 @@ function expectedForDay(date, weights) {
   if (!weights.length) {
     return null;
   }
-  const dayWeights = weights.filter((w) => w.measured_at === date);
+  const dayWeights = weights.filter((w) => normalizeDate(w.measured_at) === date);
   if (dayWeights.length > 0) {
     const latest = dayWeights[dayWeights.length - 1];
-    return Math.round((latest.weight_grams / 1000) * 150);
+    return latest.weight_grams * 150;
   }
   const latestWeight = weights[weights.length - 1];
-  return Math.round((latestWeight.weight_grams / 1000) * 150);
+  return latestWeight.weight_grams * 150;
+}
+
+function maxForDay(date, weights) {
+  if (!weights.length) {
+    return null;
+  }
+  const dayWeights = weights.filter((w) => normalizeDate(w.measured_at) === date);
+  if (dayWeights.length > 0) {
+    const latest = dayWeights[dayWeights.length - 1];
+    return latest.weight_grams * 180;
+  }
+  const latestWeight = weights[weights.length - 1];
+  return latestWeight.weight_grams * 180;
 }
 
 export default function MilkChart({ entries, weights }) {
@@ -98,12 +112,14 @@ export default function MilkChart({ entries, weights }) {
     day,
     label: formatDayLabel(day),
     total_ml: daily.get(day) || 0,
-    expected_ml: expectedForDay(day, weights),
+    suggested_ml: expectedForDay(day, weights),
+    max_ml: maxForDay(day, weights),
   }));
 
   const maxTotal = data.length ? Math.max(...data.map((d) => d.total_ml)) : 0;
-  const maxExpected = data.length ? Math.max(...data.map((d) => d.expected_ml || 0)) : 0;
-  const maxY = Math.max(maxTotal, maxExpected, 50);
+  const maxSuggested = data.length ? Math.max(...data.map((d) => d.suggested_ml || 0)) : 0;
+  const maxRecommended = data.length ? Math.max(...data.map((d) => d.max_ml || 0)) : 0;
+  const maxY = Math.max(maxTotal, maxSuggested, maxRecommended, 50);
 
   return (
     <div style={{ width: "100%", minHeight: 260 }}>
@@ -127,11 +143,19 @@ export default function MilkChart({ entries, weights }) {
           />
           <Line
             type='monotone'
-            dataKey='expected_ml'
+            dataKey='suggested_ml'
             stroke='var(--accent)'
             strokeWidth={2}
             dot={false}
             strokeDasharray='5 4'
+          />
+          <Line
+            type='monotone'
+            dataKey='max_ml'
+            stroke='var(--danger)'
+            strokeWidth={2}
+            dot={false}
+            strokeDasharray='3 5'
           />
           {data.length > 0 && <ReferenceLine y={0} stroke='transparent' />}
         </LineChart>

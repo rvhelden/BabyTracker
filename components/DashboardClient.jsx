@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { daysBetween, parsePlainDate, todayPlainDate } from "../lib/temporal.js";
 import AddBabyModal from "./AddBabyModal.jsx";
 
@@ -34,6 +34,24 @@ function genderIcon(gender) {
 export default function DashboardClient({ babies }) {
   const [showAdd, setShowAdd] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (babies.length === 0) {
+      return;
+    }
+    if (searchParams.get("dashboard") === "1") {
+      return;
+    }
+    const lastBabyId = window.localStorage.getItem("lastViewedBabyId");
+    if (!lastBabyId) {
+      return;
+    }
+    const exists = babies.some((baby) => String(baby.id) === String(lastBabyId));
+    if (exists) {
+      router.replace(`/baby/${lastBabyId}`);
+    }
+  }, [babies, router, searchParams]);
 
   function handleAdded() {
     setShowAdd(false);
@@ -71,9 +89,6 @@ export default function DashboardClient({ babies }) {
                   <h3>{baby.name}</h3>
                   <span className='baby-age'>{ageLabel(baby.birth_date)}</span>
                 </div>
-                <span className={`badge ${baby.role === "owner" ? "badge-blue" : "badge-green"}`}>
-                  {baby.role}
-                </span>
               </div>
               <div className='baby-stats'>
                 {baby.latest_weight ? (
@@ -85,10 +100,6 @@ export default function DashboardClient({ babies }) {
                 ) : (
                   <div className='stat no-data'>No weight entries yet</div>
                 )}
-                <div className='stat'>
-                  <span className='stat-label'>Parents</span>
-                  <span className='stat-value'>{baby.parent_count}</span>
-                </div>
               </div>
             </Link>
           ))}

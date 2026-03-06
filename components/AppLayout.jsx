@@ -45,7 +45,7 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
               ←
             </button>
           )}
-          <Link href='/' className='navbar-brand'>
+          <Link href='/?dashboard=1' className='navbar-brand'>
             <span className='navbar-icon'>🍼</span>
             <span className='navbar-title'>Baby Tracker</span>
           </Link>
@@ -70,7 +70,7 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
 
       {!hideBottomNav && (
         <nav className='bottom-nav' aria-label='Main navigation'>
-          <Link href='/' className={`bnav-item${isHome ? " active" : ""}`}>
+          <Link href='/?dashboard=1' className={`bnav-item${isHome ? " active" : ""}`}>
             <span className='bnav-icon'>🏠</span>
             <span className='bnav-label'>Home</span>
           </Link>

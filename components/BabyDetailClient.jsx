@@ -136,6 +136,13 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (!baby?.id) {
+      return;
+    }
+    window.localStorage.setItem("lastViewedBabyId", String(baby.id));
+  }, [baby?.id]);
+
   const latestMilk = milkEntries.length
     ? [...milkEntries].sort((a, b) => b.fed_at.localeCompare(a.fed_at))[0]
     : null;
@@ -269,13 +276,6 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             )}
           </div>
         </div>
-        <div className='baby-detail-parents'>
-          {baby.parents?.map((p) => (
-            <span key={p.id} className='parent-chip'>
-              {p.name} <span className='parent-role'>· {p.role}</span>
-            </span>
-          ))}
-        </div>
       </div>
 
       <div className='section-tabs' role='tablist' aria-label='Detail sections'>
@@ -394,32 +394,51 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             </div>
             <div className='next-feed-body'>
               {nextFeedings.length > 0 ? (
-                nextFeedings.map((time, idx) => {
+                (() => {
                   const now = nowZoned();
-                  const isNextDay = formatDayKey(time) !== formatDayKey(now);
-                  const midnight = now.toPlainDate().toPlainDateTime({ hour: 0, minute: 0 });
-                  const dayDiff = Math.round(
-                    daysBetween(midnight.toPlainDate(), time.toPlainDate()),
-                  );
-                  const dayLabel = isNextDay
-                    ? dayDiff === 1
-                      ? "tomorrow"
-                      : formatWeekdayShort(time)
-                    : null;
-                  const etaLabel = formatEtaUntil(time, nowTick);
-                  const isLate = idx === 0 && isFeedingLate;
+                  const first = nextFeedings[0];
+                  const upcoming = nextFeedings.slice(1, 3);
+                  const renderFeed = (time, compact = false, isFirst = false) => {
+                    const isNextDay = formatDayKey(time) !== formatDayKey(now);
+                    const midnight = now.toPlainDate().toPlainDateTime({ hour: 0, minute: 0 });
+                    const dayDiff = Math.round(
+                      daysBetween(midnight.toPlainDate(), time.toPlainDate()),
+                    );
+                    const dayLabel = isNextDay
+                      ? dayDiff === 1
+                        ? "tomorrow"
+                        : formatWeekdayShort(time)
+                      : null;
+                    const etaLabel = formatEtaUntil(time, nowTick);
+                    const isLate = isFirst && isFeedingLate;
+
+                    return (
+                      <div
+                        key={time.toString()}
+                        className={`next-feed-item${compact ? " compact" : ""}`}
+                      >
+                        <span className='next-feed-time'>{formatTimeOnly(time)}</span>
+                        {isLate ? (
+                          <span className='next-feed-eta late'>Late</span>
+                        ) : (
+                          <span className='next-feed-eta'>{etaLabel}</span>
+                        )}
+                        {dayLabel && <span className='next-feed-day'>{dayLabel}</span>}
+                      </div>
+                    );
+                  };
+
                   return (
-                    <div key={time.toString()} className='next-feed-item'>
-                      <span className='next-feed-time'>{formatTimeOnly(time)}</span>
-                      {isLate ? (
-                        <span className='next-feed-eta late'>Late</span>
-                      ) : (
-                        <span className='next-feed-eta'>{etaLabel}</span>
-                      )}
-                      {dayLabel && <span className='next-feed-day'>{dayLabel}</span>}
-                    </div>
+                    <>
+                      {first ? renderFeed(first, false, true) : null}
+                      {upcoming.length > 0 ? (
+                        <div className='next-feed-stack'>
+                          {upcoming.map((time) => renderFeed(time, true, false))}
+                        </div>
+                      ) : null}
+                    </>
                   );
-                })
+                })()
               ) : (
                 <div className='next-feed-empty'>Add a feeding to see the schedule.</div>
               )}
