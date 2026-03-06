@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image.js";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { deleteBabyAction, leaveBabyAction } from "../app/actions.js";
@@ -23,6 +24,7 @@ import EditBabyModal from "./EditBabyModal.jsx";
 import FeedingHourChart from "./FeedingHourChart.jsx";
 import FeedingTimerModal from "./FeedingTimerModal.jsx";
 import InviteModal from "./InviteModal.jsx";
+import { useLocale } from "./LocaleContext.jsx";
 import MilkChart from "./MilkChart.jsx";
 import MilkList from "./MilkList.jsx";
 import WeightChart from "./WeightChart.jsx";
@@ -103,11 +105,11 @@ function formatEtaUntil(date, nowTick) {
   return `in ${mins}m`;
 }
 
-function formatTimeOnly(date) {
+function formatTimeOnly(date, locale) {
   if (!date) {
     return "";
   }
-  return formatLocalTime(date.toPlainDateTime ? date.toPlainDateTime() : date);
+  return formatLocalTime(date.toPlainDateTime ? date.toPlainDateTime() : date, locale);
 }
 
 function formatDayKey(date) {
@@ -115,6 +117,7 @@ function formatDayKey(date) {
 }
 
 export default function BabyDetailClient({ baby, weights, milkEntries }) {
+  const locale = useLocale()?.locale;
   const [modal, setModal] = useState(null); // 'add-weight' | 'invite' | 'edit' | 'add-milk' | 'timer'
   const [activeSection, setActiveSection] = useState("feeding");
   const [feedFabAction, setFeedFabAction] = useState("timer");
@@ -247,7 +250,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           <div className='baby-hero-info'>
             <div className='baby-detail-avatar'>
               {baby.photo_url ? (
-                <img src={baby.photo_url} alt={baby.name} />
+                <Image src={baby.photo_url} alt={baby.name} width={100} height={100} />
               ) : (
                 genderIcon(baby.gender)
               )}
@@ -255,7 +258,9 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             <div className='baby-hero-text'>
               <h2>{baby.name}</h2>
               <p className='baby-detail-age'>{ageLabel(baby.birth_date)}</p>
-              <p className='baby-born'>Born {formatLocalDate(parsePlainDate(baby.birth_date))}</p>
+              <p className='baby-born'>
+                Born {formatLocalDate(parsePlainDate(baby.birth_date), locale)}
+              </p>
             </div>
           </div>
           <div className='baby-hero-actions'>
@@ -372,7 +377,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
               </div>
               {milkTotals.lastFeedAt && (
                 <div className='summary-sub'>
-                  {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime())}
+                  {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime(), locale)}
                 </div>
               )}
             </div>
@@ -407,7 +412,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                     const dayLabel = isNextDay
                       ? dayDiff === 1
                         ? "tomorrow"
-                        : formatWeekdayShort(time)
+                        : formatWeekdayShort(time, locale)
                       : null;
                     const etaLabel = formatEtaUntil(time, nowTick);
                     const isLate = isFirst && isFeedingLate;
@@ -417,12 +422,14 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                         key={time.toString()}
                         className={`next-feed-item${compact ? " compact" : ""}`}
                       >
-                        <span className='next-feed-time'>{formatTimeOnly(time)}</span>
-                        {isLate ? (
-                          <span className='next-feed-eta late'>Late</span>
-                        ) : (
-                          <span className='next-feed-eta'>{etaLabel}</span>
-                        )}
+                        <div className='next-feed-main'>
+                          <span className='next-feed-time'>{formatTimeOnly(time, locale)}</span>
+                          {isLate ? (
+                            <span className='next-feed-eta late'>Late</span>
+                          ) : (
+                            <span className='next-feed-eta'>{etaLabel}</span>
+                          )}
+                        </div>
                         {dayLabel && <span className='next-feed-day'>{dayLabel}</span>}
                       </div>
                     );

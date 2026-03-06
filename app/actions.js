@@ -76,6 +76,19 @@ export async function logoutAction() {
   redirect("/login");
 }
 
+export async function updateLocaleAction(locale) {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const nextLocale = locale?.toString().trim() || null;
+  dal.updateUserLocale(user.id, nextLocale);
+  revalidatePath("/");
+  revalidatePath("/settings");
+  return { success: true };
+}
+
 // ── Babies ─────────────────────────────────────────────────────────────────
 
 export async function createBabyAction(_prevState, formData) {

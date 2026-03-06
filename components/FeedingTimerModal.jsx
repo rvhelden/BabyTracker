@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   durationMinutes,
+  formatLocalTime,
   nowInstant,
   nowZoned,
   parsePlainDateTime,
   timeZone,
   toLocalDateTimeInput,
 } from "../lib/temporal.js";
+import { useLocale } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
 function formatElapsed(ms) {
@@ -24,6 +26,7 @@ function formatElapsed(ms) {
 }
 
 export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVolume }) {
+  const locale = useLocale()?.locale;
   const initialStart = useMemo(() => nowZoned().toPlainDateTime(), []);
   const [startedAt, setStartedAt] = useState(initialStart);
   const [elapsed, setElapsed] = useState(0);
@@ -156,11 +159,7 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
       <div className='timer-panel'>
         <div className='timer-time'>{formatElapsed(elapsed)}</div>
         <div className='timer-meta'>
-          {starting
-            ? "Preparing entry…"
-            : `Started at ${startedAt.toZonedDateTime(timeZone).toLocaleString(undefined, {
-                timeStyle: "short",
-              })}`}
+          {starting ? "Preparing entry…" : `Started at ${formatLocalTime(startedAt, locale)}`}
         </div>
       </div>
       <div className='form-group'>

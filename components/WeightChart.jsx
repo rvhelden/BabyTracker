@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import { daysBetween, parsePlainDate } from "../lib/temporal.js";
+import { useLocale } from "./LocaleContext.jsx";
 
 function daysSinceBirth(birthDate, measured_at) {
   const birth = parsePlainDate(birthDate);
@@ -18,7 +19,7 @@ function daysSinceBirth(birthDate, measured_at) {
   return birth && date ? Math.floor(daysBetween(birth, date)) : 0;
 }
 
-function CustomTooltip({ active, payload }) {
+function CustomTooltip({ active, payload, locale }) {
   if (!active || !payload?.length) {
     return null;
   }
@@ -34,7 +35,11 @@ function CustomTooltip({ active, payload }) {
         fontSize: "0.88rem",
       }}
     >
-      <p style={{ fontWeight: 700, marginBottom: 2 }}>{d.measured_at}</p>
+      <p style={{ fontWeight: 700, marginBottom: 2 }}>
+        {parsePlainDate(d.measured_at)?.toLocaleString(locale || undefined, {
+          dateStyle: "medium",
+        }) || d.measured_at}
+      </p>
       <p style={{ color: "var(--primary-dark)" }}>
         {d.weight_grams} g ({(d.weight_grams / 1000).toFixed(3)} kg)
       </p>
@@ -44,6 +49,7 @@ function CustomTooltip({ active, payload }) {
 }
 
 export default function WeightChart({ weights, birthDate }) {
+  const locale = useLocale()?.locale;
   const data = weights.map((w) => ({
     ...w,
     day: daysSinceBirth(birthDate, w.measured_at),
@@ -63,7 +69,7 @@ export default function WeightChart({ weights, birthDate }) {
 
   return (
     <div style={{ width: "100%", minHeight: 300 }}>
-      <ResponsiveContainer>
+      <ResponsiveContainer height={300}>
         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray='3 3' stroke='var(--chart-grid)' />
           <XAxis
@@ -84,7 +90,7 @@ export default function WeightChart({ weights, birthDate }) {
             tick={{ fontSize: 12, fill: "var(--text-muted)" }}
             width={65}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip locale={locale} />} />
           <Line
             type='monotone'
             dataKey='kg'

@@ -16,21 +16,22 @@ import {
   parsePlainDateTime,
   todayPlainDate,
 } from "../lib/temporal.js";
+import { useLocale } from "./LocaleContext.jsx";
 
-function formatDayLabel(dateStr) {
+function formatDayLabel(dateStr, locale) {
   const date = parsePlainDate(dateStr);
   if (!date) {
     return dateStr;
   }
-  return date.toLocaleString(undefined, { month: "short", day: "numeric" });
+  return date.toLocaleString(locale || undefined, { month: "short", day: "numeric" });
 }
 
-function CustomTooltip({ active, payload }) {
+function CustomTooltip({ active, payload, locale }) {
   if (!active || !payload?.length) {
     return null;
   }
   const d = payload[0].payload;
-  const dayLabel = d.day ? formatLocalDate(parsePlainDate(d.day)) : d.day;
+  const dayLabel = d.day ? formatLocalDate(parsePlainDate(d.day), locale) : d.day;
   return (
     <div
       style={{
@@ -97,6 +98,7 @@ function maxForDay(date, weights) {
 }
 
 export default function MilkChart({ entries, weights }) {
+  const locale = useLocale()?.locale;
   const daily = new Map();
   entries.forEach((entry) => {
     const day = normalizeDate(entry.fed_at);
@@ -110,7 +112,7 @@ export default function MilkChart({ entries, weights }) {
   const days = getLastDays(7);
   const data = days.map((day) => ({
     day,
-    label: formatDayLabel(day),
+    label: formatDayLabel(day, locale),
     total_ml: daily.get(day) || 0,
     suggested_ml: expectedForDay(day, weights),
     max_ml: maxForDay(day, weights),
@@ -123,7 +125,7 @@ export default function MilkChart({ entries, weights }) {
 
   return (
     <div style={{ width: "100%", minHeight: 260 }}>
-      <ResponsiveContainer>
+      <ResponsiveContainer height={260}>
         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' />
           <XAxis dataKey='label' tick={{ fontSize: 12, fill: "var(--text-muted)" }} />
@@ -132,7 +134,7 @@ export default function MilkChart({ entries, weights }) {
             tick={{ fontSize: 12, fill: "var(--text-muted)" }}
             width={65}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip locale={locale} />} />
           <Line
             type='monotone'
             dataKey='total_ml'

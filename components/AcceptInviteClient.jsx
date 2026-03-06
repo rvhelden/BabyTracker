@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { acceptInviteAction } from "../app/actions.js";
 import { formatLocalDate, parseInstant } from "../lib/temporal.js";
+import { useLocale } from "./LocaleContext.jsx";
 
 export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
+  const locale = useLocale()?.locale;
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState(null);
 
@@ -49,6 +51,7 @@ export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
               <strong>
                 {formatLocalDate(
                   parseInstant(invite.expiresAt)?.toZonedDateTimeISO().toPlainDate(),
+                  locale,
                 )}
               </strong>
             </div>

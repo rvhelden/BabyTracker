@@ -3,9 +3,11 @@
 import { useState, useTransition } from "react";
 import { createInviteAction } from "../app/actions.js";
 import { formatLocalDate, parseInstant } from "../lib/temporal.js";
+import { useLocale } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
 export default function InviteModal({ babyId, babyName, onClose }) {
+  const locale = useLocale()?.locale;
   const [invite, setInvite] = useState(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -30,7 +32,7 @@ export default function InviteModal({ babyId, babyName, onClose }) {
   }
 
   const expiresLabel = invite
-    ? formatLocalDate(parseInstant(invite.expiresAt)?.toZonedDateTimeISO().toPlainDate())
+    ? formatLocalDate(parseInstant(invite.expiresAt)?.toZonedDateTimeISO().toPlainDate(), locale)
     : "";
 
   return (

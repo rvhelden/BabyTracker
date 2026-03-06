@@ -13,13 +13,13 @@
   "lang": "en",
   "icons": [
     {
-      "src": "/icons/icon.svg",
+      "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable.svg",
+      "src": "/icon-maskable.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
@@ -31,7 +31,7 @@
       "short_name": "Add Weight",
       "description": "Log a new weight measurement",
       "url": "/",
-      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
     }
   ],
   "screenshots": []

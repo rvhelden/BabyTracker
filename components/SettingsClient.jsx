@@ -1,11 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { updateLocaleAction } from "../app/actions.js";
 import Modal from "./Modal.jsx";
 
-export default function SettingsClient() {
+const LOCALE_OPTIONS = [
+  { value: "", label: "Browser default" },
+  { value: "nl-NL", label: "Dutch (Netherlands)" },
+  { value: "en-US", label: "English (United States)" },
+  { value: "en-GB", label: "English (United Kingdom)" },
+  { value: "fr-FR", label: "French (France)" },
+  { value: "de-DE", label: "German (Germany)" },
+  { value: "es-ES", label: "Spanish (Spain)" },
+];
+
+export default function SettingsClient({ locale }) {
   const [feedFabAction, setFeedFabAction] = useState("timer");
   const [feedingIntervalHours, setFeedingIntervalHours] = useState("3");
+  const [selectedLocale, setSelectedLocale] = useState(locale || "");
+  const [savingLocale, setSavingLocale] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [importError, setImportError] = useState("");
@@ -35,6 +48,24 @@ export default function SettingsClient() {
     const value = e.target.value;
     setFeedingIntervalHours(value);
     window.localStorage.setItem("feedingIntervalHours", value);
+  }
+
+  async function handleLocaleChange(e) {
+    const value = e.target.value;
+    setSelectedLocale(value);
+    setSavingLocale(true);
+    try {
+      const result = await updateLocaleAction(value);
+      if (result?.error) {
+        setImportError(result.error);
+        return;
+      }
+      window.location.reload();
+    } catch {
+      setImportError("Failed to save locale. Please try again.");
+    } finally {
+      setSavingLocale(false);
+    }
   }
 
   const summaryCounts = useMemo(() => {
@@ -146,6 +177,32 @@ export default function SettingsClient() {
             <option value='3'>Every 3 hours</option>
             <option value='3.5'>Every 3.5 hours</option>
             <option value='4'>Every 4 hours</option>
+          </select>
+        </div>
+      </div>
+
+      <div className='settings-card card'>
+        <div className='section-header'>
+          <h3>Locale</h3>
+        </div>
+        <div className='settings-row'>
+          <div>
+            <div className='settings-label'>Date and time culture</div>
+            <div className='settings-help'>
+              Override your browser locale for dates, times, and chart labels.
+            </div>
+          </div>
+          <select
+            value={selectedLocale}
+            onChange={handleLocaleChange}
+            className='settings-select'
+            disabled={savingLocale}
+          >
+            {LOCALE_OPTIONS.map((option) => (
+              <option key={option.value || "browser-default"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>

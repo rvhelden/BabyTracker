@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  formatDayKey,
-  formatWeekdayShort,
-  parsePlainDate,
-  parsePlainDateTime,
-  todayPlainDate,
-} from "../lib/temporal.js";
+import { formatWeekdayShort, parsePlainDateTime, todayPlainDate } from "../lib/temporal.js";
+import { useLocale } from "./LocaleContext.jsx";
 
 function hourLabel(hour) {
   const suffix = hour >= 12 ? "PM" : "AM";
@@ -14,40 +9,34 @@ function hourLabel(hour) {
   return `${display}${suffix}`;
 }
 
-function dayKey(value) {
-  const date = typeof value === "string" ? parsePlainDate(value) : value;
-  if (!date) {
-    return null;
-  }
-  return formatDayKey(date);
-}
-
 function getLastDays(count) {
-  const days = [];
+  const days = new Set();
   const today = todayPlainDate();
   for (let i = count - 1; i >= 0; i -= 1) {
     const d = today.subtract({ days: i });
-    days.push(dayKey(d));
+    days.add(d.toString());
   }
-  return days.filter(Boolean);
+  return days;
 }
 
 export default function FeedingHourChart({ entries }) {
+  const locale = useLocale()?.locale;
   const days = getLastDays(30);
+  const weekdays = [1, 2, 3, 4, 5, 6, 7];
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const matrix = new Map();
-  const todayKey = dayKey(todayPlainDate());
 
   entries.forEach((entry) => {
     const dateTime = parsePlainDateTime(entry.fed_at);
     if (!dateTime) {
       return;
     }
-    const day = dayKey(dateTime.toPlainDate());
-    if (!day) {
+    const day = dateTime.toPlainDate().toString();
+    if (!days.has(day)) {
       return;
     }
-    const key = `${day}-${dateTime.hour}`;
+    const weekday = dateTime.dayOfWeek;
+    const key = `${weekday}-${dateTime.hour}`;
     matrix.set(key, (matrix.get(key) || 0) + 1);
   });
 
@@ -57,14 +46,13 @@ export default function FeedingHourChart({ entries }) {
     <div className='feed-matrix'>
       <div className='matrix-header'>
         <div className='matrix-corner' />
-        {days.map((day) => {
-          const parsed = parsePlainDate(day);
-          const label = parsed
-            ? `${formatWeekdayShort(parsed)} ${parsed.day.toString().padStart(2, "0")}`
-            : formatWeekdayShort(parsePlainDate(day));
-          const isToday = day === todayKey;
+        {weekdays.map((weekday) => {
+          const sampleDate = todayPlainDate().subtract({
+            days: (todayPlainDate().dayOfWeek - weekday + 7) % 7,
+          });
+          const label = formatWeekdayShort(sampleDate, locale);
           return (
-            <div key={day} className={`matrix-day${isToday ? " today" : ""}`}>
+            <div key={weekday} className='matrix-day'>
               {label}
             </div>
           );
@@ -74,15 +62,15 @@ export default function FeedingHourChart({ entries }) {
         {hours.map((hour) => (
           <div key={hour} className='matrix-row'>
             <div className='matrix-hour'>{hourLabel(hour)}</div>
-            {days.map((day) => {
-              const count = matrix.get(`${day}-${hour}`) || 0;
+            {weekdays.map((weekday) => {
+              const count = matrix.get(`${weekday}-${hour}`) || 0;
               const intensity = count === 0 ? 0 : Math.min(0.15 + (count / maxCount) * 0.75, 0.9);
               return (
                 <div
-                  key={`${day}-${hour}`}
+                  key={`${weekday}-${hour}`}
                   className='matrix-cell'
                   style={{ backgroundColor: `rgba(var(--primary-rgb), ${intensity})` }}
-                  title={`${day} ${hourLabel(hour)}: ${count} feedings`}
+                  title={`${labelForWeekday(weekday, locale)} ${hourLabel(hour)}: ${count} feedings (last 30 days)`}
                 >
                   {count > 0 ? count : ""}
                 </div>
@@ -115,4 +103,10 @@ export default function FeedingHourChart({ entries }) {
       </div>
     </div>
   );
+}
+
+function labelForWeekday(weekday, locale) {
+  const today = todayPlainDate();
+  const sampleDate = today.subtract({ days: (today.dayOfWeek - weekday + 7) % 7 });
+  return formatWeekdayShort(sampleDate, locale);
 }

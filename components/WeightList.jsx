@@ -1,15 +1,16 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { deleteWeightAction, updateWeightAction } from "../app/actions.js";
 import { formatLocalDate, parsePlainDate } from "../lib/temporal.js";
+import { useLocale } from "./LocaleContext.jsx";
 
-function formatDateLabel(value) {
+function formatDateLabel(value, locale) {
   const date = parsePlainDate(value);
   if (!date) {
     return value;
   }
-  return formatLocalDate(date);
+  return formatLocalDate(date, locale);
 }
 
 function EditForm({ entry, babyId, onDone }) {
@@ -69,9 +70,35 @@ function EditForm({ entry, babyId, onDone }) {
   );
 }
 
+function ConfirmDeleteBar({ onConfirm, onCancel, deleting }) {
+  return (
+    <div className='swipe-confirm-bar'>
+      <span className='swipe-confirm-msg'>Delete this entry?</span>
+      <div className='swipe-confirm-actions'>
+        <button type='button' className='btn btn-secondary btn-sm' onClick={onCancel}>
+          Cancel
+        </button>
+        <button
+          type='button'
+          className='btn btn-danger btn-sm'
+          onClick={onConfirm}
+          disabled={deleting}
+        >
+          {deleting ? <span className='spinner' /> : "Delete"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function WeightList({ weights, babyId, onMutated }) {
+  const locale = useLocale()?.locale;
   const [editing, setEditing] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [swipeState, setSwipeState] = useState({ id: null, offset: 0, isDragging: false });
+  const touchStartXRef = useRef(null);
+  const touchRowIdRef = useRef(null);
 
   async function handleDelete(id) {
     setDeleting(id);
@@ -79,12 +106,63 @@ export default function WeightList({ weights, babyId, onMutated }) {
       const result = await deleteWeightAction(babyId, id);
       if (result?.error) {
         alert(result.error);
+        setConfirmDelete(null);
       } else {
+        setConfirmDelete(null);
         onMutated();
       }
     } finally {
       setDeleting(null);
     }
+  }
+
+  function handleRowTouchStart(id, e) {
+    touchStartXRef.current = e.touches[0]?.clientX ?? null;
+    touchRowIdRef.current = id;
+    setSwipeState({ id, offset: 0, isDragging: true });
+  }
+
+  function handleRowTouchMove(id, e) {
+    if (touchRowIdRef.current !== id || touchStartXRef.current == null) {
+      return;
+    }
+    const currentX = e.touches[0]?.clientX;
+    if (typeof currentX !== "number") {
+      return;
+    }
+    const dx = currentX - touchStartXRef.current;
+    const clamped = Math.max(-84, Math.min(84, dx));
+    setSwipeState({ id, offset: clamped, isDragging: true });
+  }
+
+  function handleRowTouchEnd(id, e) {
+    if (touchRowIdRef.current !== id || touchStartXRef.current == null) {
+      return;
+    }
+    const endX = e.changedTouches[0]?.clientX;
+    if (typeof endX !== "number") {
+      touchStartXRef.current = null;
+      touchRowIdRef.current = null;
+      return;
+    }
+    const dx = endX - touchStartXRef.current;
+    setSwipeState({ id, offset: 0, isDragging: false });
+    // Swipe left → edit
+    if (dx <= -45) {
+      setTimeout(() => {
+        setConfirmDelete(null);
+        setEditing(id);
+      }, 120);
+    }
+    // Swipe right → delete with confirmation
+    if (dx >= 45) {
+      setTimeout(() => {
+        setEditing(null);
+        setConfirmDelete(id);
+      }, 120);
+    }
+    touchStartXRef.current = null;
+    touchRowIdRef.current = null;
   }
 
   if (weights.length === 0) {
@@ -114,12 +192,35 @@ export default function WeightList({ weights, babyId, onMutated }) {
           );
         }
 
+        if (confirmDelete === w.id) {
+          return (
+            <div key={w.id} className='weight-card'>
+              <ConfirmDeleteBar
+                deleting={deleting === w.id}
+                onConfirm={() => handleDelete(w.id)}
+                onCancel={() => setConfirmDelete(null)}
+              />
+            </div>
+          );
+        }
+
         return (
-          <div key={w.id} className='weight-card'>
+          <div
+            key={w.id}
+            className='weight-card swipe-gesture-card'
+            style={{
+              transform: `translateX(${swipeState.id === w.id ? swipeState.offset : 0}px)`,
+              transition:
+                swipeState.id === w.id && swipeState.isDragging ? "none" : "transform 160ms ease",
+            }}
+            onTouchStart={(e) => handleRowTouchStart(w.id, e)}
+            onTouchMove={(e) => handleRowTouchMove(w.id, e)}
+            onTouchEnd={(e) => handleRowTouchEnd(w.id, e)}
+          >
             <div className='weight-card-body'>
               <div className='weight-row-main'>
                 <div className='weight-card-left'>
-                  <div className='weight-date'>{formatDateLabel(w.measured_at)}</div>
+                  <div className='weight-date'>{formatDateLabel(w.measured_at, locale)}</div>
                   {w.notes && <div className='weight-notes'>{w.notes}</div>}
                 </div>
                 <div className='weight-card-mid'>
@@ -134,29 +235,6 @@ export default function WeightList({ weights, babyId, onMutated }) {
                     </span>
                   )}
                 </div>
-              </div>
-              <div className='weight-row-actions'>
-                <button
-                  type='button'
-                  className='maction-btn'
-                  onClick={() => setEditing(w.id)}
-                  aria-label='Edit entry'
-                >
-                  ✏️
-                </button>
-                <button
-                  type='button'
-                  className='maction-btn danger'
-                  onClick={() => handleDelete(w.id)}
-                  disabled={deleting === w.id}
-                  aria-label='Delete entry'
-                >
-                  {deleting === w.id ? (
-                    <span className='spinner' style={{ borderTopColor: "var(--danger)" }} />
-                  ) : (
-                    "🗑️"
-                  )}
-                </button>
               </div>
             </div>
           </div>

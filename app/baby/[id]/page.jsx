@@ -21,7 +21,12 @@ export default async function BabyDetailPage({ params }) {
 
   return (
     <AppLayout user={user} showBack hideBottomNav>
-      <BabyDetailClient baby={baby} weights={weights} milkEntries={milkEntries} />
+      <BabyDetailClient
+        baby={baby}
+        weights={weights}
+        milkEntries={milkEntries}
+        locale={user.locale}
+      />
     </AppLayout>
   );
 }

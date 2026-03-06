@@ -13,7 +13,7 @@ export default async function DashboardPage() {
 
   return (
     <AppLayout user={user}>
-      <DashboardClient babies={babies} />
+      <DashboardClient babies={babies} locale={user.locale} />
     </AppLayout>
   );
 }

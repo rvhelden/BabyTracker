@@ -1179,6 +1179,31 @@ select {
   display: flex;
   gap: 0.4rem;
 }
+/* swipe-confirm-bar — shown in-place when a row is swiped right (delete) */
+.swipe-confirm-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  min-height: 56px;
+}
+.swipe-confirm-msg {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--danger);
+  flex: 1;
+}
+.swipe-confirm-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.swipe-gesture-card {
+  will-change: transform;
+  touch-action: pan-y;
+}
+
 .milk-row-actions .maction-btn,
 .weight-row-actions .maction-btn {
   border: 1px solid var(--border);
@@ -1342,22 +1367,28 @@ select {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.15rem;
+  gap: 0.3rem;
   justify-content: center;
   min-width: 0;
-  padding: 0.65rem 0.75rem;
+  padding: 0.5rem 0.65rem;
   border-radius: 12px;
   background: var(--surface-contrast);
   border: 1px solid var(--border);
 }
+.next-feed-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
 .next-feed-time {
   font-weight: 800;
   color: var(--text);
-  font-size: 1.2rem;
+  font-size: 1.02rem;
 }
 .next-feed-eta {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.8rem;
 }
 .next-feed-eta.late {
   color: var(--danger);
@@ -1374,14 +1405,14 @@ select {
   gap: 0.45rem;
 }
 .next-feed-item.compact {
-  padding: 0.45rem 0.55rem;
+  padding: 0.42rem 0.5rem;
   border-radius: 10px;
 }
 .next-feed-item.compact .next-feed-time {
-  font-size: 0.96rem;
+  font-size: 0.88rem;
 }
 .next-feed-item.compact .next-feed-eta {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
 }
 .next-feed-item.compact .next-feed-day {
   font-size: 0.68rem;
@@ -1527,10 +1558,9 @@ select {
 }
 .matrix-header {
   display: grid;
-  grid-template-columns: 56px repeat(30, minmax(44px, 1fr));
+  grid-template-columns: 56px repeat(7, minmax(44px, 1fr));
   align-items: center;
   gap: 0.35rem;
-  min-width: 1380px;
 }
 .matrix-corner {
   width: 56px;
@@ -1563,10 +1593,9 @@ select {
 }
 .matrix-row {
   display: grid;
-  grid-template-columns: 56px repeat(30, minmax(44px, 1fr));
+  grid-template-columns: 56px repeat(7, minmax(44px, 1fr));
   gap: 0.35rem;
   align-items: center;
-  min-width: 1380px;
 }
 .matrix-hour {
   font-size: 0.7rem;

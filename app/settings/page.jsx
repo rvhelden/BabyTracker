@@ -10,7 +10,7 @@ export default async function SettingsPage() {
   }
   return (
     <AppLayout user={user} showBack>
-      <SettingsClient />
+      <SettingsClient locale={user.locale} />
     </AppLayout>
   );
 }
