@@ -10,8 +10,10 @@ export default function AddMilkModal({ babyId, onClose, onAdded, defaultVolume }
   const [state, action, pending] = useActionState(boundAction, null);
 
   useEffect(() => {
-    if (state?.success) onAdded();
-  }, [state?.success]);
+    if (state?.success) {
+      onAdded();
+    }
+  }, [state?.success, onAdded]);
 
   const defaultDateTime = toLocalDateTimeInput();
 
@@ -19,28 +21,34 @@ export default function AddMilkModal({ babyId, onClose, onAdded, defaultVolume }
     <Modal title='Add Milk Feeding' onClose={onClose}>
       <form action={action}>
         <div className='form-group'>
-          <label>Time</label>
-          <input type='datetime-local' name='fed_at' required defaultValue={defaultDateTime} />
+          <label htmlFor='fed_at'>Time</label>
+          <input
+            id='fed_at'
+            type='datetime-local'
+            name='fed_at'
+            required
+            defaultValue={defaultDateTime}
+          />
         </div>
         <input type='hidden' name='started_at' value='' />
         <input type='hidden' name='ended_at' value='' />
         <input type='hidden' name='duration_minutes' value='' />
         <div className='form-group'>
-          <label>Amount (ml)</label>
+          <label htmlFor='volume_ml'>Amount (ml)</label>
           <input
+            id='volume_ml'
             type='number'
             name='volume_ml'
             placeholder='e.g. 120'
             required
             min='5'
             max='2000'
-            autoFocus
             defaultValue={defaultVolume}
           />
         </div>
         <div className='form-group'>
-          <label>Notes (optional)</label>
-          <input type='text' name='notes' placeholder='e.g. Pumped milk' />
+          <label htmlFor='milk_notes'>Notes (optional)</label>
+          <input id='milk_notes' type='text' name='notes' placeholder='e.g. Pumped milk' />
         </div>
         {state?.error && <p className='error-msg'>{state.error}</p>}
         <div className='modal-actions'>

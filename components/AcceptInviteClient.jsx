@@ -12,7 +12,9 @@ export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
   function handleAccept() {
     startTransition(async () => {
       const result = await acceptInviteAction(token);
-      if (result?.error) setError(result.error);
+      if (result?.error) {
+        setError(result.error);
+      }
     });
   }
 
@@ -57,6 +59,7 @@ export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
           {isLoggedIn ? (
             <div className='invite-actions'>
               <button
+                type='button'
                 className='btn btn-primary auth-btn'
                 onClick={handleAccept}
                 disabled={pending}

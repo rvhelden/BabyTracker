@@ -6,6 +6,7 @@ import {
   nowInstant,
   nowZoned,
   parsePlainDateTime,
+  timeZone,
   toLocalDateTimeInput,
 } from "../lib/temporal.js";
 import Modal from "./Modal.jsx";
@@ -16,7 +17,9 @@ function formatElapsed(ms) {
   const mins = Math.floor((totalSec % 3600) / 60);
   const secs = totalSec % 60;
   const parts = [mins.toString().padStart(2, "0"), secs.toString().padStart(2, "0")];
-  if (hrs > 0) parts.unshift(hrs.toString().padStart(2, "0"));
+  if (hrs > 0) {
+    parts.unshift(hrs.toString().padStart(2, "0"));
+  }
   return parts.join(":");
 }
 
@@ -35,7 +38,10 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsed(
-        Math.max(0, nowInstant().epochMilliseconds - startedAt.toZonedDateTime().epochMilliseconds),
+        Math.max(
+          0,
+          nowInstant().epochMilliseconds - startedAt.toZonedDateTime(timeZone).epochMilliseconds,
+        ),
       );
     }, 1000);
     return () => clearInterval(timer);
@@ -43,13 +49,20 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
 
   function handleStartTimeChange(e) {
     const value = e.target.value;
-    if (!value) return;
+    if (!value) {
+      return;
+    }
     const next = parsePlainDateTime(value);
-    if (next) setStartedAt(next);
+    if (next) {
+      setStartedAt(next);
+    }
   }
 
   useEffect(() => {
-    if (startedRef.current) return;
+    if (startedRef.current) {
+      return;
+    }
+
     startedRef.current = true;
     async function startEntry() {
       setStarting(true);
@@ -65,11 +78,15 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
           credentials: "include",
           signal: controller.signal,
         });
+
         clearTimeout(timeout);
+
         const result = await res.json();
-        if (!res.ok || result?.error)
+        if (!res.ok || result?.error) {
           setError(result?.error || "Unable to start feeding. Please try again.");
-        else setEntryId(result.entryId);
+        } else {
+          setEntryId(result.entryId);
+        }
       } catch (err) {
         console.error("Timer start failed:", err);
         setError("Unable to start feeding. Please try again.");
@@ -78,7 +95,7 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
       }
     }
     startEntry();
-  }, [babyId]);
+  }, [babyId, startedAt, volume]);
 
   async function handleStop() {
     setSaving(true);
@@ -121,9 +138,11 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
         credentials: "include",
       });
       const result = await res.json();
-      if (!res.ok || result?.error)
+      if (!res.ok || result?.error) {
         setError(result?.error || "Unable to save feeding. Please try again.");
-      else onAdded();
+      } else {
+        onAdded();
+      }
     } catch (err) {
       console.error("Timer stop failed:", err);
       setError("Unable to save feeding. Please try again.");
@@ -139,14 +158,15 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
         <div className='timer-meta'>
           {starting
             ? "Preparing entry…"
-            : `Started at ${startedAt.toZonedDateTime().toLocaleString(undefined, {
+            : `Started at ${startedAt.toZonedDateTime(timeZone).toLocaleString(undefined, {
                 timeStyle: "short",
               })}`}
         </div>
       </div>
       <div className='form-group'>
-        <label>Amount (ml)</label>
+        <label htmlFor='timer_volume_ml'>Amount (ml)</label>
         <input
+          id='timer_volume_ml'
           type='number'
           min='5'
           max='2000'
@@ -156,16 +176,18 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
         />
       </div>
       <div className='form-group'>
-        <label>Start time</label>
+        <label htmlFor='timer_start_time'>Start time</label>
         <input
+          id='timer_start_time'
           type='datetime-local'
           value={toLocalDateTimeInput(startedAt)}
           onChange={handleStartTimeChange}
         />
       </div>
       <div className='form-group'>
-        <label>Notes (optional)</label>
+        <label htmlFor='timer_notes'>Notes (optional)</label>
         <input
+          id='timer_notes'
           type='text'
           value={notes}
           onChange={(e) => setNotes(e.target.value)}

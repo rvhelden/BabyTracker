@@ -65,7 +65,6 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
-  min-height: 100vh;
   min-height: 100dvh;
   overscroll-behavior-y: none;
   background-image:
@@ -303,7 +302,6 @@ select {
 
 /* ── App Layout ── */
 .layout {
-  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -608,7 +606,6 @@ select {
 
 /* ── Auth pages ── */
 .auth-page {
-  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   align-items: center;

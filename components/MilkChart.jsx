@@ -19,12 +19,16 @@ import {
 
 function formatDayLabel(dateStr) {
   const date = parsePlainDate(dateStr);
-  if (!date) return dateStr;
+  if (!date) {
+    return dateStr;
+  }
   return date.toLocaleString(undefined, { month: "short", day: "numeric" });
 }
 
 function CustomTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null;
+  if (!active || !payload?.length) {
+    return null;
+  }
   const d = payload[0].payload;
   const dayLabel = d.day ? formatLocalDate(parsePlainDate(d.day)) : d.day;
   return (
@@ -49,7 +53,9 @@ function CustomTooltip({ active, payload }) {
 
 function normalizeDate(value) {
   const date = parsePlainDateTime(value)?.toPlainDate();
-  if (!date) return null;
+  if (!date) {
+    return null;
+  }
   return date.toString();
 }
 
@@ -64,7 +70,9 @@ function getLastDays(count) {
 }
 
 function expectedForDay(date, weights) {
-  if (!weights.length) return null;
+  if (!weights.length) {
+    return null;
+  }
   const dayWeights = weights.filter((w) => w.measured_at === date);
   if (dayWeights.length > 0) {
     const latest = dayWeights[dayWeights.length - 1];
@@ -78,7 +86,9 @@ export default function MilkChart({ entries, weights }) {
   const daily = new Map();
   entries.forEach((entry) => {
     const day = normalizeDate(entry.fed_at);
-    if (!day) return;
+    if (!day) {
+      return;
+    }
     const current = daily.get(day) || 0;
     daily.set(day, current + entry.volume_ml);
   });
@@ -96,7 +106,7 @@ export default function MilkChart({ entries, weights }) {
   const maxY = Math.max(maxTotal, maxExpected, 50);
 
   return (
-    <div style={{ width: "100%", height: 260 }}>
+    <div style={{ width: "100%", minHeight: 260 }}>
       <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' />

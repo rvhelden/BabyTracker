@@ -9,8 +9,10 @@ export default function AddBabyModal({ onClose, onAdded }) {
   const [state, action, pending] = useActionState(createBabyAction, null);
 
   useEffect(() => {
-    if (state?.success) onAdded();
-  }, [state?.success]);
+    if (state?.success) {
+      onAdded();
+    }
+  }, [state?.success, onAdded]);
 
   const today = toLocalDateInput();
 
@@ -18,16 +20,16 @@ export default function AddBabyModal({ onClose, onAdded }) {
     <Modal title='Add Baby' onClose={onClose}>
       <form action={action}>
         <div className='form-group'>
-          <label>Baby's Name</label>
-          <input type='text' name='name' placeholder='e.g. Emma' required autoFocus />
+          <label htmlFor='baby_name'>Baby's Name</label>
+          <input id='baby_name' type='text' name='name' placeholder='e.g. Emma' required />
         </div>
         <div className='form-group'>
-          <label>Date of Birth</label>
-          <input type='date' name='birth_date' required max={today} />
+          <label htmlFor='baby_birth_date'>Date of Birth</label>
+          <input id='baby_birth_date' type='date' name='birth_date' required max={today} />
         </div>
         <div className='form-group'>
-          <label>Gender (optional)</label>
-          <select name='gender'>
+          <label htmlFor='baby_gender'>Gender (optional)</label>
+          <select id='baby_gender' name='gender'>
             <option value=''>Prefer not to say</option>
             <option value='female'>Girl</option>
             <option value='male'>Boy</option>

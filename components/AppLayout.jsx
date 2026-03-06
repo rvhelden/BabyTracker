@@ -36,7 +36,12 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
       <header className='navbar'>
         <div className='navbar-left'>
           {showBack && (
-            <button className='navbar-back' onClick={() => router.back()} aria-label='Go back'>
+            <button
+              type='button'
+              className='navbar-back'
+              onClick={() => router.back()}
+              aria-label='Go back'
+            >
               ←
             </button>
           )}
@@ -49,7 +54,12 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
           <Link href='/settings' className='navbar-link' aria-label='Settings'>
             ⚙️
           </Link>
-          <button className='theme-toggle' onClick={toggleTheme} aria-label='Toggle dark mode'>
+          <button
+            type='button'
+            className='theme-toggle'
+            onClick={toggleTheme}
+            aria-label='Toggle dark mode'
+          >
             {theme === "dark" ? "🌙" : "☀️"}
           </button>
           <span className='navbar-name'>{user?.name}</span>
@@ -64,7 +74,7 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
             <span className='bnav-icon'>🏠</span>
             <span className='bnav-label'>Home</span>
           </Link>
-          <button className='bnav-item' onClick={handleLogout} disabled={pending}>
+          <button type='button' className='bnav-item' onClick={handleLogout} disabled={pending}>
             <span className='bnav-icon'>👤</span>
             <span className='bnav-label'>{pending ? "…" : "Log out"}</span>
           </button>

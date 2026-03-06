@@ -16,7 +16,9 @@ function hourLabel(hour) {
 
 function dayKey(value) {
   const date = typeof value === "string" ? parsePlainDate(value) : value;
-  if (!date) return null;
+  if (!date) {
+    return null;
+  }
   return formatDayKey(date);
 }
 
@@ -38,9 +40,13 @@ export default function FeedingHourChart({ entries }) {
 
   entries.forEach((entry) => {
     const dateTime = parsePlainDateTime(entry.fed_at);
-    if (!dateTime) return;
+    if (!dateTime) {
+      return;
+    }
     const day = dayKey(dateTime.toPlainDate());
-    if (!day) return;
+    if (!day) {
+      return;
+    }
     const key = `${day}-${dateTime.hour}`;
     matrix.set(key, (matrix.get(key) || 0) + 1);
   });

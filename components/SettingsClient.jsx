@@ -16,9 +16,13 @@ export default function SettingsClient() {
 
   useEffect(() => {
     const saved = window.localStorage.getItem("feedFabAction");
-    if (saved) setFeedFabAction(saved);
+    if (saved) {
+      setFeedFabAction(saved);
+    }
     const savedInterval = window.localStorage.getItem("feedingIntervalHours");
-    if (savedInterval) setFeedingIntervalHours(savedInterval);
+    if (savedInterval) {
+      setFeedingIntervalHours(savedInterval);
+    }
   }, []);
 
   function handleFabChange(e) {
@@ -34,7 +38,9 @@ export default function SettingsClient() {
   }
 
   const summaryCounts = useMemo(() => {
-    if (!importPreview?.countsByType) return [];
+    if (!importPreview?.countsByType) {
+      return [];
+    }
     return Object.entries(importPreview.countsByType).map(([key, count]) => ({
       key,
       count,
@@ -161,6 +167,7 @@ export default function SettingsClient() {
           />
         </div>
         <button
+          type='button'
           className='btn btn-primary'
           onClick={handlePreview}
           disabled={previewing || importing}
@@ -241,10 +248,19 @@ export default function SettingsClient() {
             </div>
           )}
           <div className='modal-actions'>
-            <button className='btn btn-secondary' onClick={() => setShowPreview(false)}>
+            <button
+              type='button'
+              className='btn btn-secondary'
+              onClick={() => setShowPreview(false)}
+            >
               Cancel
             </button>
-            <button className='btn btn-primary' onClick={handleConfirmImport} disabled={importing}>
+            <button
+              type='button'
+              className='btn btn-primary'
+              onClick={handleConfirmImport}
+              disabled={importing}
+            >
               {importing ? <span className='spinner' /> : "Import now"}
             </button>
           </div>

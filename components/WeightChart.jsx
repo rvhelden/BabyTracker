@@ -19,7 +19,9 @@ function daysSinceBirth(birthDate, measured_at) {
 }
 
 function CustomTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null;
+  if (!active || !payload?.length) {
+    return null;
+  }
   const d = payload[0].payload;
   return (
     <div
@@ -52,13 +54,15 @@ export default function WeightChart({ weights, birthDate }) {
   const maxKg = Math.max(...data.map((d) => d.kg)) + 0.1;
 
   function formatDay(day) {
-    if (day < 30) return `Day ${day}`;
+    if (day < 30) {
+      return `Day ${day}`;
+    }
     const months = Math.floor(day / 30.44);
     return `${months}m`;
   }
 
   return (
-    <div style={{ width: "100%", height: 300 }}>
+    <div style={{ width: "100%", minHeight: 300 }}>
       <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray='3 3' stroke='var(--chart-grid)' />

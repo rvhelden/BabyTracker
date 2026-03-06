@@ -18,12 +18,24 @@ export default function LoginForm({ from }) {
         <form action={action}>
           <input type='hidden' name='from' value={from} />
           <div className='form-group'>
-            <label>Email</label>
-            <input type='email' name='email' placeholder='you@example.com' required autoFocus />
+            <label htmlFor='login_email'>Email</label>
+            <input
+              id='login_email'
+              type='email'
+              name='email'
+              placeholder='you@example.com'
+              required
+            />
           </div>
           <div className='form-group'>
-            <label>Password</label>
-            <input type='password' name='password' placeholder='••••••••' required />
+            <label htmlFor='login_password'>Password</label>
+            <input
+              id='login_password'
+              type='password'
+              name='password'
+              placeholder='••••••••'
+              required
+            />
           </div>
           {state?.error && <p className='error-msg'>{state.error}</p>}
           <button type='submit' className='btn btn-primary auth-btn' disabled={pending}>

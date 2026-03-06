@@ -13,14 +13,18 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
   const [photoUrl, setPhotoUrl] = useState(baby.photo_url || "");
 
   useEffect(() => {
-    if (state?.success) onUpdated();
-  }, [state?.success]);
+    if (state?.success) {
+      onUpdated();
+    }
+  }, [state?.success, onUpdated]);
 
   const today = toLocalDateInput();
 
   async function handlePhotoChange(event) {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     setPhotoError("");
     setPhotoUploading(true);
     try {
@@ -48,17 +52,18 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
       <form action={action}>
         <input type='hidden' name='photo_url' value={photoUrl} />
         <div className='form-group'>
-          <label>Photo</label>
+          <label htmlFor='baby_photo'>Photo</label>
           <div className='photo-picker'>
             <div className='photo-preview'>
               {photoUrl ? (
-                <img src={photoUrl} alt={`${baby.name} photo`} />
+                <img src={photoUrl} alt={baby.name} />
               ) : (
                 <span className='photo-fallback'>{baby.name?.[0] || "👶"}</span>
               )}
             </div>
             <div className='photo-actions'>
               <input
+                id='baby_photo'
                 type='file'
                 name='photo'
                 accept='image/*'
@@ -71,12 +76,13 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
           {photoError && <p className='error-msg'>{photoError}</p>}
         </div>
         <div className='form-group'>
-          <label>Name</label>
-          <input type='text' name='name' defaultValue={baby.name} required autoFocus />
+          <label htmlFor='edit_baby_name'>Name</label>
+          <input id='edit_baby_name' type='text' name='name' defaultValue={baby.name} required />
         </div>
         <div className='form-group'>
-          <label>Date of Birth</label>
+          <label htmlFor='edit_baby_birth_date'>Date of Birth</label>
           <input
+            id='edit_baby_birth_date'
             type='date'
             name='birth_date'
             defaultValue={baby.birth_date}
@@ -85,8 +91,8 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
           />
         </div>
         <div className='form-group'>
-          <label>Gender</label>
-          <select name='gender' defaultValue={baby.gender || ""}>
+          <label htmlFor='edit_baby_gender'>Gender</label>
+          <select id='edit_baby_gender' name='gender' defaultValue={baby.gender || ""}>
             <option value=''>Prefer not to say</option>
             <option value='female'>Girl</option>
             <option value='male'>Boy</option>

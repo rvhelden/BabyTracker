@@ -44,10 +44,15 @@ export default function InviteModal({ babyId, babyName, onClose }) {
             </p>
             {error && <p className='error-msg'>{error}</p>}
             <div className='modal-actions'>
-              <button className='btn btn-secondary' onClick={onClose}>
+              <button type='button' className='btn btn-secondary' onClick={onClose}>
                 Cancel
               </button>
-              <button className='btn btn-primary' onClick={generate} disabled={pending}>
+              <button
+                type='button'
+                className='btn btn-primary'
+                onClick={generate}
+                disabled={pending}
+              >
                 {pending ? <span className='spinner' /> : "Generate QR Code"}
               </button>
             </div>
@@ -63,6 +68,7 @@ export default function InviteModal({ babyId, babyName, onClose }) {
             <div className='invite-link-row'>
               <input readOnly value={invite.inviteUrl} className='invite-link-input' />
               <button
+                type='button'
                 className={`btn ${copied ? "btn-secondary" : "btn-primary"}`}
                 onClick={copyLink}
               >
@@ -73,10 +79,11 @@ export default function InviteModal({ babyId, babyName, onClose }) {
               The invited person must create an account (or log in) before accepting the invite.
             </p>
             <div className='modal-actions'>
-              <button className='btn btn-secondary' onClick={onClose}>
+              <button type='button' className='btn btn-secondary' onClick={onClose}>
                 Close
               </button>
               <button
+                type='button'
                 className='btn btn-primary'
                 onClick={() => {
                   setInvite(null);

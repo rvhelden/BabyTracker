@@ -6,7 +6,9 @@ import { formatLocalDate, parsePlainDate } from "../lib/temporal.js";
 
 function formatDateLabel(value) {
   const date = parsePlainDate(value);
-  if (!date) return value;
+  if (!date) {
+    return value;
+  }
   return formatLocalDate(date);
 }
 
@@ -15,19 +17,27 @@ function EditForm({ entry, babyId, onDone }) {
   const [state, action, pending] = useActionState(boundUpdate, null);
 
   useEffect(() => {
-    if (state?.success) onDone();
-  }, [state?.success]);
+    if (state?.success) {
+      onDone();
+    }
+  }, [state?.success, onDone]);
 
   return (
     <div className='weight-edit-form'>
       <form action={action}>
         <div className='form-group'>
-          <label>Date</label>
-          <input type='date' name='measured_at' defaultValue={entry.measured_at} />
+          <label htmlFor='weight_edit_date'>Date</label>
+          <input
+            id='weight_edit_date'
+            type='date'
+            name='measured_at'
+            defaultValue={entry.measured_at}
+          />
         </div>
         <div className='form-group'>
-          <label>Weight (grams)</label>
+          <label htmlFor='weight_edit_grams'>Weight (grams)</label>
           <input
+            id='weight_edit_grams'
             type='number'
             name='weight_grams'
             defaultValue={entry.weight_grams}
@@ -36,8 +46,9 @@ function EditForm({ entry, babyId, onDone }) {
           />
         </div>
         <div className='form-group' style={{ marginBottom: 0 }}>
-          <label>Notes</label>
+          <label htmlFor='weight_edit_notes'>Notes</label>
           <input
+            id='weight_edit_notes'
             type='text'
             name='notes'
             placeholder='Optional note…'
@@ -66,8 +77,11 @@ export default function WeightList({ weights, babyId, onMutated }) {
     setDeleting(id);
     try {
       const result = await deleteWeightAction(babyId, id);
-      if (result?.error) alert(result.error);
-      else onMutated();
+      if (result?.error) {
+        alert(result.error);
+      } else {
+        onMutated();
+      }
     } finally {
       setDeleting(null);
     }
@@ -123,6 +137,7 @@ export default function WeightList({ weights, babyId, onMutated }) {
               </div>
               <div className='weight-row-actions'>
                 <button
+                  type='button'
                   className='maction-btn'
                   onClick={() => setEditing(w.id)}
                   aria-label='Edit entry'
@@ -130,6 +145,7 @@ export default function WeightList({ weights, babyId, onMutated }) {
                   ✏️
                 </button>
                 <button
+                  type='button'
                   className='maction-btn danger'
                   onClick={() => handleDelete(w.id)}
                   disabled={deleting === w.id}

@@ -17,16 +17,23 @@ export default function SignupForm() {
         </div>
         <form action={action}>
           <div className='form-group'>
-            <label>Full Name</label>
-            <input type='text' name='name' placeholder='Jane Doe' required autoFocus />
+            <label htmlFor='signup_name'>Full Name</label>
+            <input id='signup_name' type='text' name='name' placeholder='Jane Doe' required />
           </div>
           <div className='form-group'>
-            <label>Email</label>
-            <input type='email' name='email' placeholder='you@example.com' required />
-          </div>
-          <div className='form-group'>
-            <label>Password</label>
+            <label htmlFor='signup_email'>Email</label>
             <input
+              id='signup_email'
+              type='email'
+              name='email'
+              placeholder='you@example.com'
+              required
+            />
+          </div>
+          <div className='form-group'>
+            <label htmlFor='signup_password'>Password</label>
+            <input
+              id='signup_password'
               type='password'
               name='password'
               placeholder='At least 6 characters'
@@ -35,8 +42,14 @@ export default function SignupForm() {
             />
           </div>
           <div className='form-group'>
-            <label>Confirm Password</label>
-            <input type='password' name='confirm' placeholder='••••••••' required />
+            <label htmlFor='signup_confirm'>Confirm Password</label>
+            <input
+              id='signup_confirm'
+              type='password'
+              name='confirm'
+              placeholder='••••••••'
+              required
+            />
           </div>
           {state?.error && <p className='error-msg'>{state.error}</p>}
           <button type='submit' className='btn btn-primary auth-btn' disabled={pending}>

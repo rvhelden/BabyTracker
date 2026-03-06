@@ -10,8 +10,10 @@ export default function AddWeightModal({ babyId, onClose, onAdded }) {
   const [state, action, pending] = useActionState(boundAction, null);
 
   useEffect(() => {
-    if (state?.success) onAdded();
-  }, [state?.success]);
+    if (state?.success) {
+      onAdded();
+    }
+  }, [state?.success, onAdded]);
 
   const today = toLocalDateInput();
 
@@ -19,24 +21,31 @@ export default function AddWeightModal({ babyId, onClose, onAdded }) {
     <Modal title='Add Weight Entry' onClose={onClose}>
       <form action={action}>
         <div className='form-group'>
-          <label>Date</label>
-          <input type='date' name='measured_at' required defaultValue={today} max={today} />
+          <label htmlFor='weight_measured_at'>Date</label>
+          <input
+            id='weight_measured_at'
+            type='date'
+            name='measured_at'
+            required
+            defaultValue={today}
+            max={today}
+          />
         </div>
         <div className='form-group'>
-          <label>Weight (grams)</label>
+          <label htmlFor='weight_grams'>Weight (grams)</label>
           <input
+            id='weight_grams'
             type='number'
             name='weight_grams'
             placeholder='e.g. 3500'
             required
             min='100'
             max='50000'
-            autoFocus
           />
         </div>
         <div className='form-group'>
-          <label>Notes (optional)</label>
-          <input type='text' name='notes' placeholder='e.g. After feeding' />
+          <label htmlFor='weight_notes'>Notes (optional)</label>
+          <input id='weight_notes' type='text' name='notes' placeholder='e.g. After feeding' />
         </div>
         {state?.error && <p className='error-msg'>{state.error}</p>}
         <div className='modal-actions'>

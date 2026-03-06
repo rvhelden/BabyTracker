@@ -32,55 +32,81 @@ function ageLabel(birthDate) {
   const birth = parsePlainDate(birthDate);
   const now = todayPlainDate();
   const days = birth ? Math.floor(daysBetween(birth, now)) : 0;
-  if (days < 30) return `${days} day${days !== 1 ? "s" : ""} old`;
+  if (days < 30) {
+    return `${days} day${days !== 1 ? "s" : ""} old`;
+  }
   const months = Math.floor(days / 30.44);
-  if (months < 24) return `${months} month${months !== 1 ? "s" : ""} old`;
+  if (months < 24) {
+    return `${months} month${months !== 1 ? "s" : ""} old`;
+  }
   const years = Math.floor(months / 12);
   return `${years} year${years !== 1 ? "s" : ""} old`;
 }
 
 function genderIcon(gender) {
-  if (gender === "male") return "👦";
-  if (gender === "female") return "👧";
+  if (gender === "male") {
+    return "👦";
+  }
+  if (gender === "female") {
+    return "👧";
+  }
   return "🍼";
 }
 
 function normalizeDateTime(value) {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   return value.includes("T") ? value : value.replace(" ", "T");
 }
 
 function parseDateTime(value) {
   const normalized = normalizeDateTime(value);
-  if (!normalized) return null;
+  if (!normalized) {
+    return null;
+  }
   const plain = parsePlainDateTime(normalized);
   return plain ? zonedFromPlainDateTime(plain) : null;
 }
 
 function formatElapsedSince(date, nowTick) {
-  if (!date) return "No feeds yet";
+  if (!date) {
+    return "No feeds yet";
+  }
   const diffMs = nowTick - date.epochMilliseconds;
-  if (diffMs < 0) return "Just now";
+  if (diffMs < 0) {
+    return "Just now";
+  }
   const totalMin = Math.floor(diffMs / 60000);
   const hours = Math.floor(totalMin / 60);
   const mins = totalMin % 60;
-  if (hours > 0) return `${hours}h ${mins}m ago`;
+  if (hours > 0) {
+    return `${hours}h ${mins}m ago`;
+  }
   return `${mins}m ago`;
 }
 
 function formatEtaUntil(date, nowTick) {
-  if (!date) return "";
+  if (!date) {
+    return "";
+  }
   const diffMs = date.epochMilliseconds - nowTick;
-  if (diffMs <= 0) return "due now";
+  if (diffMs <= 0) {
+    return "due now";
+  }
   const totalMin = Math.ceil(diffMs / 60000);
   const hours = Math.floor(totalMin / 60);
   const mins = totalMin % 60;
-  if (hours > 0) return `in ${hours}h ${mins}m`;
+  if (hours > 0) {
+    return `in ${hours}h ${mins}m`;
+  }
   return `in ${mins}m`;
 }
 
 function formatTimeOnly(date) {
-  if (!date) return "";
+  if (!date) {
+    return "";
+  }
   return formatLocalTime(date.toPlainDateTime ? date.toPlainDateTime() : date);
 }
 
@@ -99,9 +125,13 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
 
   useEffect(() => {
     const saved = window.localStorage.getItem("feedFabAction");
-    if (saved) setFeedFabAction(saved);
+    if (saved) {
+      setFeedFabAction(saved);
+    }
     const savedInterval = window.localStorage.getItem("feedingIntervalHours");
-    if (savedInterval) setFeedingIntervalHours(savedInterval);
+    if (savedInterval) {
+      setFeedingIntervalHours(savedInterval);
+    }
     const timer = setInterval(() => setNowTick(nowInstant().epochMilliseconds), 60000);
     return () => clearInterval(timer);
   }, []);
@@ -112,7 +142,9 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
   const latestMilkVolume = latestMilk?.volume_ml || "";
 
   const milkTotals = useMemo(() => {
-    if (!milkEntries.length) return { dayTotal: 0, last24hTotal: 0, lastFeedAt: null };
+    if (!milkEntries.length) {
+      return { dayTotal: 0, last24hTotal: 0, lastFeedAt: null };
+    }
     const now = nowZoned();
     const todayKey = formatDayKey(now);
     const since24h = now.subtract({ hours: 24 });
@@ -122,30 +154,44 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
 
     for (const entry of milkEntries) {
       const when = parseDateTime(entry.fed_at);
-      if (!when) continue;
-      if (!lastFeedAt || when.epochMilliseconds > lastFeedAt.epochMilliseconds) lastFeedAt = when;
-      if (formatDayKey(when) === todayKey) dayTotal += entry.volume_ml;
-      if (when.epochMilliseconds >= since24h.epochMilliseconds) last24hTotal += entry.volume_ml;
+      if (!when) {
+        continue;
+      }
+      if (!lastFeedAt || when.epochMilliseconds > lastFeedAt.epochMilliseconds) {
+        lastFeedAt = when;
+      }
+      if (formatDayKey(when) === todayKey) {
+        dayTotal += entry.volume_ml;
+      }
+      if (when.epochMilliseconds >= since24h.epochMilliseconds) {
+        last24hTotal += entry.volume_ml;
+      }
     }
     return { dayTotal, last24hTotal, lastFeedAt };
-  }, [milkEntries, nowTick]);
+  }, [milkEntries]);
 
   const nextFeedings = useMemo(() => {
     const intervalHours = Number.parseFloat(feedingIntervalHours);
-    if (!milkTotals.lastFeedAt || !Number.isFinite(intervalHours) || intervalHours <= 0) return [];
+    if (!milkTotals.lastFeedAt || !Number.isFinite(intervalHours) || intervalHours <= 0) {
+      return [];
+    }
     const intervalMinutes = intervalHours * 60;
     const dueAt = addMinutes(milkTotals.lastFeedAt, intervalMinutes);
     return [0, 1, 2].map((step) => addMinutes(dueAt, step * intervalMinutes));
-  }, [feedingIntervalHours, milkTotals.lastFeedAt, nowTick]);
+  }, [feedingIntervalHours, milkTotals.lastFeedAt]);
 
   const feedingIntervalMinutes = useMemo(() => {
     const intervalHours = Number.parseFloat(feedingIntervalHours);
-    if (!Number.isFinite(intervalHours) || intervalHours <= 0) return null;
+    if (!Number.isFinite(intervalHours) || intervalHours <= 0) {
+      return null;
+    }
     return intervalHours * 60;
   }, [feedingIntervalHours]);
 
   const isFeedingLate = useMemo(() => {
-    if (!milkTotals.lastFeedAt || !feedingIntervalMinutes) return false;
+    if (!milkTotals.lastFeedAt || !feedingIntervalMinutes) {
+      return false;
+    }
     const dueAt = addMinutes(milkTotals.lastFeedAt, feedingIntervalMinutes);
     return nowTick > dueAt.epochMilliseconds;
   }, [milkTotals.lastFeedAt, feedingIntervalMinutes, nowTick]);
@@ -163,18 +209,26 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete ${baby.name}'s profile? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete ${baby.name}'s profile? This cannot be undone.`)) {
+      return;
+    }
     startTransition(async () => {
       const result = await deleteBabyAction(baby.id);
-      if (result?.error) alert(result.error);
+      if (result?.error) {
+        alert(result.error);
+      }
     });
   }
 
   async function handleLeave() {
-    if (!window.confirm(`Remove yourself from ${baby.name}'s profile?`)) return;
+    if (!window.confirm(`Remove yourself from ${baby.name}'s profile?`)) {
+      return;
+    }
     startTransition(async () => {
       const result = await leaveBabyAction(baby.id);
-      if (result?.error) alert(result.error);
+      if (result?.error) {
+        alert(result.error);
+      }
     });
   }
 
@@ -186,7 +240,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           <div className='baby-hero-info'>
             <div className='baby-detail-avatar'>
               {baby.photo_url ? (
-                <img src={baby.photo_url} alt={`${baby.name} photo`} />
+                <img src={baby.photo_url} alt={baby.name} />
               ) : (
                 genderIcon(baby.gender)
               )}
@@ -198,18 +252,18 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             </div>
           </div>
           <div className='baby-hero-actions'>
-            <button className='baby-action-btn' onClick={() => setModal("edit")}>
+            <button type='button' className='baby-action-btn' onClick={() => setModal("edit")}>
               <span>✏️</span> Edit
             </button>
-            <button className='baby-action-btn' onClick={() => setModal("invite")}>
+            <button type='button' className='baby-action-btn' onClick={() => setModal("invite")}>
               <span>📲</span> Share
             </button>
             {baby.role === "owner" ? (
-              <button className='baby-action-btn danger' onClick={handleDelete}>
+              <button type='button' className='baby-action-btn danger' onClick={handleDelete}>
                 <span>🗑️</span> Delete
               </button>
             ) : (
-              <button className='baby-action-btn' onClick={handleLeave}>
+              <button type='button' className='baby-action-btn' onClick={handleLeave}>
                 <span>👋</span> Leave
               </button>
             )}
@@ -226,6 +280,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
 
       <div className='section-tabs' role='tablist' aria-label='Detail sections'>
         <button
+          type='button'
           className={`tab-btn${activeSection === "weight" ? " active" : ""}`}
           onClick={() => setActiveSection("weight")}
           role='tab'
@@ -234,6 +289,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           Weight
         </button>
         <button
+          type='button'
           className={`tab-btn${activeSection === "feeding" ? " active" : ""}`}
           onClick={() => setActiveSection("feeding")}
           role='tab'
@@ -242,6 +298,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           Feeding
         </button>
         <button
+          type='button'
           className={`tab-btn${activeSection === "reports" ? " active" : ""}`}
           onClick={() => setActiveSection("reports")}
           role='tab'
@@ -352,7 +409,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                   const etaLabel = formatEtaUntil(time, nowTick);
                   const isLate = idx === 0 && isFeedingLate;
                   return (
-                    <div key={`${time.toString()}-${idx}`} className='next-feed-item'>
+                    <div key={time.toString()} className='next-feed-item'>
                       <span className='next-feed-time'>{formatTimeOnly(time)}</span>
                       {isLate ? (
                         <span className='next-feed-eta late'>Late</span>
@@ -409,12 +466,18 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
 
       {activeSection !== "reports" && (
         <button
+          type='button'
           className='fab'
           onClick={() => {
-            if (activeSection === "weight") setModal("add-weight");
+            if (activeSection === "weight") {
+              setModal("add-weight");
+            }
             if (activeSection === "feeding") {
-              if (feedFabAction === "manual") setModal("add-milk");
-              else setModal("timer");
+              if (feedFabAction === "manual") {
+                setModal("add-milk");
+              } else {
+                setModal("timer");
+              }
             }
           }}
           aria-label={activeSection === "weight" ? "Add weight" : "Start feeding"}

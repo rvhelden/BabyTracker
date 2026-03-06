@@ -10,16 +10,24 @@ function ageLabel(birthDate) {
   const birth = parsePlainDate(birthDate);
   const now = todayPlainDate();
   const days = birth ? Math.floor(daysBetween(birth, now)) : 0;
-  if (days < 30) return `${days} day${days !== 1 ? "s" : ""} old`;
+  if (days < 30) {
+    return `${days} day${days !== 1 ? "s" : ""} old`;
+  }
   const months = Math.floor(days / 30.44);
-  if (months < 24) return `${months} month${months !== 1 ? "s" : ""} old`;
+  if (months < 24) {
+    return `${months} month${months !== 1 ? "s" : ""} old`;
+  }
   const years = Math.floor(months / 12);
   return `${years} year${years !== 1 ? "s" : ""} old`;
 }
 
 function genderIcon(gender) {
-  if (gender === "male") return "👦";
-  if (gender === "female") return "👧";
+  if (gender === "male") {
+    return "👦";
+  }
+  if (gender === "female") {
+    return "👧";
+  }
   return "🍼";
 }
 
@@ -54,7 +62,7 @@ export default function DashboardClient({ babies }) {
               <div className='baby-card-top'>
                 <div className='baby-avatar'>
                   {baby.photo_url ? (
-                    <img src={baby.photo_url} alt={`${baby.name} photo`} />
+                    <img src={baby.photo_url} alt={baby.name} />
                   ) : (
                     genderIcon(baby.gender)
                   )}
@@ -87,7 +95,7 @@ export default function DashboardClient({ babies }) {
         </div>
       )}
 
-      <button className='fab' onClick={() => setShowAdd(true)} aria-label='Add baby'>
+      <button type='button' className='fab' onClick={() => setShowAdd(true)} aria-label='Add baby'>
         +
       </button>
 

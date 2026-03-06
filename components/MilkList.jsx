@@ -6,7 +6,9 @@ import { formatLocalTime, parsePlainDate, parsePlainDateTime } from "../lib/temp
 
 function formatDayKey(value) {
   const date = parsePlainDate(value) || parsePlainDateTime(value)?.toPlainDate();
-  if (!date) return value;
+  if (!date) {
+    return value;
+  }
   return date.toString();
 }
 
@@ -15,8 +17,10 @@ function EditForm({ entry, babyId, onDone }) {
   const [state, action, pending] = useActionState(boundUpdate, null);
 
   useEffect(() => {
-    if (state?.success) onDone();
-  }, [state?.success]);
+    if (state?.success) {
+      onDone();
+    }
+  }, [state?.success, onDone]);
 
   const defaultDateTime =
     parsePlainDateTime(entry.fed_at)?.toString({ smallestUnit: "minute" }) || "";
@@ -33,27 +37,45 @@ function EditForm({ entry, babyId, onDone }) {
     <div className='milk-edit-form'>
       <form action={action}>
         <div className='form-group'>
-          <label>Time</label>
-          <input type='datetime-local' name='fed_at' defaultValue={defaultDateTime} />
+          <label htmlFor='fed_at'>Time</label>
+          <input type='datetime-local' id='fed_at' name='fed_at' defaultValue={defaultDateTime} />
         </div>
         <div className='form-group'>
-          <label>Amount (ml)</label>
-          <input type='number' name='volume_ml' defaultValue={entry.volume_ml} min='5' max='2000' />
+          <label htmlFor='volume_ml'>Amount (ml)</label>
+          <input
+            type='number'
+            id='volume_ml'
+            name='volume_ml'
+            defaultValue={entry.volume_ml}
+            min='5'
+            max='2000'
+          />
         </div>
         <div className='form-row'>
           <div className='form-group' style={{ flex: 1 }}>
-            <label>Started</label>
-            <input type='datetime-local' name='started_at' defaultValue={defaultStartedAt} />
+            <label htmlFor='started_at'>Started</label>
+            <input
+              type='datetime-local'
+              id='started_at'
+              name='started_at'
+              defaultValue={defaultStartedAt}
+            />
           </div>
           <div className='form-group' style={{ flex: 1 }}>
-            <label>Ended</label>
-            <input type='datetime-local' name='ended_at' defaultValue={defaultEndedAt} />
+            <label htmlFor='ended_at'>Ended</label>
+            <input
+              type='datetime-local'
+              id='ended_at'
+              name='ended_at'
+              defaultValue={defaultEndedAt}
+            />
           </div>
         </div>
         <div className='form-group' style={{ marginBottom: 0 }}>
-          <label>Notes</label>
+          <label htmlFor='notes'>Notes</label>
           <input
             type='text'
+            id='notes'
             name='notes'
             placeholder='Optional note…'
             defaultValue={entry.notes || ""}
@@ -84,15 +106,14 @@ export default function MilkList({ entries, babyId, onMutated }) {
     setDeleting(id);
     try {
       const result = await deleteMilkAction(babyId, id);
-      if (result?.error) alert(result.error);
-      else onMutated();
+      if (result?.error) {
+        alert(result.error);
+      } else {
+        onMutated();
+      }
     } finally {
       setDeleting(null);
     }
-  }
-
-  if (entries.length === 0) {
-    return <p className='milk-empty'>No feedings yet. Tap + to start one.</p>;
   }
 
   const sorted = [...entries].sort((a, b) => b.fed_at.localeCompare(a.fed_at));
@@ -105,9 +126,15 @@ export default function MilkList({ entries, babyId, onMutated }) {
   const dayTotal = dayEntries.reduce((sum, entry) => sum + entry.volume_ml, 0);
 
   useEffect(() => {
-    if (!days.length) return;
+    if (!days.length) {
+      return;
+    }
     setSelectedIndex(0);
-  }, [entries.length, days.length]);
+  }, [days.length]);
+
+  if (entries.length === 0) {
+    return <p className='milk-empty'>No feedings yet. Tap + to start one.</p>;
+  }
 
   function handlePrevDay() {
     setSelectedIndex((idx) => Math.min(days.length - 1, idx + 1));
@@ -122,18 +149,25 @@ export default function MilkList({ entries, babyId, onMutated }) {
   }
 
   function handleTouchEnd(e) {
-    if (touchStartX == null) return;
+    if (touchStartX == null) {
+      return;
+    }
     const dx = e.changedTouches[0].clientX - touchStartX;
     if (Math.abs(dx) > 40) {
-      if (dx < 0) handleNextDay();
-      else handlePrevDay();
+      if (dx < 0) {
+        handleNextDay();
+      } else {
+        handlePrevDay();
+      }
     }
     setTouchStartX(null);
   }
 
   function handlePickDate(e) {
     const value = e.target.value;
-    if (!value) return;
+    if (!value) {
+      return;
+    }
     const exactIndex = days.indexOf(value);
     if (exactIndex >= 0) {
       setSelectedIndex(exactIndex);
@@ -145,7 +179,9 @@ export default function MilkList({ entries, babyId, onMutated }) {
     let closestDiff = Infinity;
     days.forEach((day, idx) => {
       const ts = parsePlainDate(day)?.toPlainDateTime({ hour: 0, minute: 0 }).toZonedDateTime();
-      if (!ts || !target || ts.epochMilliseconds > target.epochMilliseconds) return;
+      if (!ts || !target || ts.epochMilliseconds > target.epochMilliseconds) {
+        return;
+      }
       const diff = target.epochMilliseconds - ts.epochMilliseconds;
       if (diff < closestDiff) {
         closestDiff = diff;
@@ -156,7 +192,9 @@ export default function MilkList({ entries, babyId, onMutated }) {
   }
 
   function openDatePicker() {
-    if (!dateInputRef.current) return;
+    if (!dateInputRef.current) {
+      return;
+    }
     dateInputRef.current.showPicker?.();
     dateInputRef.current.focus();
   }
@@ -165,6 +203,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
     <div className='milk-list' onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className='milk-day-header single'>
         <button
+          type='button'
           className='day-nav'
           onClick={handlePrevDay}
           disabled={safeIndex >= days.length - 1}
@@ -172,7 +211,12 @@ export default function MilkList({ entries, babyId, onMutated }) {
         >
           ‹
         </button>
-        <button className='day-title' onClick={openDatePicker} aria-label='Pick a date'>
+        <button
+          type='button'
+          className='day-title'
+          onClick={openDatePicker}
+          aria-label='Pick a date'
+        >
           <div>{activeDay}</div>
           <div className='day-total'>{dayTotal} ml</div>
           <input
@@ -184,6 +228,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
           />
         </button>
         <button
+          type='button'
           className='day-nav'
           onClick={handleNextDay}
           disabled={safeIndex === 0}
@@ -224,6 +269,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
               </div>
               <div className='milk-row-actions'>
                 <button
+                  type='button'
                   className='maction-btn'
                   onClick={() => setEditing(entry.id)}
                   aria-label='Edit entry'
@@ -231,6 +277,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
                   ✏️
                 </button>
                 <button
+                  type='button'
                   className='maction-btn danger'
                   onClick={() => handleDelete(entry.id)}
                   disabled={deleting === entry.id}
