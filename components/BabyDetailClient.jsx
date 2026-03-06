@@ -10,7 +10,6 @@ import {
   formatLocalDate,
   formatLocalDateTime,
   formatLocalTime,
-  formatWeekdayShort,
   nowInstant,
   nowZoned,
   parsePlainDate,
@@ -208,6 +207,10 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
 
   const latestWeight = weights.length > 0 ? weights[weights.length - 1] : null;
   const firstWeight = weights.length > 0 ? weights[0] : null;
+  const advisedDailyMilk = latestWeight
+    ? Math.round((latestWeight.weight_grams / 1000) * 150)
+    : null;
+  const maxDailyMilk = latestWeight ? Math.round((latestWeight.weight_grams / 1000) * 180) : null;
   const gainGrams =
     latestWeight && firstWeight && weights.length > 1
       ? latestWeight.weight_grams - firstWeight.weight_grams
@@ -369,86 +372,83 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           <div className='section-title'>
             <h3>Feeding</h3>
           </div>
-          <div className='feeding-summary'>
-            <div className='summary-card card stat-big'>
-              <div className='summary-label'>Last Feeding</div>
-              <div className='summary-value'>
-                {formatElapsedSince(milkTotals.lastFeedAt, nowTick)}
+          <div className={`feeding-timeline-card card${isFeedingLate ? " late" : ""}`}>
+            <div className='feeding-timeline-row'>
+              <div className='feed-chip feed-chip-last'>
+                <span className='feed-chip-label'>Last</span>
+                <span className='feed-chip-value'>
+                  {formatElapsedSince(milkTotals.lastFeedAt, nowTick)}
+                </span>
+                {milkTotals.lastFeedAt && (
+                  <span className='feed-chip-sub'>
+                    {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime(), locale)}
+                  </span>
+                )}
               </div>
-              {milkTotals.lastFeedAt && (
-                <div className='summary-sub'>
-                  {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime(), locale)}
-                </div>
-              )}
-            </div>
-            <div className='summary-card card stat-big'>
-              <div className='summary-label'>Today</div>
-              <div className='summary-value'>{milkTotals.dayTotal} ml</div>
-              <div className='summary-sub'>Midnight to now</div>
-            </div>
-            <div className='summary-card card stat-big'>
-              <div className='summary-label'>Last 24h</div>
-              <div className='summary-value'>{milkTotals.last24hTotal} ml</div>
-              <div className='summary-sub'>Rolling total</div>
+
+              <div className='feed-chip feed-chip-next'>
+                <span className='feed-chip-label'>Next</span>
+                {nextFeedings.length > 0 ? (
+                  (() => {
+                    const next = nextFeedings[0];
+                    const eta = formatEtaUntil(next, nowTick);
+                    return (
+                      <div className='feed-chip-next-body'>
+                        <div className='feed-chip-next-main'>
+                          <span className='feed-chip-value'>{formatTimeOnly(next, locale)}</span>
+                          <span className={`feed-chip-sub${isFeedingLate ? " late" : ""}`}>
+                            {isFeedingLate ? "Late" : eta}
+                          </span>
+                        </div>
+                        {nextFeedings.length > 1 && (
+                          <div className='feed-chip-next-rail'>
+                            {nextFeedings.slice(1, 3).map((time) => (
+                              <div key={time.toString()} className='feed-chip-next-mini'>
+                                <span className='feed-chip-next-mini-time'>
+                                  {formatTimeOnly(time, locale)}
+                                </span>
+                                <span className='feed-chip-next-mini-eta'>
+                                  {formatEtaUntil(time, nowTick)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <span className='feed-chip-sub'>Add a feeding to see schedule</span>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className={`next-feed-card card${isFeedingLate ? " next-feed-late" : ""}`}>
-            <div className='section-header'>
-              <h3>Next Feedings</h3>
-            </div>
-            <div className='next-feed-body'>
-              {nextFeedings.length > 0 ? (
-                (() => {
-                  const now = nowZoned();
-                  const first = nextFeedings[0];
-                  const upcoming = nextFeedings.slice(1, 3);
-                  const renderFeed = (time, compact = false, isFirst = false) => {
-                    const isNextDay = formatDayKey(time) !== formatDayKey(now);
-                    const midnight = now.toPlainDate().toPlainDateTime({ hour: 0, minute: 0 });
-                    const dayDiff = Math.round(
-                      daysBetween(midnight.toPlainDate(), time.toPlainDate()),
-                    );
-                    const dayLabel = isNextDay
-                      ? dayDiff === 1
-                        ? "tomorrow"
-                        : formatWeekdayShort(time, locale)
-                      : null;
-                    const etaLabel = formatEtaUntil(time, nowTick);
-                    const isLate = isFirst && isFeedingLate;
+          <div className='milk-metrics-card card'>
+            <div className='milk-metrics-row'>
+              <div className='milk-chip milk-chip-primary'>
+                <span className='milk-chip-label'>Current Milk</span>
+                <span className='milk-chip-value'>{milkTotals.dayTotal} ml</span>
+                <span className='milk-chip-sub'>Midnight to now</span>
+              </div>
 
-                    return (
-                      <div
-                        key={time.toString()}
-                        className={`next-feed-item${compact ? " compact" : ""}`}
-                      >
-                        <div className='next-feed-main'>
-                          <span className='next-feed-time'>{formatTimeOnly(time, locale)}</span>
-                          {isLate ? (
-                            <span className='next-feed-eta late'>Late</span>
-                          ) : (
-                            <span className='next-feed-eta'>{etaLabel}</span>
-                          )}
-                        </div>
-                        {dayLabel && <span className='next-feed-day'>{dayLabel}</span>}
-                      </div>
-                    );
-                  };
+              <div className='milk-chip'>
+                <span className='milk-chip-label'>Milk Past 24h</span>
+                <span className='milk-chip-value'>{milkTotals.last24hTotal} ml</span>
+                <span className='milk-chip-sub'>Rolling total</span>
+              </div>
 
-                  return (
-                    <>
-                      {first ? renderFeed(first, false, true) : null}
-                      {upcoming.length > 0 ? (
-                        <div className='next-feed-stack'>
-                          {upcoming.map((time) => renderFeed(time, true, false))}
-                        </div>
-                      ) : null}
-                    </>
-                  );
-                })()
-              ) : (
-                <div className='next-feed-empty'>Add a feeding to see the schedule.</div>
-              )}
+              <div className='milk-chip milk-chip-guidance milk-chip-wide'>
+                <span className='milk-chip-label'>Advised / Max</span>
+                {advisedDailyMilk != null ? (
+                  <>
+                    <span className='milk-chip-value'>{advisedDailyMilk} ml</span>
+                    <span className='milk-chip-sub'>max {maxDailyMilk} ml/day</span>
+                  </>
+                ) : (
+                  <span className='milk-chip-sub'>Add weight to get guidance</span>
+                )}
+              </div>
             </div>
           </div>
 

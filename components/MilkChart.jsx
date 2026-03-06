@@ -78,10 +78,10 @@ function expectedForDay(date, weights) {
   const dayWeights = weights.filter((w) => normalizeDate(w.measured_at) === date);
   if (dayWeights.length > 0) {
     const latest = dayWeights[dayWeights.length - 1];
-    return latest.weight_grams * 150;
+    return Math.round((latest.weight_grams / 1000) * 150);
   }
   const latestWeight = weights[weights.length - 1];
-  return latestWeight.weight_grams * 150;
+  return Math.round((latestWeight.weight_grams / 1000) * 150);
 }
 
 function maxForDay(date, weights) {
@@ -91,10 +91,10 @@ function maxForDay(date, weights) {
   const dayWeights = weights.filter((w) => normalizeDate(w.measured_at) === date);
   if (dayWeights.length > 0) {
     const latest = dayWeights[dayWeights.length - 1];
-    return latest.weight_grams * 180;
+    return Math.round((latest.weight_grams / 1000) * 180);
   }
   const latestWeight = weights[weights.length - 1];
-  return latestWeight.weight_grams * 180;
+  return Math.round((latestWeight.weight_grams / 1000) * 180);
 }
 
 export default function MilkChart({ entries, weights }) {

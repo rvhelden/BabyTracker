@@ -49,15 +49,21 @@ function CustomTooltip({ active, payload, locale }) {
 }
 
 export default function WeightChart({ weights, birthDate }) {
+  const STEP_KG = 0.02;
   const locale = useLocale()?.locale;
   const data = weights.map((w) => ({
     ...w,
     day: daysSinceBirth(birthDate, w.measured_at),
-    kg: parseFloat((w.weight_grams / 1000).toFixed(3)),
+    kg: w.weight_grams / 1000,
   }));
 
-  const minKg = Math.max(0, Math.min(...data.map((d) => d.kg)) - 0.1);
-  const maxKg = Math.max(...data.map((d) => d.kg)) + 0.1;
+  const minRaw = Math.min(...data.map((d) => d.kg));
+  const maxRaw = Math.max(...data.map((d) => d.kg));
+  const paddedMin = Math.max(0, minRaw - STEP_KG * 2);
+  const paddedMax = maxRaw + STEP_KG * 2;
+  const minKg = Math.floor(paddedMin / STEP_KG) * STEP_KG;
+  const maxKg = Math.ceil(paddedMax / STEP_KG) * STEP_KG;
+  const domainMax = maxKg <= minKg ? minKg + STEP_KG * 2 : maxKg;
 
   function formatDay(day) {
     if (day < 30) {
@@ -85,14 +91,14 @@ export default function WeightChart({ weights, birthDate }) {
             }}
           />
           <YAxis
-            domain={[minKg, maxKg]}
-            tickFormatter={(v) => `${v.toFixed(1)} kg`}
+            domain={[minKg, domainMax]}
+            tickFormatter={(v) => `${v.toFixed(2)} kg`}
             tick={{ fontSize: 12, fill: "var(--text-muted)" }}
             width={65}
           />
           <Tooltip content={<CustomTooltip locale={locale} />} />
           <Line
-            type='monotone'
+            type='linear'
             dataKey='kg'
             stroke='var(--primary)'
             strokeWidth={2.5}
