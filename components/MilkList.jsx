@@ -221,6 +221,12 @@ export default function MilkList({ entries, babyId, onMutated }) {
     rowTouchIdRef.current = null;
   }
 
+  function handleRowTouchCancel() {
+    setSwipeState({ id: null, offset: 0, isDragging: false });
+    rowTouchStartXRef.current = null;
+    rowTouchIdRef.current = null;
+  }
+
   function handlePickDate(e) {
     const value = e.target.value;
     if (!value) {
@@ -327,28 +333,39 @@ export default function MilkList({ entries, babyId, onMutated }) {
           return (
             <div
               key={entry.id}
-              className='milk-row card swipe-gesture-card'
-              style={{
-                transform: `translateX(${swipeState.id === entry.id ? swipeState.offset : 0}px)`,
-                transition:
-                  swipeState.id === entry.id && swipeState.isDragging
-                    ? "none"
-                    : "transform 160ms ease",
-              }}
-              onTouchStart={(e) => handleRowTouchStart(entry.id, e)}
-              onTouchMove={(e) => handleRowTouchMove(entry.id, e)}
-              onTouchEnd={(e) => handleRowTouchEnd(entry.id, e)}
+              className={`swipe-row${
+                swipeState.id === entry.id && swipeState.offset !== 0 ? " active" : ""
+              }`}
             >
-              <div className='milk-row-main'>
-                <span className='milk-row-icon'>🍼</span>
-                <span className='milk-row-time'>
-                  {formatLocalTime(parsePlainDateTime(entry.fed_at), locale)}
-                </span>
-                <span className='milk-row-amount'>{entry.volume_ml} ml</span>
-                {entry.duration_minutes != null && (
-                  <span className='milk-row-meta'>⏱️ {entry.duration_minutes}m</span>
-                )}
-                {entry.notes && <span className='milk-row-notes'>💬 {entry.notes}</span>}
+              <div className='swipe-underlay'>
+                <div className='swipe-underlay-left'>Delete</div>
+                <div className='swipe-underlay-right'>Edit</div>
+              </div>
+              <div
+                className='milk-row card swipe-gesture-card'
+                style={{
+                  transform: `translateX(${swipeState.id === entry.id ? swipeState.offset : 0}px)`,
+                  transition:
+                    swipeState.id === entry.id && swipeState.isDragging
+                      ? "none"
+                      : "transform 160ms ease",
+                }}
+                onTouchStart={(e) => handleRowTouchStart(entry.id, e)}
+                onTouchMove={(e) => handleRowTouchMove(entry.id, e)}
+                onTouchEnd={(e) => handleRowTouchEnd(entry.id, e)}
+                onTouchCancel={handleRowTouchCancel}
+              >
+                <div className='milk-row-main'>
+                  <span className='milk-row-icon'>🍼</span>
+                  <span className='milk-row-time'>
+                    {formatLocalTime(parsePlainDateTime(entry.fed_at), locale)}
+                  </span>
+                  <span className='milk-row-amount'>{entry.volume_ml} ml</span>
+                  {entry.duration_minutes != null && (
+                    <span className='milk-row-meta'>⏱️ {entry.duration_minutes}m</span>
+                  )}
+                  {entry.notes && <span className='milk-row-notes'>💬 {entry.notes}</span>}
+                </div>
               </div>
             </div>
           );

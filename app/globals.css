@@ -1203,6 +1203,49 @@ select {
   will-change: transform;
   touch-action: pan-y;
 }
+.swipe-row {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.swipe-underlay {
+  position: absolute;
+  inset: 1px;
+  display: none;
+  align-items: stretch;
+  justify-content: space-between;
+  z-index: 0;
+}
+.swipe-row.active .swipe-underlay {
+  display: flex;
+}
+.swipe-underlay-left,
+.swipe-underlay-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-sm);
+}
+.swipe-underlay-left {
+  justify-content: flex-start;
+  background: var(--danger);
+}
+.swipe-underlay-right {
+  justify-content: flex-end;
+  background: var(--primary-dark);
+}
+.swipe-row .swipe-gesture-card {
+  position: relative;
+  z-index: 1;
+  border-radius: var(--radius);
+  margin: 0;
+}
 
 .milk-row-actions .maction-btn,
 .weight-row-actions .maction-btn {
@@ -1760,6 +1803,9 @@ select {
 }
 
 @media (max-width: 640px) {
+  .feeding-timeline-row {
+    grid-template-columns: 1fr;
+  }
   .feed-chip-next-body {
     flex-direction: column;
   }
@@ -1767,7 +1813,10 @@ select {
     align-items: flex-start;
   }
   .milk-metrics-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .milk-chip-wide {
+    grid-column: 1 / -1;
   }
   .next-feed-body {
     grid-template-columns: 1fr;

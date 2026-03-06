@@ -165,6 +165,12 @@ export default function WeightList({ weights, babyId, onMutated }) {
     touchRowIdRef.current = null;
   }
 
+  function handleRowTouchCancel() {
+    setSwipeState({ id: null, offset: 0, isDragging: false });
+    touchStartXRef.current = null;
+    touchRowIdRef.current = null;
+  }
+
   if (weights.length === 0) {
     return <p className='weight-empty'>No measurements yet. Tap + to add one.</p>;
   }
@@ -207,33 +213,42 @@ export default function WeightList({ weights, babyId, onMutated }) {
         return (
           <div
             key={w.id}
-            className='weight-card swipe-gesture-card'
-            style={{
-              transform: `translateX(${swipeState.id === w.id ? swipeState.offset : 0}px)`,
-              transition:
-                swipeState.id === w.id && swipeState.isDragging ? "none" : "transform 160ms ease",
-            }}
-            onTouchStart={(e) => handleRowTouchStart(w.id, e)}
-            onTouchMove={(e) => handleRowTouchMove(w.id, e)}
-            onTouchEnd={(e) => handleRowTouchEnd(w.id, e)}
+            className={`swipe-row${swipeState.id === w.id && swipeState.offset !== 0 ? " active" : ""}`}
           >
-            <div className='weight-card-body'>
-              <div className='weight-row-main'>
-                <div className='weight-card-left'>
-                  <div className='weight-date'>{formatDateLabel(w.measured_at, locale)}</div>
-                  {w.notes && <div className='weight-notes'>{w.notes}</div>}
-                </div>
-                <div className='weight-card-mid'>
-                  <div className='weight-grams'>{w.weight_grams} g</div>
-                  <div className='weight-kg'>{(w.weight_grams / 1000).toFixed(3)} kg</div>
-                </div>
-                <div className='weight-card-right'>
-                  {diff !== null && (
-                    <span className={`weight-diff ${diff >= 0 ? "diff-pos" : "diff-neg"}`}>
-                      {diff >= 0 ? "+" : ""}
-                      {diff} g
-                    </span>
-                  )}
+            <div className='swipe-underlay'>
+              <div className='swipe-underlay-left'>Delete</div>
+              <div className='swipe-underlay-right'>Edit</div>
+            </div>
+            <div
+              className='weight-card swipe-gesture-card'
+              style={{
+                transform: `translateX(${swipeState.id === w.id ? swipeState.offset : 0}px)`,
+                transition:
+                  swipeState.id === w.id && swipeState.isDragging ? "none" : "transform 160ms ease",
+              }}
+              onTouchStart={(e) => handleRowTouchStart(w.id, e)}
+              onTouchMove={(e) => handleRowTouchMove(w.id, e)}
+              onTouchEnd={(e) => handleRowTouchEnd(w.id, e)}
+              onTouchCancel={handleRowTouchCancel}
+            >
+              <div className='weight-card-body'>
+                <div className='weight-row-main'>
+                  <div className='weight-card-left'>
+                    <div className='weight-date'>{formatDateLabel(w.measured_at, locale)}</div>
+                    {w.notes && <div className='weight-notes'>{w.notes}</div>}
+                  </div>
+                  <div className='weight-card-mid'>
+                    <div className='weight-grams'>{w.weight_grams} g</div>
+                    <div className='weight-kg'>{(w.weight_grams / 1000).toFixed(3)} kg</div>
+                  </div>
+                  <div className='weight-card-right'>
+                    {diff !== null && (
+                      <span className={`weight-diff ${diff >= 0 ? "diff-pos" : "diff-neg"}`}>
+                        {diff >= 0 ? "+" : ""}
+                        {diff} g
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

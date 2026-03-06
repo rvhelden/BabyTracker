@@ -7,6 +7,8 @@ import { getUser } from "../../../../../lib/session.js";
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const IMAGE_UPLOAD_DIR =
+  process.env.IMAGE_UPLOAD_DIR || join(process.cwd(), "public", "uploads", "babies");
 
 export async function POST(request, { params }) {
   const user = await getUser();
@@ -35,11 +37,10 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
   }
 
-  const uploadDir = join(process.cwd(), "public", "uploads", "babies");
-  await mkdir(uploadDir, { recursive: true });
+  await mkdir(IMAGE_UPLOAD_DIR, { recursive: true });
   const ext = extname(file.name) || ".jpg";
   const fileName = `${randomUUID()}${ext}`;
-  const filePath = join(uploadDir, fileName);
+  const filePath = join(IMAGE_UPLOAD_DIR, fileName);
   await writeFile(filePath, Buffer.from(arrayBuffer));
 
   const photoUrl = `/uploads/babies/${fileName}`;
