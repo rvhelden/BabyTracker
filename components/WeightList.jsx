@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { deleteWeightAction, updateWeightAction } from "../app/actions.js";
 import { formatLocalDate, parsePlainDate } from "../lib/temporal.js";
-import { useLocale } from "./LocaleContext.jsx";
+import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
 function formatDateLabel(value, locale) {
@@ -18,6 +18,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
   const boundUpdate = updateWeightAction.bind(null, babyId, entry.id);
   const [state, action, pending] = useActionState(boundUpdate, null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const t = useTranslation();
 
   useEffect(() => {
     if (state?.success) {
@@ -29,7 +30,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
     <div className='weight-edit-form'>
       <form action={action}>
         <div className='form-group'>
-          <label htmlFor='weight_edit_date'>Date</label>
+          <label htmlFor='weight_edit_date'>{t("weightList.date")}</label>
           <input
             id='weight_edit_date'
             type='date'
@@ -38,7 +39,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
           />
         </div>
         <div className='form-group'>
-          <label htmlFor='weight_edit_grams'>Weight (grams)</label>
+          <label htmlFor='weight_edit_grams'>{t("weightList.weight")}</label>
           <input
             id='weight_edit_grams'
             type='number'
@@ -49,35 +50,35 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
           />
         </div>
         <div className='form-group' style={{ marginBottom: 0 }}>
-          <label htmlFor='weight_edit_notes'>Notes</label>
+          <label htmlFor='weight_edit_notes'>{t("weightList.notes")}</label>
           <input
             id='weight_edit_notes'
             type='text'
             name='notes'
-            placeholder='Optional note…'
+            placeholder={t("weightList.noteOptional")}
             defaultValue={entry.notes || ""}
           />
         </div>
         {state?.error && <p className='error-msg'>{state.error}</p>}
         <div className='weight-edit-actions'>
           <button type='button' className='btn btn-secondary' onClick={onDone}>
-            Cancel
+            {t("weightList.cancel")}
           </button>
           <button type='submit' className='btn btn-primary' disabled={pending}>
-            {pending ? <span className='spinner' /> : "Save"}
+            {pending ? <span className='spinner' /> : t("weightList.save")}
           </button>
         </div>
       </form>
       <div className='edit-dialog-delete'>
         {confirmingDelete ? (
           <div className='delete-confirm-row'>
-            <span>Delete this entry?</span>
+            <span>{t("weightList.deleteConfirm")}</span>
             <button
               type='button'
               className='btn btn-secondary btn-sm'
               onClick={() => setConfirmingDelete(false)}
             >
-              Cancel
+              {t("weightList.cancel")}
             </button>
             <button
               type='button'
@@ -85,7 +86,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
               onClick={onDelete}
               disabled={deleting}
             >
-              {deleting ? <span className='spinner' /> : "Delete"}
+              {deleting ? <span className='spinner' /> : t("weightList.deleteEntry")}
             </button>
           </div>
         ) : (
@@ -94,7 +95,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
             className='btn btn-danger btn-sm'
             onClick={() => setConfirmingDelete(true)}
           >
-            Delete entry
+            {t("weightList.deleteEntry")}
           </button>
         )}
       </div>
@@ -104,6 +105,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
 
 export default function WeightList({ weights, babyId, onMutated }) {
   const locale = useLocale()?.locale;
+  const t = useTranslation();
   const [dialogEntry, setDialogEntry] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
@@ -123,7 +125,7 @@ export default function WeightList({ weights, babyId, onMutated }) {
   }
 
   if (weights.length === 0) {
-    return <p className='history-empty'>No measurements yet. Tap + to add one.</p>;
+    return <p className='history-empty'>{t("weightList.noMeasurements")}</p>;
   }
 
   const sorted = [...weights].sort((a, b) => b.measured_at.localeCompare(a.measured_at));
@@ -132,7 +134,7 @@ export default function WeightList({ weights, babyId, onMutated }) {
   return (
     <div>
       {openDialogWeight && (
-        <Modal title='Edit measurement' onClose={() => setDialogEntry(null)}>
+        <Modal title={t("weightList.editTitle")} onClose={() => setDialogEntry(null)}>
           <EditForm
             entry={openDialogWeight}
             babyId={babyId}

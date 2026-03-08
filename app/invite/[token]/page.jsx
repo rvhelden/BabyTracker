@@ -1,12 +1,14 @@
 import Link from "next/link";
 import AcceptInviteClient from "../../../components/AcceptInviteClient.jsx";
 import { getInviteByToken } from "../../../lib/dal.js";
+import { getT } from "../../../lib/i18n.js";
 import { getUser } from "../../../lib/session.js";
 import { nowInstant, parseInstant } from "../../../lib/temporal.js";
 
 export default async function InvitePage({ params }) {
   const { token } = await params;
   const user = await getUser();
+  const t = getT(user?.locale);
 
   const invite = getInviteByToken(token);
 
@@ -16,16 +18,16 @@ export default async function InvitePage({ params }) {
         <div className='auth-card card invite-accept-card'>
           <div className='auth-header'>
             <div className='auth-logo'>🍼</div>
-            <h1>Baby Tracker</h1>
+            <h1>{t("auth.appName")}</h1>
           </div>
           <div className='invite-error'>
-            <p className='error-msg'>Invite not found or already used.</p>
+            <p className='error-msg'>{t("acceptInvite.notFound")}</p>
             <Link
               href='/'
               className='btn btn-primary'
               style={{ display: "inline-block", marginTop: "1rem" }}
             >
-              Go to Dashboard
+              {t("acceptInvite.goToDashboard")}
             </Link>
           </div>
         </div>
@@ -43,18 +45,18 @@ export default async function InvitePage({ params }) {
         <div className='auth-card card invite-accept-card'>
           <div className='auth-header'>
             <div className='auth-logo'>🍼</div>
-            <h1>Baby Tracker</h1>
+            <h1>{t("auth.appName")}</h1>
           </div>
           <div className='invite-error'>
             <p className='error-msg'>
-              {invite.used_at ? "This invite has already been used." : "This invite has expired."}
+              {invite.used_at ? t("acceptInvite.alreadyUsed") : t("acceptInvite.expired")}
             </p>
             <Link
               href='/'
               className='btn btn-primary'
               style={{ display: "inline-block", marginTop: "1rem" }}
             >
-              Go to Dashboard
+              {t("acceptInvite.goToDashboard")}
             </Link>
           </div>
         </div>

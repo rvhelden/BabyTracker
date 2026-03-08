@@ -10,7 +10,7 @@ import {
   timeZone,
   toLocalDateTimeInput,
 } from "../lib/temporal.js";
-import { useLocale } from "./LocaleContext.jsx";
+import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
 function formatElapsed(ms) {
@@ -27,6 +27,7 @@ function formatElapsed(ms) {
 
 export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVolume }) {
   const locale = useLocale()?.locale;
+  const t = useTranslation();
   const initialStart = useMemo(() => nowZoned().toPlainDateTime(), []);
   const [startedAt, setStartedAt] = useState(initialStart);
   const [elapsed, setElapsed] = useState(0);
@@ -86,19 +87,19 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
 
         const result = await res.json();
         if (!res.ok || result?.error) {
-          setError(result?.error || "Unable to start feeding. Please try again.");
+          setError(result?.error || t("timer.unableToStart"));
         } else {
           setEntryId(result.entryId);
         }
       } catch (err) {
         console.error("Timer start failed:", err);
-        setError("Unable to start feeding. Please try again.");
+        setError(t("timer.unableToStart"));
       } finally {
         setStarting(false);
       }
     }
     startEntry();
-  }, [babyId, startedAt, volume]);
+  }, [babyId, startedAt, volume, t]);
 
   async function handleStop() {
     setSaving(true);
@@ -120,7 +121,7 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
         });
         const startResult = await startRes.json();
         if (!startRes.ok || startResult?.error) {
-          setError(startResult?.error || "Unable to start feeding. Please try again.");
+          setError(startResult?.error || t("timer.unableToStart"));
           return;
         }
         activeEntryId = startResult.entryId;
@@ -142,28 +143,30 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
       });
       const result = await res.json();
       if (!res.ok || result?.error) {
-        setError(result?.error || "Unable to save feeding. Please try again.");
+        setError(result?.error || t("timer.unableToSave"));
       } else {
         onAdded();
       }
     } catch (err) {
       console.error("Timer stop failed:", err);
-      setError("Unable to save feeding. Please try again.");
+      setError(t("timer.unableToSave"));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal title='Feeding Timer' onClose={onClose}>
+    <Modal title={t("timer.title")} onClose={onClose}>
       <div className='timer-panel'>
         <div className='timer-time'>{formatElapsed(elapsed)}</div>
         <div className='timer-meta'>
-          {starting ? "Preparing entry…" : `Started at ${formatLocalTime(startedAt, locale)}`}
+          {starting
+            ? t("timer.preparing")
+            : t("timer.startedAt", { time: formatLocalTime(startedAt, locale) })}
         </div>
       </div>
       <div className='form-group'>
-        <label htmlFor='timer_volume_ml'>Amount (ml)</label>
+        <label htmlFor='timer_volume_ml'>{t("timer.amount")}</label>
         <input
           id='timer_volume_ml'
           type='number'
@@ -171,11 +174,11 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
           max='2000'
           value={volume}
           onChange={(e) => setVolume(e.target.value)}
-          placeholder='e.g. 120'
+          placeholder={t("timer.amountPlaceholder")}
         />
       </div>
       <div className='form-group'>
-        <label htmlFor='timer_start_time'>Start time</label>
+        <label htmlFor='timer_start_time'>{t("timer.startTime")}</label>
         <input
           id='timer_start_time'
           type='datetime-local'
@@ -184,19 +187,19 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
         />
       </div>
       <div className='form-group'>
-        <label htmlFor='timer_notes'>Notes (optional)</label>
+        <label htmlFor='timer_notes'>{t("timer.notes")}</label>
         <input
           id='timer_notes'
           type='text'
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder='e.g. Left side'
+          placeholder={t("timer.notesPlaceholder")}
         />
       </div>
       {error && <p className='error-msg'>{error}</p>}
       <div className='modal-actions'>
         <button type='button' className='btn btn-secondary' onClick={onClose}>
-          Close
+          {t("timer.close")}
         </button>
         <button
           type='button'
@@ -204,7 +207,7 @@ export default function FeedingTimerModal({ babyId, onClose, onAdded, defaultVol
           onClick={handleStop}
           disabled={saving || !volume}
         >
-          {saving ? <span className='spinner' /> : "Stop & Save"}
+          {saving ? <span className='spinner' /> : t("timer.stopSave")}
         </button>
       </div>
     </Modal>

@@ -3,11 +3,12 @@
 import { useState, useTransition } from "react";
 import { createInviteAction } from "../app/actions.js";
 import { formatLocalDate, parseInstant } from "../lib/temporal.js";
-import { useLocale } from "./LocaleContext.jsx";
+import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
 export default function InviteModal({ babyId, babyName, onClose }) {
   const locale = useLocale()?.locale;
+  const t = useTranslation();
   const [invite, setInvite] = useState(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -36,18 +37,17 @@ export default function InviteModal({ babyId, babyName, onClose }) {
     : "";
 
   return (
-    <Modal title={`Share ${babyName}'s Profile`} onClose={onClose}>
+    <Modal title={t("invite.shareTitle", { name: babyName })} onClose={onClose}>
       <div className='invite-modal'>
         {!invite ? (
           <>
             <p className='invite-info'>
-              Generate a QR code that another parent can scan to link their account to{" "}
-              <strong>{babyName}</strong>'s profile. The link expires in 7 days.
+              {t("invite.generateInfo", { name: babyName })}
             </p>
             {error && <p className='error-msg'>{error}</p>}
             <div className='modal-actions'>
               <button type='button' className='btn btn-secondary' onClick={onClose}>
-                Cancel
+                {t("invite.cancel")}
               </button>
               <button
                 type='button'
@@ -55,14 +55,14 @@ export default function InviteModal({ babyId, babyName, onClose }) {
                 onClick={generate}
                 disabled={pending}
               >
-                {pending ? <span className='spinner' /> : "Generate QR Code"}
+                {pending ? <span className='spinner' /> : t("invite.generate")}
               </button>
             </div>
           </>
         ) : (
           <>
             <p className='invite-info'>
-              Scan this QR code or share the link. Expires on <strong>{expiresLabel}</strong>.
+              {t("invite.scanInfo", { date: expiresLabel })}
             </p>
             <div className='qr-container'>
               <img src={invite.qrDataUrl} alt='QR Code invite' className='qr-image' />
@@ -74,15 +74,13 @@ export default function InviteModal({ babyId, babyName, onClose }) {
                 className={`btn ${copied ? "btn-secondary" : "btn-primary"}`}
                 onClick={copyLink}
               >
-                {copied ? "Copied!" : "Copy"}
+                {copied ? t("invite.copied") : t("invite.copy")}
               </button>
             </div>
-            <p className='invite-note'>
-              The invited person must create an account (or log in) before accepting the invite.
-            </p>
+            <p className='invite-note'>{t("invite.note")}</p>
             <div className='modal-actions'>
               <button type='button' className='btn btn-secondary' onClick={onClose}>
-                Close
+                {t("invite.close")}
               </button>
               <button
                 type='button'
@@ -93,7 +91,7 @@ export default function InviteModal({ babyId, babyName, onClose }) {
                 }}
                 disabled={pending}
               >
-                New Code
+                {t("invite.newCode")}
               </button>
             </div>
           </>

@@ -2,19 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { updateLocaleAction } from "../app/actions.js";
+import { useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
-const LOCALE_OPTIONS = [
-  { value: "", label: "Browser default" },
-  { value: "nl-NL", label: "Dutch (Netherlands)" },
-  { value: "en-US", label: "English (United States)" },
-  { value: "en-GB", label: "English (United Kingdom)" },
-  { value: "fr-FR", label: "French (France)" },
-  { value: "de-DE", label: "German (Germany)" },
-  { value: "es-ES", label: "Spanish (Spain)" },
-];
-
 export default function SettingsClient({ locale }) {
+  const t = useTranslation();
   const [feedFabAction, setFeedFabAction] = useState("timer");
   const [feedingIntervalHours, setFeedingIntervalHours] = useState("3");
   const [selectedLocale, setSelectedLocale] = useState(locale || "");
@@ -26,6 +18,16 @@ export default function SettingsClient({ locale }) {
   const [previewing, setPreviewing] = useState(false);
   const [importPreview, setImportPreview] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+
+  const LOCALE_OPTIONS = [
+    { value: "", label: t("settings.browserDefault") },
+    { value: "nl-NL", label: "Nederlands (Nederland)" },
+    { value: "en-US", label: "English (United States)" },
+    { value: "en-GB", label: "English (United Kingdom)" },
+    { value: "fr-FR", label: "Français (France)" },
+    { value: "de-DE", label: "Deutsch (Deutschland)" },
+    { value: "es-ES", label: "Español (España)" },
+  ];
 
   useEffect(() => {
     const saved = window.localStorage.getItem("feedFabAction");
@@ -62,7 +64,7 @@ export default function SettingsClient({ locale }) {
       }
       window.location.reload();
     } catch {
-      setImportError("Failed to save locale. Please try again.");
+      setImportError(t("settings.failedLocale"));
     } finally {
       setSavingLocale(false);
     }
@@ -83,7 +85,7 @@ export default function SettingsClient({ locale }) {
     setImportResult(null);
     setImportPreview(null);
     if (!importFile) {
-      setImportError("Please choose a zip file to import.");
+      setImportError(t("settings.chooseZip"));
       return;
     }
     setPreviewing(true);
@@ -98,14 +100,14 @@ export default function SettingsClient({ locale }) {
       });
       const result = await res.json();
       if (!res.ok || result?.error) {
-        setImportError(result?.error || "Import failed. Please try again.");
+        setImportError(result?.error || t("settings.importFailed"));
       } else {
         setImportPreview(result);
         setShowPreview(true);
       }
     } catch (err) {
       console.error(err);
-      setImportError("Import failed. Please try again.");
+      setImportError(t("settings.importFailed"));
     } finally {
       setPreviewing(false);
     }
@@ -113,7 +115,7 @@ export default function SettingsClient({ locale }) {
 
   async function handleConfirmImport() {
     if (!importFile) {
-      setImportError("Please choose a zip file to import.");
+      setImportError(t("settings.chooseZip"));
       return;
     }
     setImportError("");
@@ -130,14 +132,14 @@ export default function SettingsClient({ locale }) {
       });
       const result = await res.json();
       if (!res.ok || result?.error) {
-        setImportError(result?.error || "Import failed. Please try again.");
+        setImportError(result?.error || t("settings.importFailed"));
       } else {
         setImportResult(result);
         setShowPreview(false);
       }
     } catch (err) {
       console.error(err);
-      setImportError("Import failed. Please try again.");
+      setImportError(t("settings.importFailed"));
     } finally {
       setImporting(false);
     }
@@ -147,50 +149,46 @@ export default function SettingsClient({ locale }) {
     <div className='settings-page'>
       <div className='settings-card card'>
         <div className='section-header'>
-          <h3>Feeding Defaults</h3>
+          <h3>{t("settings.feedingDefaults")}</h3>
         </div>
         <div className='settings-row'>
           <div>
-            <div className='settings-label'>Feeding FAB action</div>
-            <div className='settings-help'>What happens when you tap the + on the Feeding tab.</div>
+            <div className='settings-label'>{t("settings.feedingFabAction")}</div>
+            <div className='settings-help'>{t("settings.feedingFabHelp")}</div>
           </div>
           <select value={feedFabAction} onChange={handleFabChange} className='settings-select'>
-            <option value='timer'>Start timer</option>
-            <option value='manual'>Manual add</option>
+            <option value='timer'>{t("settings.startTimer")}</option>
+            <option value='manual'>{t("settings.manualAdd")}</option>
           </select>
         </div>
         <div className='settings-row'>
           <div>
-            <div className='settings-label'>Feeding interval</div>
-            <div className='settings-help'>
-              Used for the next feeding schedule on the baby view.
-            </div>
+            <div className='settings-label'>{t("settings.feedingInterval")}</div>
+            <div className='settings-help'>{t("settings.feedingIntervalHelp")}</div>
           </div>
           <select
             value={feedingIntervalHours}
             onChange={handleIntervalChange}
             className='settings-select'
           >
-            <option value='1.5'>Every 1.5 hours</option>
-            <option value='2'>Every 2 hours</option>
-            <option value='2.5'>Every 2.5 hours</option>
-            <option value='3'>Every 3 hours</option>
-            <option value='3.5'>Every 3.5 hours</option>
-            <option value='4'>Every 4 hours</option>
+            <option value='1.5'>{t("settings.every1_5h")}</option>
+            <option value='2'>{t("settings.every2h")}</option>
+            <option value='2.5'>{t("settings.every2_5h")}</option>
+            <option value='3'>{t("settings.every3h")}</option>
+            <option value='3.5'>{t("settings.every3_5h")}</option>
+            <option value='4'>{t("settings.every4h")}</option>
           </select>
         </div>
       </div>
 
       <div className='settings-card card'>
         <div className='section-header'>
-          <h3>Locale</h3>
+          <h3>{t("settings.locale")}</h3>
         </div>
         <div className='settings-row'>
           <div>
-            <div className='settings-label'>Date and time culture</div>
-            <div className='settings-help'>
-              Override your browser locale for dates, times, and chart labels.
-            </div>
+            <div className='settings-label'>{t("settings.dateTimeCulture")}</div>
+            <div className='settings-help'>{t("settings.dateTimeCultureHelp")}</div>
           </div>
           <select
             value={selectedLocale}
@@ -209,13 +207,13 @@ export default function SettingsClient({ locale }) {
 
       <div className='settings-card card'>
         <div className='section-header'>
-          <h3>Import Data</h3>
+          <h3>{t("settings.importData")}</h3>
         </div>
         <p className='settings-help' style={{ marginBottom: "0.75rem" }}>
-          Import Formula (milk) and Growth (weight) entries from Baby Tracker CSV exports.
+          {t("settings.importHelp")}
         </p>
         <div className='form-group'>
-          <label htmlFor='importZip'>Zip file</label>
+          <label htmlFor='importZip'>{t("settings.zipFile")}</label>
           <input
             id='importZip'
             type='file'
@@ -229,7 +227,7 @@ export default function SettingsClient({ locale }) {
           onClick={handlePreview}
           disabled={previewing || importing}
         >
-          {previewing ? <span className='spinner' /> : "Preview import"}
+          {previewing ? <span className='spinner' /> : t("settings.previewImport")}
         </button>
         {importError && (
           <p className='error-msg' style={{ marginTop: "0.75rem" }}>
@@ -239,39 +237,43 @@ export default function SettingsClient({ locale }) {
         {importResult && (
           <div className='import-result'>
             {importResult.babiesToCreate?.length > 0 && (
-              <div>Babies created: {importResult.babiesToCreate.length}</div>
+              <div>{t("settings.babiesCreated", { n: importResult.babiesToCreate.length })}</div>
             )}
-            <div>Milk entries: {importResult.countsByType?.formula || 0}</div>
-            <div>Weight entries: {importResult.countsByType?.growth || 0}</div>
-            {importResult.skipped > 0 && <div>Skipped duplicates: {importResult.skipped}</div>}
+            <div>{t("settings.milkEntries", { n: importResult.countsByType?.formula || 0 })}</div>
+            <div>{t("settings.weightEntries", { n: importResult.countsByType?.growth || 0 })}</div>
+            {importResult.skipped > 0 && (
+              <div>{t("settings.skippedDuplicates", { n: importResult.skipped })}</div>
+            )}
           </div>
         )}
       </div>
       {showPreview && importPreview && (
-        <Modal title='Review import' onClose={() => setShowPreview(false)}>
+        <Modal title={t("settings.reviewImport")} onClose={() => setShowPreview(false)}>
           <p className='settings-help' style={{ marginBottom: "0.75rem" }}>
-            Review what will be created or reused before importing.
+            {t("settings.reviewInfo")}
           </p>
           <div className='import-preview'>
             <div className='import-preview-row'>
-              <div className='import-preview-label'>Babies to create</div>
+              <div className='import-preview-label'>{t("settings.babiesToCreate")}</div>
               <div className='import-preview-value'>{importPreview.babiesToCreate.length}</div>
             </div>
             <div className='import-preview-row'>
-              <div className='import-preview-label'>Babies to reuse</div>
+              <div className='import-preview-label'>{t("settings.babiesToReuse")}</div>
               <div className='import-preview-value'>{importPreview.babiesToReuse.length}</div>
             </div>
             {summaryCounts.map((item) => (
               <div className='import-preview-row' key={item.key}>
                 <div className='import-preview-label'>
-                  {item.key === "formula" ? "Milk entries" : "Weight entries"}
+                  {item.key === "formula"
+                    ? t("settings.milkEntriesPreview")
+                    : t("settings.weightEntriesPreview")}
                 </div>
                 <div className='import-preview-value'>{item.count}</div>
               </div>
             ))}
             {importPreview.skipped > 0 && (
               <div className='import-preview-row'>
-                <div className='import-preview-label'>Duplicates skipped</div>
+                <div className='import-preview-label'>{t("settings.duplicatesSkipped")}</div>
                 <div className='import-preview-value'>{importPreview.skipped}</div>
               </div>
             )}
@@ -280,7 +282,7 @@ export default function SettingsClient({ locale }) {
             <div className='import-preview-list'>
               {importPreview.babiesToCreate.length > 0 && (
                 <div>
-                  <div className='import-preview-heading'>Create</div>
+                  <div className='import-preview-heading'>{t("settings.create")}</div>
                   <div className='import-preview-tags'>
                     {importPreview.babiesToCreate.map((name) => (
                       <span className='badge badge-green' key={`create-${name}`}>
@@ -292,7 +294,7 @@ export default function SettingsClient({ locale }) {
               )}
               {importPreview.babiesToReuse.length > 0 && (
                 <div>
-                  <div className='import-preview-heading'>Reuse</div>
+                  <div className='import-preview-heading'>{t("settings.reuse")}</div>
                   <div className='import-preview-tags'>
                     {importPreview.babiesToReuse.map((name) => (
                       <span className='badge badge-blue' key={`reuse-${name}`}>
@@ -310,7 +312,7 @@ export default function SettingsClient({ locale }) {
               className='btn btn-secondary'
               onClick={() => setShowPreview(false)}
             >
-              Cancel
+              {t("settings.importCancel")}
             </button>
             <button
               type='button'
@@ -318,7 +320,7 @@ export default function SettingsClient({ locale }) {
               onClick={handleConfirmImport}
               disabled={importing}
             >
-              {importing ? <span className='spinner' /> : "Import now"}
+              {importing ? <span className='spinner' /> : t("settings.importNow")}
             </button>
           </div>
         </Modal>
