@@ -48,8 +48,7 @@
   },
   "tabs": {
     "weight": "Weight",
-    "feeding": "Feeding",
-    "reports": "Reports"
+    "feeding": "Feeding"
   },
   "weight": {
     "title": "Weight",

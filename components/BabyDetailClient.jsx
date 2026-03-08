@@ -121,6 +121,8 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
   const t = useTranslation();
   const [modal, setModal] = useState(null); // 'add-weight' | 'invite' | 'edit' | 'add-milk' | 'timer'
   const [activeSection, setActiveSection] = useState("feeding");
+  const [showWeightReports, setShowWeightReports] = useState(false);
+  const [showFeedingReports, setShowFeedingReports] = useState(false);
   const [feedFabAction, setFeedFabAction] = useState("timer");
   const [feedingIntervalHours, setFeedingIntervalHours] = useState("3");
   const [nowTick, setNowTick] = useState(() => nowInstant().epochMilliseconds);
@@ -307,21 +309,21 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
         >
           {t("tabs.feeding")}
         </button>
-        <button
-          type='button'
-          className={`tab-btn${activeSection === "reports" ? " active" : ""}`}
-          onClick={() => setActiveSection("reports")}
-          role='tab'
-          aria-selected={activeSection === "reports"}
-        >
-          {t("tabs.reports")}
-        </button>
       </div>
 
       {activeSection === "weight" && (
         <section className='detail-section' role='tabpanel'>
           <div className='section-title'>
             <h3>{t("weight.title")}</h3>
+            <button
+              type='button'
+              className={`reports-icon-btn${showWeightReports ? " active" : ""}`}
+              onClick={() => setShowWeightReports((v) => !v)}
+              aria-label={t("reports.title")}
+              title={t("reports.title")}
+            >
+              📊
+            </button>
           </div>
           <div className='weight-summary'>
             <div className='summary-card card'>
@@ -351,23 +353,27 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             </div>
           </div>
 
-          <div className='chart-card card'>
-            <div className='section-header'>
-              <h3>{t("weight.growthChart")}</h3>
-            </div>
-            {weights.length > 0 ? (
-              <WeightChart weights={weights} birthDate={baby.birth_date} />
-            ) : (
-              <p className='chart-empty'>{t("weight.noEntries")}</p>
-            )}
-          </div>
+          {showWeightReports && (
+            <>
+              <div className='chart-card card'>
+                <div className='section-header'>
+                  <h3>{t("weight.growthChart")}</h3>
+                </div>
+                {weights.length > 0 ? (
+                  <WeightChart weights={weights} birthDate={baby.birth_date} />
+                ) : (
+                  <p className='chart-empty'>{t("weight.noEntries")}</p>
+                )}
+              </div>
 
-          <div className='chart-card card'>
-            <div className='section-header'>
-              <h3>{t("weight.gainLossChart")}</h3>
-            </div>
-            <WeightGainChart weights={weights} />
-          </div>
+              <div className='chart-card card'>
+                <div className='section-header'>
+                  <h3>{t("weight.gainLossChart")}</h3>
+                </div>
+                <WeightGainChart weights={weights} />
+              </div>
+            </>
+          )}
 
           <div className='history-card card'>
             <div className='section-header'>
@@ -390,6 +396,15 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
         <section className='detail-section' role='tabpanel'>
           <div className='section-title'>
             <h3>{t("feeding.title")}</h3>
+            <button
+              type='button'
+              className={`reports-icon-btn${showFeedingReports ? " active" : ""}`}
+              onClick={() => setShowFeedingReports((v) => !v)}
+              aria-label={t("reports.title")}
+              title={t("reports.title")}
+            >
+              📊
+            </button>
           </div>
           <div className={`feeding-timeline-card card${isFeedingLate ? " late" : ""}`}>
             <div className='feeding-timeline-row'>
@@ -477,59 +492,54 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             </div>
             <MilkList entries={milkEntries} babyId={baby.id} onMutated={handleMutated} />
           </div>
+
+          {showFeedingReports && (
+            <>
+              <div className='chart-card card'>
+                <div className='section-header'>
+                  <h3>{t("reports.milkIntake")}</h3>
+                </div>
+                {milkEntries.length > 0 ? (
+                  <MilkChart entries={milkEntries} weights={weights} />
+                ) : (
+                  <p className='chart-empty'>{t("reports.noMilkEntries")}</p>
+                )}
+              </div>
+
+              <div className='chart-card card'>
+                <div className='section-header'>
+                  <h3>{t("reports.feedingsByHour")}</h3>
+                </div>
+                {milkEntries.length > 0 ? (
+                  <FeedingHourChart entries={milkEntries} />
+                ) : (
+                  <p className='chart-empty'>{t("reports.noFeedingData")}</p>
+                )}
+              </div>
+            </>
+          )}
         </section>
       )}
 
-      {activeSection === "reports" && (
-        <section className='detail-section' role='tabpanel'>
-          <div className='section-title'>
-            <h3>{t("reports.title")}</h3>
-          </div>
-          <div className='chart-card card'>
-            <div className='section-header'>
-              <h3>{t("reports.milkIntake")}</h3>
-            </div>
-            {milkEntries.length > 0 ? (
-              <MilkChart entries={milkEntries} weights={weights} />
-            ) : (
-              <p className='chart-empty'>{t("reports.noMilkEntries")}</p>
-            )}
-          </div>
-
-          <div className='chart-card card'>
-            <div className='section-header'>
-              <h3>{t("reports.feedingsByHour")}</h3>
-            </div>
-            {milkEntries.length > 0 ? (
-              <FeedingHourChart entries={milkEntries} />
-            ) : (
-              <p className='chart-empty'>{t("reports.noFeedingData")}</p>
-            )}
-          </div>
-        </section>
-      )}
-
-      {activeSection !== "reports" && (
-        <button
-          type='button'
-          className='fab'
-          onClick={() => {
-            if (activeSection === "weight") {
-              setModal("add-weight");
+      <button
+        type='button'
+        className='fab'
+        onClick={() => {
+          if (activeSection === "weight") {
+            setModal("add-weight");
+          }
+          if (activeSection === "feeding") {
+            if (feedFabAction === "manual") {
+              setModal("add-milk");
+            } else {
+              setModal("timer");
             }
-            if (activeSection === "feeding") {
-              if (feedFabAction === "manual") {
-                setModal("add-milk");
-              } else {
-                setModal("timer");
-              }
-            }
-          }}
-          aria-label={activeSection === "weight" ? t("weight.addWeight") : t("feeding.startFeeding")}
-        >
-          +
-        </button>
-      )}
+          }
+        }}
+        aria-label={activeSection === "weight" ? t("weight.addWeight") : t("feeding.startFeeding")}
+      >
+        +
+      </button>
 
       {modal === "add-weight" && (
         <AddWeightModal babyId={baby.id} onClose={() => setModal(null)} onAdded={handleMutated} />
