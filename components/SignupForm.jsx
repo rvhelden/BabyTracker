@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { signupAction } from "../app/actions.js";
+import { signupAction } from "../app/auth-actions.js";
 import { useTranslation } from "./LocaleContext.jsx";
 
 export default function SignupForm() {

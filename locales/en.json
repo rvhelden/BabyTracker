@@ -48,7 +48,10 @@
   },
   "tabs": {
     "growth": "Growth",
-    "feeding": "Feeding"
+    "feeding": "Feeding",
+    "diaper": "Diapers",
+    "temperature": "Temperature",
+    "medication": "Medication"
   },
   "growth": {
     "title": "Growth",
@@ -88,6 +91,44 @@
     "milkHistory": "Milk History",
     "noFeedingsYet": "No feedings yet. Tap + to start one.",
     "startFeeding": "Start feeding"
+  },
+  "diaper": {
+    "title": "Diapers",
+    "addEntry": "Add diaper",
+    "today": "Today",
+    "todayBreakdown": "{wet} wet, {dirty} dirty, {both} both",
+    "last24h": "Last 24h",
+    "lastChange": "Last change",
+    "lastWet": "Last wet",
+    "lastDirty": "Last dirty",
+    "never": "Never",
+    "types": {
+      "wet": "Wet",
+      "dirty": "Dirty",
+      "both": "Both",
+      "dry": "Dry"
+    }
+  },
+  "temperature": {
+    "title": "Temperature",
+    "addEntry": "Add temperature",
+    "latest": "Latest",
+    "todayRange": "Today range",
+    "status": "Status",
+    "statusValues": {
+      "normal": "Normal",
+      "elevated": "Elevated",
+      "fever": "Fever"
+    }
+  },
+  "medication": {
+    "title": "Medication",
+    "addEntry": "Add medication",
+    "today": "Today doses",
+    "lastGiven": "Last given",
+    "activeMeds": "Active meds (24h)",
+    "interval": "Min interval",
+    "none": "None"
   },
   "reports": {
     "title": "Reports",
@@ -141,6 +182,42 @@
     "lengthPlaceholder": "e.g. 52.5",
     "notes": "Notes (optional)",
     "notesPlaceholder": "e.g. After feeding",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "addDiaper": {
+    "title": "Add Diaper Entry",
+    "time": "Time",
+    "type": "Type",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "e.g. Rash improving",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "addTemperature": {
+    "title": "Add Temperature",
+    "time": "Time",
+    "temperature": "Temperature ({unit})",
+    "temperaturePlaceholder": "e.g. 37.5",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "e.g. After medicine",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "addMedication": {
+    "title": "Add Medication",
+    "time": "Time",
+    "predefined": "Predefined",
+    "custom": "Custom",
+    "predefinedHelp": "Template values will be used for name, dosage, and interval.",
+    "name": "Medication name",
+    "namePlaceholder": "e.g. Paracetamol",
+    "dosage": "Dosage",
+    "dosagePlaceholder": "e.g. 2.5 ml",
+    "interval": "Min interval (hours)",
+    "intervalPlaceholder": "e.g. 4",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "e.g. Before nap",
     "cancel": "Cancel",
     "save": "Save"
   },
@@ -218,6 +295,9 @@
     "babiesCreated": "Babies created: {n}",
     "milkEntries": "Milk entries: {n}",
     "growthEntries": "Growth entries: {n}",
+    "diaperEntries": "Diaper entries: {n}",
+    "temperatureEntries": "Temperature entries: {n}",
+    "medicationEntries": "Medication entries: {n}",
     "skippedDuplicates": "Skipped duplicates: {n}",
     "reviewImport": "Review import",
     "reviewInfo": "Review what will be created or reused before importing.",
@@ -225,6 +305,9 @@
     "babiesToReuse": "Babies to reuse",
     "milkEntriesPreview": "Milk entries",
     "growthEntriesPreview": "Growth entries",
+    "diaperEntriesPreview": "Diaper entries",
+    "temperatureEntriesPreview": "Temperature entries",
+    "medicationEntriesPreview": "Medication entries",
     "duplicatesSkipped": "Duplicates skipped",
     "create": "Create",
     "reuse": "Reuse",
@@ -260,5 +343,52 @@
     "deleteEntry": "Delete entry",
     "deleteConfirm": "Delete this entry?",
     "noMeasurements": "No measurements yet. Tap + to add one."
+  },
+  "diaperList": {
+    "editTitle": "Edit diaper entry",
+    "time": "Time",
+    "type": "Type",
+    "notes": "Notes",
+    "noteOptional": "Optional note…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "deleteEntry": "Delete entry",
+    "deleteConfirm": "Delete this entry?",
+    "empty": "No diaper entries yet. Tap + to add one."
+  },
+  "temperatureList": {
+    "editTitle": "Edit temperature entry",
+    "time": "Time",
+    "temperature": "Temperature ({unit})",
+    "notes": "Notes",
+    "noteOptional": "Optional note…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "deleteEntry": "Delete entry",
+    "deleteConfirm": "Delete this entry?",
+    "empty": "No temperature entries yet. Tap + to add one."
+  },
+  "medicationList": {
+    "editTitle": "Edit medication entry",
+    "editTemplateTitle": "Edit predefined medication",
+    "templates": "Predefined medications",
+    "templatesHelp": "Save common meds here so you can log doses faster.",
+    "noTemplates": "No predefined meds yet. Add one above.",
+    "addTemplate": "Add predefined medication",
+    "time": "Time",
+    "template": "Use predefined",
+    "custom": "Custom",
+    "name": "Medication name",
+    "dosage": "Dosage",
+    "dosagePlaceholder": "Optional dosage…",
+    "interval": "Min interval (hours)",
+    "intervalPlaceholder": "Optional interval…",
+    "notes": "Notes",
+    "noteOptional": "Optional note…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "deleteEntry": "Delete entry",
+    "deleteConfirm": "Delete this entry?",
+    "empty": "No medication entries yet. Tap + to add one."
   }
 }

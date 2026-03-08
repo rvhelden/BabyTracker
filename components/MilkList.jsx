@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { deleteMilkAction, updateMilkAction } from "../app/actions.js";
+import { deleteMilkAction, updateMilkAction } from "../app/milk-actions.js";
 import { formatLocalTime, parsePlainDate, parsePlainDateTime } from "../lib/temporal.js";
 import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";

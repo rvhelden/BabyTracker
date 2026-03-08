@@ -7,7 +7,9 @@ import nl from "../locales/nl.json";
 const translations = { en, nl };
 
 function getLang(locale) {
-  if (!locale) return "en";
+  if (!locale) {
+    return "en";
+  }
   const code = locale.split("-")[0].toLowerCase();
   return code in translations ? code : "en";
 }
@@ -20,8 +22,12 @@ function makeT(lang) {
     for (const part of parts) {
       value = value?.[part];
     }
-    if (typeof value !== "string") return key;
-    if (!vars) return value;
+    if (typeof value !== "string") {
+      return key;
+    }
+    if (!vars) {
+      return value;
+    }
     return value.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
   };
 }

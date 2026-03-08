@@ -48,7 +48,10 @@
   },
   "tabs": {
     "growth": "Groei",
-    "feeding": "Voeding"
+    "feeding": "Voeding",
+    "diaper": "Luiers",
+    "temperature": "Temperatuur",
+    "medication": "Medicatie"
   },
   "growth": {
     "title": "Groei",
@@ -88,6 +91,44 @@
     "milkHistory": "Voedingsgeschiedenis",
     "noFeedingsYet": "Nog geen voedingen. Tik op + om te beginnen.",
     "startFeeding": "Voeding starten"
+  },
+  "diaper": {
+    "title": "Luiers",
+    "addEntry": "Luier toevoegen",
+    "today": "Vandaag",
+    "todayBreakdown": "{wet} nat, {dirty} vies, {both} beide",
+    "last24h": "Afgelopen 24u",
+    "lastChange": "Laatste verschoning",
+    "lastWet": "Laatste nat",
+    "lastDirty": "Laatste vies",
+    "never": "Nooit",
+    "types": {
+      "wet": "Nat",
+      "dirty": "Vies",
+      "both": "Beide",
+      "dry": "Droog"
+    }
+  },
+  "temperature": {
+    "title": "Temperatuur",
+    "addEntry": "Temperatuur toevoegen",
+    "latest": "Laatste",
+    "todayRange": "Bereik vandaag",
+    "status": "Status",
+    "statusValues": {
+      "normal": "Normaal",
+      "elevated": "Verhoogd",
+      "fever": "Koorts"
+    }
+  },
+  "medication": {
+    "title": "Medicatie",
+    "addEntry": "Medicatie toevoegen",
+    "today": "Doses vandaag",
+    "lastGiven": "Laatst gegeven",
+    "activeMeds": "Actieve medicatie (24u)",
+    "interval": "Min. interval",
+    "none": "Geen"
   },
   "reports": {
     "title": "Rapporten",
@@ -141,6 +182,42 @@
     "lengthPlaceholder": "bijv. 52,5",
     "notes": "Notities (optioneel)",
     "notesPlaceholder": "bijv. Na voeding",
+    "cancel": "Annuleren",
+    "save": "Opslaan"
+  },
+  "addDiaper": {
+    "title": "Luier toevoegen",
+    "time": "Tijd",
+    "type": "Type",
+    "notes": "Notities (optioneel)",
+    "notesPlaceholder": "bijv. Uitslag minder",
+    "cancel": "Annuleren",
+    "save": "Opslaan"
+  },
+  "addTemperature": {
+    "title": "Temperatuur toevoegen",
+    "time": "Tijd",
+    "temperature": "Temperatuur ({unit})",
+    "temperaturePlaceholder": "bijv. 37,5",
+    "notes": "Notities (optioneel)",
+    "notesPlaceholder": "bijv. Na medicatie",
+    "cancel": "Annuleren",
+    "save": "Opslaan"
+  },
+  "addMedication": {
+    "title": "Medicatie toevoegen",
+    "time": "Tijd",
+    "predefined": "Voorgedefinieerd",
+    "custom": "Aangepast",
+    "predefinedHelp": "Sjabloonwaarden worden gebruikt voor naam, dosering en interval.",
+    "name": "Naam medicatie",
+    "namePlaceholder": "bijv. Paracetamol",
+    "dosage": "Dosering",
+    "dosagePlaceholder": "bijv. 2,5 ml",
+    "interval": "Min. interval (uren)",
+    "intervalPlaceholder": "bijv. 4",
+    "notes": "Notities (optioneel)",
+    "notesPlaceholder": "bijv. Voor dutje",
     "cancel": "Annuleren",
     "save": "Opslaan"
   },
@@ -218,6 +295,9 @@
     "babiesCreated": "Baby's aangemaakt: {n}",
     "milkEntries": "Voedingen: {n}",
     "growthEntries": "Groeimetingen: {n}",
+    "diaperEntries": "Luieritems: {n}",
+    "temperatureEntries": "Temperatuuritems: {n}",
+    "medicationEntries": "Medicatieitems: {n}",
     "skippedDuplicates": "Duplicaten overgeslagen: {n}",
     "reviewImport": "Importoverzicht",
     "reviewInfo": "Bekijk wat er wordt aangemaakt of hergebruikt voordat je importeert.",
@@ -225,6 +305,9 @@
     "babiesToReuse": "Te hergebruiken baby's",
     "milkEntriesPreview": "Voedingen",
     "growthEntriesPreview": "Groeimetingen",
+    "diaperEntriesPreview": "Luieritems",
+    "temperatureEntriesPreview": "Temperatuuritems",
+    "medicationEntriesPreview": "Medicatieitems",
     "duplicatesSkipped": "Duplicaten overgeslagen",
     "create": "Aanmaken",
     "reuse": "Hergebruiken",
@@ -260,5 +343,52 @@
     "deleteEntry": "Vermelding verwijderen",
     "deleteConfirm": "Deze vermelding verwijderen?",
     "noMeasurements": "Nog geen metingen. Tik op + om er een toe te voegen."
+  },
+  "diaperList": {
+    "editTitle": "Luieritem bewerken",
+    "time": "Tijd",
+    "type": "Type",
+    "notes": "Notities",
+    "noteOptional": "Optionele notitie…",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "deleteEntry": "Vermelding verwijderen",
+    "deleteConfirm": "Deze vermelding verwijderen?",
+    "empty": "Nog geen luieritems. Tik op + om er een toe te voegen."
+  },
+  "temperatureList": {
+    "editTitle": "Temperatuuritem bewerken",
+    "time": "Tijd",
+    "temperature": "Temperatuur ({unit})",
+    "notes": "Notities",
+    "noteOptional": "Optionele notitie…",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "deleteEntry": "Vermelding verwijderen",
+    "deleteConfirm": "Deze vermelding verwijderen?",
+    "empty": "Nog geen temperatuuritems. Tik op + om er een toe te voegen."
+  },
+  "medicationList": {
+    "editTitle": "Medicatieitem bewerken",
+    "editTemplateTitle": "Voorgedefinieerde medicatie bewerken",
+    "templates": "Voorgedefinieerde medicaties",
+    "templatesHelp": "Sla veelgebruikte medicatie hier op om doses sneller te loggen.",
+    "noTemplates": "Nog geen voorgedefinieerde medicatie. Voeg er hierboven een toe.",
+    "addTemplate": "Voorgedefinieerde medicatie toevoegen",
+    "time": "Tijd",
+    "template": "Gebruik voorgedefinieerd",
+    "custom": "Aangepast",
+    "name": "Naam medicatie",
+    "dosage": "Dosering",
+    "dosagePlaceholder": "Optionele dosering…",
+    "interval": "Min. interval (uren)",
+    "intervalPlaceholder": "Optioneel interval…",
+    "notes": "Notities",
+    "noteOptional": "Optionele notitie…",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "deleteEntry": "Vermelding verwijderen",
+    "deleteConfirm": "Deze vermelding verwijderen?",
+    "empty": "Nog geen medicatieitems. Tik op + om er een toe te voegen."
   }
 }

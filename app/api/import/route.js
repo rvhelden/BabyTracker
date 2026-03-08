@@ -68,36 +68,182 @@ const importTypes = [
         },
       };
     },
-    isDuplicate: (babyId, payload) =>
-      dal.hasGrowthEntry(babyId, payload.measured_at, payload.weight_grams, payload.length_cm),
+    isDuplicate: (babyId, payload) => {
+      const existing = dal.findGrowthEntryByDate(babyId, payload.measured_at);
+      if (!existing) {
+        return false;
+      }
+
+      const needsMerge =
+        (payload.weight_grams != null && existing.weight_grams == null) ||
+        (payload.length_cm != null && existing.length_cm == null);
+
+      if (needsMerge) {
+        return { merge: true, existingId: existing.id };
+      }
+
+      return true;
+    },
+    merge: (existingId, payload) => dal.mergeGrowthEntry(existingId, payload),
     insert: (babyId, userId, payload) => dal.addGrowthEntry(babyId, userId, payload),
+  },
+  {
+    key: "diaper",
+    label: "Diaper",
+    matcher: (name) => name.toLowerCase().endsWith("_diaper.csv"),
+    parseRow: (row) => {
+      const [babyNameRaw, timeRaw, statusRaw, noteRaw] = row;
+      const babyName = normalizeBabyName(babyNameRaw);
+      if (!babyName) {
+        return null;
+      }
+
+      const changed_at = parseDateTime(timeRaw);
+      const diaper_type = normalizeDiaperType(statusRaw);
+      if (!changed_at || !diaper_type) {
+        return null;
+      }
+
+      const notes = normalizeNote(noteRaw);
+      return {
+        babyName,
+        payload: {
+          diaper_type,
+          changed_at,
+          notes,
+        },
+      };
+    },
+    isDuplicate: (babyId, payload) =>
+      dal.hasDiaperEntry(babyId, payload.changed_at, payload.diaper_type),
+    insert: (babyId, userId, payload) => dal.addDiaperEntry(babyId, userId, payload),
+  },
+  {
+    key: "temperature",
+    label: "Temperature",
+    matcher: (name) => name.toLowerCase().endsWith("_temperature.csv"),
+    parseRow: (row) => {
+      const [babyNameRaw, timeRaw, tempRaw, noteRaw] = row;
+      const babyName = normalizeBabyName(babyNameRaw);
+      if (!babyName) {
+        return null;
+      }
+
+      const measured_at = parseDateTime(timeRaw);
+      const temperature_c = parseFloat((tempRaw || "").replace(",", "."));
+      if (!measured_at || !Number.isFinite(temperature_c)) {
+        return null;
+      }
+
+      const notes = normalizeNote(noteRaw);
+      return {
+        babyName,
+        payload: {
+          temperature_c,
+          measured_at,
+          notes,
+        },
+      };
+    },
+    isDuplicate: (babyId, payload) =>
+      dal.hasTemperatureEntry(babyId, payload.measured_at, payload.temperature_c),
+    insert: (babyId, userId, payload) => dal.addTemperatureEntry(babyId, userId, payload),
+  },
+  {
+    key: "medication",
+    label: "Medication",
+    matcher: (name) => name.toLowerCase().endsWith("_medication.csv"),
+    parseRow: (row) => {
+      const [babyNameRaw, timeRaw, nameRaw, amountRaw, unitRaw, sixthRaw, seventhRaw] = row;
+      const babyName = normalizeBabyName(babyNameRaw);
+      if (!babyName) {
+        return null;
+      }
+
+      const given_at = parseDateTime(timeRaw);
+      const medication_name = normalizeMedicationName(nameRaw);
+      if (!given_at || !medication_name) {
+        return null;
+      }
+
+      const dosage = normalizeMedicationDosage(amountRaw, unitRaw);
+      const hasIntervalColumn = row.length >= 7;
+      const intervalRaw = hasIntervalColumn ? sixthRaw : null;
+      const noteRaw = hasIntervalColumn ? seventhRaw : sixthRaw;
+      const interval_minutes = parseInt(intervalRaw || "", 10) || null;
+      const notes = normalizeNote(noteRaw);
+      return {
+        babyName,
+        payload: {
+          medication_name,
+          dosage,
+          interval_minutes,
+          given_at,
+          notes,
+        },
+      };
+    },
+    isDuplicate: (babyId, payload) =>
+      dal.hasMedicationEntry(
+        babyId,
+        payload.given_at,
+        payload.medication_name,
+        payload.dosage || null,
+      ),
+    insert: (babyId, userId, payload) => dal.addMedicationEntry(babyId, userId, payload),
   },
 ];
 
-function parseCsvLine(line) {
-  const result = [];
-  let current = "";
+function parseCsv(content) {
+  const rows = [];
+  let currentCell = "";
+  let currentRow = [];
   let inQuotes = false;
-  for (let i = 0; i < line.length; i += 1) {
-    const char = line[i];
+
+  for (let i = 0; i < content.length; i += 1) {
+    const char = content[i];
+
     if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
+      if (inQuotes && content[i + 1] === '"') {
+        currentCell += '"';
         i += 1;
       } else {
         inQuotes = !inQuotes;
       }
       continue;
     }
+
     if (char === "," && !inQuotes) {
-      result.push(current);
-      current = "";
+      currentRow.push(currentCell.trim());
+      currentCell = "";
       continue;
     }
-    current += char;
+
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && content[i + 1] === "\n") {
+        i += 1;
+      }
+      currentRow.push(currentCell.trim());
+      currentCell = "";
+
+      if (currentRow.some((cell) => cell !== "")) {
+        rows.push(currentRow);
+      }
+      currentRow = [];
+      continue;
+    }
+
+    currentCell += char;
   }
-  result.push(current);
-  return result.map((v) => v.trim());
+
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentCell.trim());
+    if (currentRow.some((cell) => cell !== "")) {
+      rows.push(currentRow);
+    }
+  }
+
+  return rows;
 }
 
 function normalizeBabyName(value) {
@@ -113,6 +259,53 @@ function normalizeNote(value) {
   }
   const cleaned = String(value).replace(/^"|"$/g, "").trim();
   return cleaned || null;
+}
+
+function normalizeDiaperType(value) {
+  const raw = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  if (raw === "mixed" || raw === "both") {
+    return "both";
+  }
+  if (raw === "wet") {
+    return "wet";
+  }
+  if (raw === "dirty") {
+    return "dirty";
+  }
+  if (raw === "dry") {
+    return "dry";
+  }
+  return null;
+}
+
+function normalizeMedicationName(value) {
+  const cleaned = String(value || "")
+    .replace(/^"|"$/g, "")
+    .trim();
+  return cleaned || null;
+}
+
+function normalizeMedicationDosage(amountRaw, unitRaw) {
+  const amount = String(amountRaw || "")
+    .replace(/^"|"$/g, "")
+    .trim();
+  const unit = String(unitRaw || "")
+    .replace(/^"|"$/g, "")
+    .trim();
+
+  if (!amount && !unit) {
+    return null;
+  }
+  if (!unit || unit === "1") {
+    return amount || null;
+  }
+  if (!amount) {
+    return unit;
+  }
+  return `${amount} ${unit}`.trim();
 }
 
 function babyKey(name) {
@@ -143,15 +336,12 @@ function parseDateTime(value) {
 
 async function readCsv(path) {
   const content = await readFile(path, "utf-8");
-  const lines = content.split(/\r?\n/).filter(Boolean);
-  if (lines.length < 2) {
+  const rows = parseCsv(content);
+  if (rows.length < 2) {
     return [];
   }
-  const rows = [];
-  for (let i = 1; i < lines.length; i += 1) {
-    rows.push(parseCsvLine(lines[i]));
-  }
-  return rows;
+
+  return rows.slice(1);
 }
 
 function safeEntryPath(entryPath) {
@@ -302,7 +492,7 @@ export async function POST(request) {
 
       if (filesByType.size === 0) {
         return NextResponse.json(
-          { error: "No formula or growth CSV files found in the zip." },
+          { error: "No supported CSV files found in the zip." },
           { status: 400 },
         );
       }
@@ -332,7 +522,18 @@ export async function POST(request) {
               state,
             });
 
-            if (baby && type.isDuplicate(baby.id, parsed.payload)) {
+            const dupResult = baby ? type.isDuplicate(baby.id, parsed.payload) : false;
+
+            if (dupResult?.merge) {
+              if (mode === "import" && type.merge) {
+                type.merge(dupResult.existingId, parsed.payload);
+              }
+
+              state.countsByType[type.key] += 1;
+              continue;
+            }
+
+            if (dupResult) {
               state.skipped += 1;
               continue;
             }

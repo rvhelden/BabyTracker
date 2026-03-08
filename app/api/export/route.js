@@ -165,6 +165,82 @@ function buildFormulaCsv(babyName, milkEntries) {
   return `${header + rows.join("\r\n")}\r\n`;
 }
 
+function diaperStatusForExport(type) {
+  if (type === "both") {
+    return "Mixed";
+  }
+  if (type === "dirty") {
+    return "Dirty";
+  }
+  if (type === "dry") {
+    return "Dry";
+  }
+  return "Wet";
+}
+
+function buildDiaperCsv(babyName, diaperEntries) {
+  const header = "Baby,Time,Status,Note\r\n";
+  const rows = diaperEntries.map((entry) => {
+    const { date, time } = splitDateTime(entry.changed_at);
+    return [
+      escapeCsv(babyName),
+      toExportDateTime(date, time),
+      diaperStatusForExport(entry.diaper_type),
+      escapeCsv(entry.notes || ""),
+    ].join(",");
+  });
+  return `${header + rows.join("\r\n")}\r\n`;
+}
+
+function buildTemperatureCsv(babyName, temperatureEntries) {
+  const header = "Baby,Time,Temperature (°C),Note\r\n";
+  const rows = temperatureEntries.map((entry) => {
+    const { date, time } = splitDateTime(entry.measured_at);
+    return [
+      escapeCsv(babyName),
+      toExportDateTime(date, time),
+      Number.isFinite(entry.temperature_c) ? Number(entry.temperature_c.toFixed(1)) : "",
+      escapeCsv(entry.notes || ""),
+    ].join(",");
+  });
+  return `${header + rows.join("\r\n")}\r\n`;
+}
+
+function splitMedicationDosage(dosage) {
+  const raw = String(dosage || "").trim();
+  if (!raw) {
+    return { amount: "", unit: "" };
+  }
+
+  const match = raw.match(/^([\d.,]+)\s*(.*)$/);
+  if (!match) {
+    return { amount: raw, unit: "" };
+  }
+
+  return {
+    amount: match[1] || "",
+    unit: match[2] || "",
+  };
+}
+
+function buildMedicationCsv(babyName, medicationEntries) {
+  const header = "Baby,Time,Medication name,Amount,,Min interval (minutes),Note\r\n";
+  const rows = medicationEntries.map((entry) => {
+    const { date, time } = splitDateTime(entry.given_at);
+    const dosage = splitMedicationDosage(entry.dosage);
+    return [
+      escapeCsv(babyName),
+      toExportDateTime(date, time),
+      escapeCsv(entry.medication_name || ""),
+      escapeCsv(dosage.amount),
+      escapeCsv(dosage.unit),
+      escapeCsv(entry.interval_minutes ?? ""),
+      escapeCsv(entry.notes || ""),
+    ].join(",");
+  });
+  return `${header + rows.join("\r\n")}\r\n`;
+}
+
 export async function GET() {
   const user = await getUser();
   if (!user) {
@@ -180,6 +256,9 @@ export async function GET() {
   for (const baby of babies) {
     const growthEntries = dal.getGrowthEntriesForBaby(baby.id, user.id) ?? [];
     const milkEntries = dal.getMilkForBaby(baby.id, user.id) ?? [];
+    const diaperEntries = dal.getDiaperEntriesForBaby(baby.id, user.id) ?? [];
+    const temperatureEntries = dal.getTemperatureEntriesForBaby(baby.id, user.id) ?? [];
+    const medicationEntries = dal.getMedicationEntriesForBaby(baby.id, user.id) ?? [];
     const safeName = String(baby.name || `baby_${baby.id}`).replace(/[^a-z0-9_-]/gi, "_");
 
     files.push({
@@ -189,6 +268,18 @@ export async function GET() {
     files.push({
       name: `${safeName}_formula.csv`,
       content: buildFormulaCsv(baby.name, milkEntries),
+    });
+    files.push({
+      name: `${safeName}_diaper.csv`,
+      content: buildDiaperCsv(baby.name, diaperEntries),
+    });
+    files.push({
+      name: `${safeName}_temperature.csv`,
+      content: buildTemperatureCsv(baby.name, temperatureEntries),
+    });
+    files.push({
+      name: `${safeName}_medication.csv`,
+      content: buildMedicationCsv(baby.name, medicationEntries),
     });
   }
 

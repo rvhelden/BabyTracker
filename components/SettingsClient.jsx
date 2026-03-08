@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { updateLocaleAction } from "../app/actions.js";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { logoutAction, updateLocaleAction } from "../app/auth-actions.js";
 import { useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
@@ -20,6 +20,7 @@ export default function SettingsClient({ locale }) {
   const [showPreview, setShowPreview] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
+  const [logoutPending, startLogoutTransition] = useTransition();
 
   const LOCALE_OPTIONS = [
     { value: "", label: t("settings.browserDefault") },
@@ -189,6 +190,10 @@ export default function SettingsClient({ locale }) {
     }
   }
 
+  function handleLogout() {
+    startLogoutTransition(() => logoutAction());
+  }
+
   return (
     <div className='settings-page'>
       <div className='settings-card card'>
@@ -307,6 +312,17 @@ export default function SettingsClient({ locale }) {
             )}
             <div>{t("settings.milkEntries", { n: importResult.countsByType?.formula || 0 })}</div>
             <div>{t("settings.growthEntries", { n: importResult.countsByType?.growth || 0 })}</div>
+            <div>{t("settings.diaperEntries", { n: importResult.countsByType?.diaper || 0 })}</div>
+            <div>
+              {t("settings.temperatureEntries", {
+                n: importResult.countsByType?.temperature || 0,
+              })}
+            </div>
+            <div>
+              {t("settings.medicationEntries", {
+                n: importResult.countsByType?.medication || 0,
+              })}
+            </div>
             {importResult.skipped > 0 && (
               <div>{t("settings.skippedDuplicates", { n: importResult.skipped })}</div>
             )}
@@ -332,7 +348,13 @@ export default function SettingsClient({ locale }) {
                 <div className='import-preview-label'>
                   {item.key === "formula"
                     ? t("settings.milkEntriesPreview")
-                    : t("settings.growthEntriesPreview")}
+                    : item.key === "growth"
+                      ? t("settings.growthEntriesPreview")
+                      : item.key === "diaper"
+                        ? t("settings.diaperEntriesPreview")
+                        : item.key === "temperature"
+                          ? t("settings.temperatureEntriesPreview")
+                          : t("settings.medicationEntriesPreview")}
                 </div>
                 <div className='import-preview-value'>{item.count}</div>
               </div>
@@ -391,6 +413,17 @@ export default function SettingsClient({ locale }) {
           </div>
         </Modal>
       )}
+
+      <div className='settings-card card'>
+        <button
+          type='button'
+          className='btn btn-secondary settings-logout-btn'
+          onClick={handleLogout}
+          disabled={logoutPending}
+        >
+          {logoutPending ? <span className='spinner' /> : t("nav.logout")}
+        </button>
+      </div>
     </div>
   );
 }

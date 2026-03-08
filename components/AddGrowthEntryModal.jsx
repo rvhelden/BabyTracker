@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { addGrowthEntryAction } from "../app/actions.js";
+import { addGrowthEntryAction } from "../app/growth-actions.js";
 import { toLocalDateInput } from "../lib/temporal.js";
 import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";

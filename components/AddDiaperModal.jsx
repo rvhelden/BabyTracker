@@ -1,13 +1,13 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { addMilkAction } from "../app/milk-actions.js";
+import { addDiaperEntryAction } from "../app/diaper-actions.js";
 import { toLocalDateTimeInput } from "../lib/temporal.js";
 import { useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
-export default function AddMilkModal({ babyId, onClose, onAdded, defaultVolume }) {
-  const boundAction = addMilkAction.bind(null, babyId);
+export default function AddDiaperModal({ babyId, onClose, onAdded }) {
+  const boundAction = addDiaperEntryAction.bind(null, babyId);
   const [state, action, pending] = useActionState(boundAction, null);
   const t = useTranslation();
 
@@ -20,50 +20,43 @@ export default function AddMilkModal({ babyId, onClose, onAdded, defaultVolume }
   const defaultDateTime = toLocalDateTimeInput();
 
   return (
-    <Modal title={t("addMilk.title")} onClose={onClose}>
+    <Modal title={t("addDiaper.title")} onClose={onClose}>
       <form action={action}>
         <div className='form-group'>
-          <label htmlFor='fed_at'>{t("addMilk.time")}</label>
+          <label htmlFor='diaper_changed_at'>{t("addDiaper.time")}</label>
           <input
-            id='fed_at'
+            id='diaper_changed_at'
             type='datetime-local'
-            name='fed_at'
+            name='changed_at'
             required
             defaultValue={defaultDateTime}
           />
         </div>
-        <input type='hidden' name='started_at' value='' />
-        <input type='hidden' name='ended_at' value='' />
-        <input type='hidden' name='duration_minutes' value='' />
         <div className='form-group'>
-          <label htmlFor='volume_ml'>{t("addMilk.amount")}</label>
-          <input
-            id='volume_ml'
-            type='number'
-            name='volume_ml'
-            placeholder={t("addMilk.amountPlaceholder")}
-            required
-            min='5'
-            max='2000'
-            defaultValue={defaultVolume}
-          />
+          <label htmlFor='diaper_type'>{t("addDiaper.type")}</label>
+          <select id='diaper_type' name='diaper_type' defaultValue='wet' required>
+            <option value='wet'>{t("diaper.types.wet")}</option>
+            <option value='dirty'>{t("diaper.types.dirty")}</option>
+            <option value='both'>{t("diaper.types.both")}</option>
+            <option value='dry'>{t("diaper.types.dry")}</option>
+          </select>
         </div>
         <div className='form-group'>
-          <label htmlFor='milk_notes'>{t("addMilk.notes")}</label>
+          <label htmlFor='diaper_notes'>{t("addDiaper.notes")}</label>
           <input
-            id='milk_notes'
+            id='diaper_notes'
             type='text'
             name='notes'
-            placeholder={t("addMilk.notesPlaceholder")}
+            placeholder={t("addDiaper.notesPlaceholder")}
           />
         </div>
         {state?.error && <p className='error-msg'>{state.error}</p>}
         <div className='modal-actions'>
           <button type='button' className='btn btn-secondary' onClick={onClose}>
-            {t("addMilk.cancel")}
+            {t("addDiaper.cancel")}
           </button>
           <button type='submit' className='btn btn-primary' disabled={pending}>
-            {pending ? <span className='spinner' /> : t("addMilk.save")}
+            {pending ? <span className='spinner' /> : t("addDiaper.save")}
           </button>
         </div>
       </form>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { acceptInviteAction } from "../app/actions.js";
+import { acceptInviteAction } from "../app/invite-actions.js";
 import { formatLocalDate, parseInstant, timeZone } from "../lib/temporal.js";
 import { useLocale, useTranslation } from "./LocaleContext.jsx";
 

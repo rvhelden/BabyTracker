@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
-import { updateBabyAction } from "../app/actions.js";
+import { updateBabyAction } from "../app/baby-actions.js";
 import { toLocalDateInput } from "../lib/temporal.js";
 import { useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
@@ -30,7 +30,7 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
   useEffect(() => {
     setPhotoUrl(baby.photo_url || "");
     setBirthDateValue(initialBirthDate);
-  }, [baby.id, baby.photo_url, initialBirthDate]);
+  }, [baby.photo_url, initialBirthDate]);
 
   useEffect(() => {
     if (state?.success) {

@@ -1,7 +1,15 @@
 import { notFound, redirect } from "next/navigation";
 import AppLayout from "../../../components/AppLayout.jsx";
 import BabyDetailClient from "../../../components/BabyDetailClient.jsx";
-import { getBabyForUser, getGrowthEntriesForBaby, getMilkForBaby } from "../../../lib/dal.js";
+import {
+  getBabyForUser,
+  getDiaperEntriesForBaby,
+  getGrowthEntriesForBaby,
+  getMedicationEntriesForBaby,
+  getMilkForBaby,
+  getPredefinedMedicationsForBaby,
+  getTemperatureEntriesForBaby,
+} from "../../../lib/dal.js";
 import { getUser } from "../../../lib/session.js";
 
 export default async function BabyDetailPage({ params }) {
@@ -18,13 +26,21 @@ export default async function BabyDetailPage({ params }) {
 
   const growthEntries = getGrowthEntriesForBaby(id, user.id) ?? [];
   const milkEntries = getMilkForBaby(id, user.id) ?? [];
+  const diaperEntries = getDiaperEntriesForBaby(id, user.id) ?? [];
+  const temperatureEntries = getTemperatureEntriesForBaby(id, user.id) ?? [];
+  const medicationEntries = getMedicationEntriesForBaby(id, user.id) ?? [];
+  const predefinedMedications = getPredefinedMedicationsForBaby(id, user.id) ?? [];
 
   return (
-    <AppLayout user={user} showBack hideBottomNav>
+    <AppLayout user={user} showBack>
       <BabyDetailClient
         baby={baby}
         growthEntries={growthEntries}
         milkEntries={milkEntries}
+        diaperEntries={diaperEntries}
+        temperatureEntries={temperatureEntries}
+        medicationEntries={medicationEntries}
+        predefinedMedications={predefinedMedications}
         locale={user.locale}
       />
     </AppLayout>

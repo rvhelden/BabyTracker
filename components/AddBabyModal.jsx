@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { createBabyAction } from "../app/actions.js";
+import { createBabyAction } from "../app/baby-actions.js";
 import { toLocalDateInput } from "../lib/temporal.js";
 import { useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";

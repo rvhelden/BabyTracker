@@ -3,7 +3,7 @@
 import Image from "next/image.js";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { deleteBabyAction, leaveBabyAction } from "../app/actions.js";
+import { deleteBabyAction, leaveBabyAction } from "../app/baby-actions.js";
 import {
   addMinutes,
   daysBetween,
@@ -17,8 +17,12 @@ import {
   todayPlainDate,
   zonedFromPlainDateTime,
 } from "../lib/temporal.js";
+import AddDiaperModal from "./AddDiaperModal.jsx";
 import AddGrowthEntryModal from "./AddGrowthEntryModal.jsx";
+import AddMedicationModal from "./AddMedicationModal.jsx";
 import AddMilkModal from "./AddMilkModal.jsx";
+import AddTemperatureModal from "./AddTemperatureModal.jsx";
+import DiaperList from "./DiaperList.jsx";
 import EditBabyModal from "./EditBabyModal.jsx";
 import FeedingHourChart from "./FeedingHourChart.jsx";
 import FeedingTimerModal from "./FeedingTimerModal.jsx";
@@ -27,8 +31,10 @@ import GrowthGainChart from "./GrowthGainChart.jsx";
 import GrowthList from "./GrowthList.jsx";
 import InviteModal from "./InviteModal.jsx";
 import { useLocale, useTranslation } from "./LocaleContext.jsx";
+import MedicationList from "./MedicationList.jsx";
 import MilkChart from "./MilkChart.jsx";
 import MilkList from "./MilkList.jsx";
+import TemperatureList from "./TemperatureList.jsx";
 
 function isEnglishLocale(locale) {
   return (locale || "").toLowerCase().startsWith("en");
@@ -145,7 +151,15 @@ function formatDayKey(date) {
   return date.toPlainDate().toString();
 }
 
-export default function BabyDetailClient({ baby, growthEntries, milkEntries }) {
+export default function BabyDetailClient({
+  baby,
+  growthEntries,
+  milkEntries,
+  diaperEntries,
+  temperatureEntries,
+  medicationEntries,
+  predefinedMedications,
+}) {
   const locale = useLocale()?.locale;
   const t = useTranslation();
   const [modal, setModal] = useState(null); // 'add-growth' | 'invite' | 'edit' | 'add-milk' | 'timer'
@@ -250,13 +264,41 @@ export default function BabyDetailClient({ baby, growthEntries, milkEntries }) {
     return nowTick > dueAt.epochMilliseconds;
   }, [milkTotals.lastFeedAt, feedingIntervalMinutes, nowTick]);
 
-  const latestGrowthEntry =
-    growthEntries.length > 0 ? growthEntries[growthEntries.length - 1] : null;
-  const firstGrowthEntry = growthEntries.length > 0 ? growthEntries[0] : null;
-  const latestWeight = latestGrowthEntry?.weight_grams != null ? latestGrowthEntry : null;
-  const firstWeight = firstGrowthEntry?.weight_grams != null ? firstGrowthEntry : null;
-  const latestLength = latestGrowthEntry?.length_cm != null ? latestGrowthEntry : null;
-  const firstLength = firstGrowthEntry?.length_cm != null ? firstGrowthEntry : null;
+  const latestWeight = useMemo(() => {
+    for (let i = growthEntries.length - 1; i >= 0; i--) {
+      if (growthEntries[i].weight_grams != null) {
+        return growthEntries[i];
+      }
+    }
+    return null;
+  }, [growthEntries]);
+
+  const firstWeight = useMemo(() => {
+    for (let i = 0; i < growthEntries.length; i++) {
+      if (growthEntries[i].weight_grams != null) {
+        return growthEntries[i];
+      }
+    }
+    return null;
+  }, [growthEntries]);
+
+  const latestLength = useMemo(() => {
+    for (let i = growthEntries.length - 1; i >= 0; i--) {
+      if (growthEntries[i].length_cm != null) {
+        return growthEntries[i];
+      }
+    }
+    return null;
+  }, [growthEntries]);
+
+  const firstLength = useMemo(() => {
+    for (let i = 0; i < growthEntries.length; i++) {
+      if (growthEntries[i].length_cm != null) {
+        return growthEntries[i];
+      }
+    }
+    return null;
+  }, [growthEntries]);
 
   const advisedDailyMilk = latestWeight
     ? Math.round((latestWeight.weight_grams / 1000) * 150)
@@ -383,6 +425,33 @@ export default function BabyDetailClient({ baby, growthEntries, milkEntries }) {
           aria-selected={activeSection === "feeding"}
         >
           {t("tabs.feeding")}
+        </button>
+        <button
+          type='button'
+          className={`tab-btn${activeSection === "diaper" ? " active" : ""}`}
+          onClick={() => setActiveSection("diaper")}
+          role='tab'
+          aria-selected={activeSection === "diaper"}
+        >
+          {t("tabs.diaper")}
+        </button>
+        <button
+          type='button'
+          className={`tab-btn${activeSection === "temperature" ? " active" : ""}`}
+          onClick={() => setActiveSection("temperature")}
+          role='tab'
+          aria-selected={activeSection === "temperature"}
+        >
+          {t("tabs.temperature")}
+        </button>
+        <button
+          type='button'
+          className={`tab-btn${activeSection === "medication" ? " active" : ""}`}
+          onClick={() => setActiveSection("medication")}
+          role='tab'
+          aria-selected={activeSection === "medication"}
+        >
+          {t("tabs.medication")}
         </button>
       </div>
 
@@ -636,6 +705,46 @@ export default function BabyDetailClient({ baby, growthEntries, milkEntries }) {
         </section>
       )}
 
+      {activeSection === "diaper" && (
+        <section className='detail-section' role='tabpanel'>
+          <div className='section-title'>
+            <h3>{t("diaper.title")}</h3>
+          </div>
+          <div className='history-card card'>
+            <DiaperList entries={diaperEntries} babyId={babyState.id} onMutated={handleMutated} />
+          </div>
+        </section>
+      )}
+
+      {activeSection === "temperature" && (
+        <section className='detail-section' role='tabpanel'>
+          <div className='section-title'>
+            <h3>{t("temperature.title")}</h3>
+          </div>
+          <div className='history-card card'>
+            <TemperatureList
+              entries={temperatureEntries}
+              babyId={babyState.id}
+              onMutated={handleMutated}
+            />
+          </div>
+        </section>
+      )}
+
+      {activeSection === "medication" && (
+        <section className='detail-section' role='tabpanel'>
+          <div className='section-title'>
+            <h3>{t("medication.title")}</h3>
+          </div>
+          <MedicationList
+            entries={medicationEntries}
+            babyId={babyState.id}
+            predefinedMedications={predefinedMedications}
+            onMutated={handleMutated}
+          />
+        </section>
+      )}
+
       <button
         type='button'
         className='fab'
@@ -650,8 +759,27 @@ export default function BabyDetailClient({ baby, growthEntries, milkEntries }) {
               setModal("timer");
             }
           }
+          if (activeSection === "diaper") {
+            setModal("add-diaper");
+          }
+          if (activeSection === "temperature") {
+            setModal("add-temperature");
+          }
+          if (activeSection === "medication") {
+            setModal("add-medication");
+          }
         }}
-        aria-label={activeSection === "growth" ? t("growth.addEntry") : t("feeding.startFeeding")}
+        aria-label={
+          activeSection === "growth"
+            ? t("growth.addEntry")
+            : activeSection === "feeding"
+              ? t("feeding.startFeeding")
+              : activeSection === "diaper"
+                ? t("diaper.addEntry")
+                : activeSection === "temperature"
+                  ? t("temperature.addEntry")
+                  : t("medication.addEntry")
+        }
       >
         +
       </button>
@@ -669,6 +797,28 @@ export default function BabyDetailClient({ baby, growthEntries, milkEntries }) {
           onClose={() => setModal(null)}
           onAdded={handleMutated}
           defaultVolume={latestMilkVolume}
+        />
+      )}
+      {modal === "add-diaper" && (
+        <AddDiaperModal
+          babyId={babyState.id}
+          onClose={() => setModal(null)}
+          onAdded={handleMutated}
+        />
+      )}
+      {modal === "add-temperature" && (
+        <AddTemperatureModal
+          babyId={babyState.id}
+          onClose={() => setModal(null)}
+          onAdded={handleMutated}
+        />
+      )}
+      {modal === "add-medication" && (
+        <AddMedicationModal
+          babyId={babyState.id}
+          predefinedMedications={predefinedMedications}
+          onClose={() => setModal(null)}
+          onAdded={handleMutated}
         />
       )}
       {modal === "timer" && (

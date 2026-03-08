@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { logoutAction } from "../app/actions.js";
+import { useEffect, useState } from "react";
 import { useTranslation } from "./LocaleContext.jsx";
 
-export default function AppLayout({ user, showBack, children, hideBottomNav }) {
+export default function AppLayout({ user, showBack, children }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const [theme, setTheme] = useState("light");
   const isHome = pathname === "/";
   const t = useTranslation();
@@ -29,12 +27,8 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
     setTheme(next);
   }
 
-  function handleLogout() {
-    startTransition(() => logoutAction());
-  }
-
   return (
-    <div className={`layout${hideBottomNav ? " no-bottom-nav" : ""}`}>
+    <div className='layout'>
       <header className='navbar'>
         <div className='navbar-left'>
           {showBack && (
@@ -69,19 +63,6 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
       </header>
 
       <main className='main-content'>{children}</main>
-
-      {!hideBottomNav && (
-        <nav className='bottom-nav' aria-label='Main navigation'>
-          <Link href='/?dashboard=1' className={`bnav-item${isHome ? " active" : ""}`}>
-            <span className='bnav-icon'>🏠</span>
-            <span className='bnav-label'>{t("nav.home")}</span>
-          </Link>
-          <button type='button' className='bnav-item' onClick={handleLogout} disabled={pending}>
-            <span className='bnav-icon'>👤</span>
-            <span className='bnav-label'>{pending ? t("nav.loggingOut") : t("nav.logout")}</span>
-          </button>
-        </nav>
-      )}
     </div>
   );
 }

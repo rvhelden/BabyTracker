@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createInviteAction } from "../app/actions.js";
+import { createInviteAction } from "../app/invite-actions.js";
 import { formatLocalDate, parseInstant, timeZone } from "../lib/temporal.js";
 import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
