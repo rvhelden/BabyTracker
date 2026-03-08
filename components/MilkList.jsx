@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { deleteMilkAction, updateMilkAction } from "../app/actions.js";
 import { formatLocalTime, parsePlainDate, parsePlainDateTime } from "../lib/temporal.js";
-import { useLocale } from "./LocaleContext.jsx";
+import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
 function formatDayKey(value) {
@@ -18,6 +18,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
   const boundUpdate = updateMilkAction.bind(null, babyId, entry.id);
   const [state, action, pending] = useActionState(boundUpdate, null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const t = useTranslation();
 
   useEffect(() => {
     if (state?.success) {
@@ -40,11 +41,11 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
     <div className='milk-edit-form'>
       <form action={action}>
         <div className='form-group'>
-          <label htmlFor='fed_at'>Time</label>
+          <label htmlFor='fed_at'>{t("milkList.time")}</label>
           <input type='datetime-local' id='fed_at' name='fed_at' defaultValue={defaultDateTime} />
         </div>
         <div className='form-group'>
-          <label htmlFor='volume_ml'>Amount (ml)</label>
+          <label htmlFor='volume_ml'>{t("milkList.amount")}</label>
           <input
             type='number'
             id='volume_ml'
@@ -56,7 +57,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
         </div>
         <div className='form-row'>
           <div className='form-group' style={{ flex: 1 }}>
-            <label htmlFor='started_at'>Started</label>
+            <label htmlFor='started_at'>{t("milkList.started")}</label>
             <input
               type='datetime-local'
               id='started_at'
@@ -65,7 +66,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
             />
           </div>
           <div className='form-group' style={{ flex: 1 }}>
-            <label htmlFor='ended_at'>Ended</label>
+            <label htmlFor='ended_at'>{t("milkList.ended")}</label>
             <input
               type='datetime-local'
               id='ended_at'
@@ -75,35 +76,35 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
           </div>
         </div>
         <div className='form-group' style={{ marginBottom: 0 }}>
-          <label htmlFor='notes'>Notes</label>
+          <label htmlFor='notes'>{t("milkList.notes")}</label>
           <input
             type='text'
             id='notes'
             name='notes'
-            placeholder='Optional note…'
+            placeholder={t("milkList.noteOptional")}
             defaultValue={entry.notes || ""}
           />
         </div>
         {state?.error && <p className='error-msg'>{state.error}</p>}
         <div className='milk-edit-actions'>
           <button type='button' className='btn btn-secondary' onClick={onDone}>
-            Cancel
+            {t("milkList.cancel")}
           </button>
           <button type='submit' className='btn btn-primary' disabled={pending}>
-            {pending ? <span className='spinner' /> : "Save"}
+            {pending ? <span className='spinner' /> : t("milkList.save")}
           </button>
         </div>
       </form>
       <div className='edit-dialog-delete'>
         {confirmingDelete ? (
           <div className='delete-confirm-row'>
-            <span>Delete this entry?</span>
+            <span>{t("milkList.deleteConfirm")}</span>
             <button
               type='button'
               className='btn btn-secondary btn-sm'
               onClick={() => setConfirmingDelete(false)}
             >
-              Cancel
+              {t("milkList.cancel")}
             </button>
             <button
               type='button'
@@ -111,7 +112,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
               onClick={onDelete}
               disabled={deleting}
             >
-              {deleting ? <span className='spinner' /> : "Delete"}
+              {deleting ? <span className='spinner' /> : t("milkList.deleteEntry")}
             </button>
           </div>
         ) : (
@@ -120,7 +121,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
             className='btn btn-danger btn-sm'
             onClick={() => setConfirmingDelete(true)}
           >
-            Delete entry
+            {t("milkList.deleteEntry")}
           </button>
         )}
       </div>
@@ -130,6 +131,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
 
 export default function MilkList({ entries, babyId, onMutated }) {
   const locale = useLocale()?.locale;
+  const t = useTranslation();
   const [dialogEntry, setDialogEntry] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -167,7 +169,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
   }, [days.length]);
 
   if (entries.length === 0) {
-    return <p className='history-empty'>No feedings yet. Tap + to start one.</p>;
+    return <p className='history-empty'>{t("feeding.noFeedingsYet")}</p>;
   }
 
   function handlePrevDay() {
@@ -219,7 +221,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
   return (
     <div>
       {openDialogEntry && (
-        <Modal title='Edit feeding' onClose={() => setDialogEntry(null)}>
+        <Modal title={t("milkList.editTitle")} onClose={() => setDialogEntry(null)}>
           <EditForm
             entry={openDialogEntry}
             babyId={babyId}
@@ -238,7 +240,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
           className='day-nav'
           onClick={handlePrevDay}
           disabled={safeIndex >= days.length - 1}
-          aria-label='Previous day'
+          aria-label={t("milkList.prevDay")}
         >
           ‹
         </button>
@@ -246,7 +248,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
           type='button'
           className='day-title'
           onClick={openDatePicker}
-          aria-label='Pick a date'
+          aria-label={t("milkList.pickDate")}
         >
           <div>{activeDay}</div>
           <div className='day-total'>{dayTotal} ml</div>
@@ -263,7 +265,7 @@ export default function MilkList({ entries, babyId, onMutated }) {
           className='day-nav'
           onClick={handleNextDay}
           disabled={safeIndex === 0}
-          aria-label='Next day'
+          aria-label={t("milkList.nextDay")}
         >
           ›
         </button>

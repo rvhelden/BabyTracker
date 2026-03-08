@@ -3,22 +3,24 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction } from "../app/actions.js";
+import { useTranslation } from "./LocaleContext.jsx";
 
 export default function LoginForm({ from }) {
   const [state, action, pending] = useActionState(loginAction, null);
+  const t = useTranslation();
 
   return (
     <div className='auth-page'>
       <div className='auth-card card'>
         <div className='auth-header'>
           <div className='auth-logo'>🍼</div>
-          <h1>Baby Tracker</h1>
-          <p>Sign in to your account</p>
+          <h1>{t("auth.appName")}</h1>
+          <p>{t("auth.signInTitle")}</p>
         </div>
         <form action={action}>
           <input type='hidden' name='from' value={from} />
           <div className='form-group'>
-            <label htmlFor='login_email'>Email</label>
+            <label htmlFor='login_email'>{t("auth.email")}</label>
             <input
               id='login_email'
               type='email'
@@ -28,7 +30,7 @@ export default function LoginForm({ from }) {
             />
           </div>
           <div className='form-group'>
-            <label htmlFor='login_password'>Password</label>
+            <label htmlFor='login_password'>{t("auth.password")}</label>
             <input
               id='login_password'
               type='password'
@@ -39,11 +41,11 @@ export default function LoginForm({ from }) {
           </div>
           {state?.error && <p className='error-msg'>{state.error}</p>}
           <button type='submit' className='btn btn-primary auth-btn' disabled={pending}>
-            {pending ? <span className='spinner' /> : "Sign In"}
+            {pending ? <span className='spinner' /> : t("auth.signIn")}
           </button>
         </form>
         <p className='auth-footer'>
-          Don't have an account? <Link href='/signup'>Sign up</Link>
+          {t("auth.noAccount")} <Link href='/signup'>{t("auth.signUpLink")}</Link>
         </p>
       </div>
     </div>

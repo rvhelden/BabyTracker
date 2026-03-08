@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { logoutAction } from "../app/actions.js";
+import { useTranslation } from "./LocaleContext.jsx";
 
 export default function AppLayout({ user, showBack, children, hideBottomNav }) {
   const pathname = usePathname();
@@ -11,6 +12,7 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
   const [pending, startTransition] = useTransition();
   const [theme, setTheme] = useState("light");
   const isHome = pathname === "/";
+  const t = useTranslation();
 
   useEffect(() => {
     const saved = window.localStorage.getItem("theme");
@@ -40,7 +42,7 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
               type='button'
               className='navbar-back'
               onClick={() => router.back()}
-              aria-label='Go back'
+              aria-label={t("nav.goBack")}
             >
               ←
             </button>
@@ -51,14 +53,14 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
           </Link>
         </div>
         <div className='navbar-right'>
-          <Link href='/settings' className='navbar-link' aria-label='Settings'>
+          <Link href='/settings' className='navbar-link' aria-label={t("nav.settings")}>
             ⚙️
           </Link>
           <button
             type='button'
             className='theme-toggle'
             onClick={toggleTheme}
-            aria-label='Toggle dark mode'
+            aria-label={t("nav.toggleDarkMode")}
           >
             {theme === "dark" ? "🌙" : "☀️"}
           </button>
@@ -72,11 +74,11 @@ export default function AppLayout({ user, showBack, children, hideBottomNav }) {
         <nav className='bottom-nav' aria-label='Main navigation'>
           <Link href='/?dashboard=1' className={`bnav-item${isHome ? " active" : ""}`}>
             <span className='bnav-icon'>🏠</span>
-            <span className='bnav-label'>Home</span>
+            <span className='bnav-label'>{t("nav.home")}</span>
           </Link>
           <button type='button' className='bnav-item' onClick={handleLogout} disabled={pending}>
             <span className='bnav-icon'>👤</span>
-            <span className='bnav-label'>{pending ? "…" : "Log out"}</span>
+            <span className='bnav-label'>{pending ? t("nav.loggingOut") : t("nav.logout")}</span>
           </button>
         </nav>
       )}

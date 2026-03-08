@@ -23,26 +23,26 @@ import EditBabyModal from "./EditBabyModal.jsx";
 import FeedingHourChart from "./FeedingHourChart.jsx";
 import FeedingTimerModal from "./FeedingTimerModal.jsx";
 import InviteModal from "./InviteModal.jsx";
-import { useLocale } from "./LocaleContext.jsx";
+import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import MilkChart from "./MilkChart.jsx";
 import MilkList from "./MilkList.jsx";
 import WeightChart from "./WeightChart.jsx";
 import WeightGainChart from "./WeightGainChart.jsx";
 import WeightList from "./WeightList.jsx";
 
-function ageLabel(birthDate) {
+function ageLabel(birthDate, t) {
   const birth = parsePlainDate(birthDate);
   const now = todayPlainDate();
   const days = birth ? Math.floor(daysBetween(birth, now)) : 0;
   if (days < 30) {
-    return `${days} day${days !== 1 ? "s" : ""} old`;
+    return days === 1 ? t("baby.ageDay", { n: days }) : t("baby.ageDays", { n: days });
   }
   const months = Math.floor(days / 30.44);
   if (months < 24) {
-    return `${months} month${months !== 1 ? "s" : ""} old`;
+    return months === 1 ? t("baby.ageMonth", { n: months }) : t("baby.ageMonths", { n: months });
   }
   const years = Math.floor(months / 12);
-  return `${years} year${years !== 1 ? "s" : ""} old`;
+  return years === 1 ? t("baby.ageYear", { n: years }) : t("baby.ageYears", { n: years });
 }
 
 function genderIcon(gender) {
@@ -71,13 +71,13 @@ function parseDateTime(value) {
   return plain ? zonedFromPlainDateTime(plain) : null;
 }
 
-function formatElapsedSince(date, nowTick) {
+function formatElapsedSince(date, nowTick, t) {
   if (!date) {
-    return "No feeds yet";
+    return t("feeding.noFeedsYet");
   }
   const diffMs = nowTick - date.epochMilliseconds;
   if (diffMs < 0) {
-    return "Just now";
+    return t("feeding.justNow");
   }
   const totalMin = Math.floor(diffMs / 60000);
   const hours = Math.floor(totalMin / 60);
@@ -88,13 +88,13 @@ function formatElapsedSince(date, nowTick) {
   return `${mins}m ago`;
 }
 
-function formatEtaUntil(date, nowTick) {
+function formatEtaUntil(date, nowTick, t) {
   if (!date) {
     return "";
   }
   const diffMs = date.epochMilliseconds - nowTick;
   if (diffMs <= 0) {
-    return "due now";
+    return t("feeding.dueNow");
   }
   const totalMin = Math.ceil(diffMs / 60000);
   const hours = Math.floor(totalMin / 60);
@@ -118,6 +118,7 @@ function formatDayKey(date) {
 
 export default function BabyDetailClient({ baby, weights, milkEntries }) {
   const locale = useLocale()?.locale;
+  const t = useTranslation();
   const [modal, setModal] = useState(null); // 'add-weight' | 'invite' | 'edit' | 'add-milk' | 'timer'
   const [activeSection, setActiveSection] = useState("feeding");
   const [feedFabAction, setFeedFabAction] = useState("timer");
@@ -223,7 +224,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete ${baby.name}'s profile? This cannot be undone.`)) {
+    if (!window.confirm(t("baby.deleteConfirm", { name: baby.name }))) {
       return;
     }
     startTransition(async () => {
@@ -235,7 +236,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
   }
 
   async function handleLeave() {
-    if (!window.confirm(`Remove yourself from ${baby.name}'s profile?`)) {
+    if (!window.confirm(t("baby.leaveConfirm", { name: baby.name }))) {
       return;
     }
     startTransition(async () => {
@@ -261,26 +262,26 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             </div>
             <div className='baby-hero-text'>
               <h2>{baby.name}</h2>
-              <p className='baby-detail-age'>{ageLabel(baby.birth_date)}</p>
+              <p className='baby-detail-age'>{ageLabel(baby.birth_date, t)}</p>
               <p className='baby-born'>
-                Born {formatLocalDate(parsePlainDate(baby.birth_date), locale)}
+                {t("baby.born")} {formatLocalDate(parsePlainDate(baby.birth_date), locale)}
               </p>
             </div>
           </div>
           <div className='baby-hero-actions'>
             <button type='button' className='baby-action-btn' onClick={() => setModal("edit")}>
-              <span>✏️</span> Edit
+              <span>✏️</span> {t("baby.edit")}
             </button>
             <button type='button' className='baby-action-btn' onClick={() => setModal("invite")}>
-              <span>📲</span> Share
+              <span>📲</span> {t("baby.share")}
             </button>
             {baby.role === "owner" ? (
               <button type='button' className='baby-action-btn danger' onClick={handleDelete}>
-                <span>🗑️</span> Delete
+                <span>🗑️</span> {t("baby.delete")}
               </button>
             ) : (
               <button type='button' className='baby-action-btn' onClick={handleLeave}>
-                <span>👋</span> Leave
+                <span>👋</span> {t("baby.leave")}
               </button>
             )}
           </div>
@@ -295,7 +296,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           role='tab'
           aria-selected={activeSection === "weight"}
         >
-          Weight
+          {t("tabs.weight")}
         </button>
         <button
           type='button'
@@ -304,7 +305,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           role='tab'
           aria-selected={activeSection === "feeding"}
         >
-          Feeding
+          {t("tabs.feeding")}
         </button>
         <button
           type='button'
@@ -313,69 +314,71 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           role='tab'
           aria-selected={activeSection === "reports"}
         >
-          Reports
+          {t("tabs.reports")}
         </button>
       </div>
 
       {activeSection === "weight" && (
         <section className='detail-section' role='tabpanel'>
           <div className='section-title'>
-            <h3>Weight</h3>
+            <h3>{t("weight.title")}</h3>
           </div>
           <div className='weight-summary'>
             <div className='summary-card card'>
-              <div className='summary-label'>Current</div>
+              <div className='summary-label'>{t("weight.current")}</div>
               <div className='summary-value'>
                 {latestWeight ? `${(latestWeight.weight_grams / 1000).toFixed(2)} kg` : "—"}
               </div>
               {latestWeight && <div className='summary-sub'>{latestWeight.weight_grams} g</div>}
             </div>
             <div className='summary-card card'>
-              <div className='summary-label'>At birth</div>
+              <div className='summary-label'>{t("weight.atBirth")}</div>
               <div className='summary-value'>
                 {firstWeight ? `${(firstWeight.weight_grams / 1000).toFixed(2)} kg` : "—"}
               </div>
               {firstWeight && <div className='summary-sub'>{firstWeight.weight_grams} g</div>}
             </div>
             <div className='summary-card card'>
-              <div className='summary-label'>Gained</div>
+              <div className='summary-label'>{t("weight.gained")}</div>
               <div
                 className={`summary-value ${gainGrams !== null && gainGrams >= 0 ? "gain-positive" : ""}`}
               >
                 {gainGrams !== null ? `${gainGrams >= 0 ? "+" : ""}${gainGrams} g` : "—"}
               </div>
-              {weights.length > 1 && <div className='summary-sub'>{weights.length} entries</div>}
+              {weights.length > 1 && (
+                <div className='summary-sub'>{t("weight.entries", { n: weights.length })}</div>
+              )}
             </div>
           </div>
 
           <div className='chart-card card'>
             <div className='section-header'>
-              <h3>Growth Chart</h3>
+              <h3>{t("weight.growthChart")}</h3>
             </div>
             {weights.length > 0 ? (
               <WeightChart weights={weights} birthDate={baby.birth_date} />
             ) : (
-              <p className='chart-empty'>No weight entries yet.</p>
+              <p className='chart-empty'>{t("weight.noEntries")}</p>
             )}
           </div>
 
           <div className='chart-card card'>
             <div className='section-header'>
-              <h3>Gain / Loss per Measurement</h3>
+              <h3>{t("weight.gainLossChart")}</h3>
             </div>
             <WeightGainChart weights={weights} />
           </div>
 
           <div className='history-card card'>
             <div className='section-header'>
-              <h3>Weight History</h3>
+              <h3>{t("weight.history")}</h3>
               <a
                 href={`/api/export/${baby.id}`}
                 download
                 className='btn btn-secondary btn-sm'
                 style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
               >
-                ⬇ Export
+                ⬇ {t("weight.export")}
               </a>
             </div>
             <WeightList weights={weights} babyId={baby.id} onMutated={handleMutated} />
@@ -386,14 +389,14 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
       {activeSection === "feeding" && (
         <section className='detail-section' role='tabpanel'>
           <div className='section-title'>
-            <h3>Feeding</h3>
+            <h3>{t("feeding.title")}</h3>
           </div>
           <div className={`feeding-timeline-card card${isFeedingLate ? " late" : ""}`}>
             <div className='feeding-timeline-row'>
               <div className='feed-chip feed-chip-last'>
-                <span className='feed-chip-label'>Last</span>
+                <span className='feed-chip-label'>{t("feeding.last")}</span>
                 <span className='feed-chip-value'>
-                  {formatElapsedSince(milkTotals.lastFeedAt, nowTick)}
+                  {formatElapsedSince(milkTotals.lastFeedAt, nowTick, t)}
                 </span>
                 {milkTotals.lastFeedAt && (
                   <span className='feed-chip-sub'>
@@ -403,17 +406,17 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
               </div>
 
               <div className='feed-chip feed-chip-next'>
-                <span className='feed-chip-label'>Next</span>
+                <span className='feed-chip-label'>{t("feeding.next")}</span>
                 {nextFeedings.length > 0 ? (
                   (() => {
                     const next = nextFeedings[0];
-                    const eta = formatEtaUntil(next, nowTick);
+                    const eta = formatEtaUntil(next, nowTick, t);
                     return (
                       <div className='feed-chip-next-body'>
                         <div className='feed-chip-next-main'>
                           <span className='feed-chip-value'>{formatTimeOnly(next, locale)}</span>
                           <span className={`feed-chip-sub${isFeedingLate ? " late" : ""}`}>
-                            {isFeedingLate ? "Late" : eta}
+                            {isFeedingLate ? t("feeding.late") : eta}
                           </span>
                         </div>
                         {nextFeedings.length > 1 && (
@@ -424,7 +427,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                                   {formatTimeOnly(time, locale)}
                                 </span>
                                 <span className='feed-chip-next-mini-eta'>
-                                  {formatEtaUntil(time, nowTick)}
+                                  {formatEtaUntil(time, nowTick, t)}
                                 </span>
                               </div>
                             ))}
@@ -434,7 +437,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                     );
                   })()
                 ) : (
-                  <span className='feed-chip-sub'>Add a feeding to see schedule</span>
+                  <span className='feed-chip-sub'>{t("feeding.addFeedingSchedule")}</span>
                 )}
               </div>
             </div>
@@ -443,26 +446,26 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
           <div className='milk-metrics-card card'>
             <div className='milk-metrics-row'>
               <div className='milk-chip milk-chip-primary'>
-                <span className='milk-chip-label'>Current Milk</span>
+                <span className='milk-chip-label'>{t("feeding.currentMilk")}</span>
                 <span className='milk-chip-value'>{milkTotals.dayTotal} ml</span>
-                <span className='milk-chip-sub'>Midnight to now</span>
+                <span className='milk-chip-sub'>{t("feeding.midnightToNow")}</span>
               </div>
 
               <div className='milk-chip'>
-                <span className='milk-chip-label'>Milk Past 24h</span>
+                <span className='milk-chip-label'>{t("feeding.milkPast24h")}</span>
                 <span className='milk-chip-value'>{milkTotals.last24hTotal} ml</span>
-                <span className='milk-chip-sub'>Rolling total</span>
+                <span className='milk-chip-sub'>{t("feeding.rollingTotal")}</span>
               </div>
 
               <div className='milk-chip milk-chip-guidance milk-chip-wide'>
-                <span className='milk-chip-label'>Advised / Max</span>
+                <span className='milk-chip-label'>{t("feeding.advisedMax")}</span>
                 {advisedDailyMilk != null ? (
                   <>
                     <span className='milk-chip-value'>{advisedDailyMilk} ml</span>
-                    <span className='milk-chip-sub'>max {maxDailyMilk} ml/day</span>
+                    <span className='milk-chip-sub'>{t("feeding.maxPerDay", { n: maxDailyMilk })}</span>
                   </>
                 ) : (
-                  <span className='milk-chip-sub'>Add weight to get guidance</span>
+                  <span className='milk-chip-sub'>{t("feeding.addWeightForGuidance")}</span>
                 )}
               </div>
             </div>
@@ -470,7 +473,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
 
           <div className='history-card card'>
             <div className='section-header'>
-              <h3>Milk History</h3>
+              <h3>{t("feeding.milkHistory")}</h3>
             </div>
             <MilkList entries={milkEntries} babyId={baby.id} onMutated={handleMutated} />
           </div>
@@ -480,27 +483,27 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
       {activeSection === "reports" && (
         <section className='detail-section' role='tabpanel'>
           <div className='section-title'>
-            <h3>Reports</h3>
+            <h3>{t("reports.title")}</h3>
           </div>
           <div className='chart-card card'>
             <div className='section-header'>
-              <h3>Milk Intake</h3>
+              <h3>{t("reports.milkIntake")}</h3>
             </div>
             {milkEntries.length > 0 ? (
               <MilkChart entries={milkEntries} weights={weights} />
             ) : (
-              <p className='chart-empty'>No milk entries yet.</p>
+              <p className='chart-empty'>{t("reports.noMilkEntries")}</p>
             )}
           </div>
 
           <div className='chart-card card'>
             <div className='section-header'>
-              <h3>Feedings by Hour</h3>
+              <h3>{t("reports.feedingsByHour")}</h3>
             </div>
             {milkEntries.length > 0 ? (
               <FeedingHourChart entries={milkEntries} />
             ) : (
-              <p className='chart-empty'>No feeding data yet.</p>
+              <p className='chart-empty'>{t("reports.noFeedingData")}</p>
             )}
           </div>
         </section>
@@ -522,7 +525,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
               }
             }
           }}
-          aria-label={activeSection === "weight" ? "Add weight" : "Start feeding"}
+          aria-label={activeSection === "weight" ? t("weight.addWeight") : t("feeding.startFeeding")}
         >
           +
         </button>

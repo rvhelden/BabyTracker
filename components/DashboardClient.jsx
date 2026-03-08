@@ -5,20 +5,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { daysBetween, parsePlainDate, todayPlainDate } from "../lib/temporal.js";
 import AddBabyModal from "./AddBabyModal.jsx";
+import { useTranslation } from "./LocaleContext.jsx";
 
-function ageLabel(birthDate) {
+function ageLabel(birthDate, t) {
   const birth = parsePlainDate(birthDate);
   const now = todayPlainDate();
   const days = birth ? Math.floor(daysBetween(birth, now)) : 0;
   if (days < 30) {
-    return `${days} day${days !== 1 ? "s" : ""} old`;
+    return days === 1 ? t("baby.ageDay", { n: days }) : t("baby.ageDays", { n: days });
   }
   const months = Math.floor(days / 30.44);
   if (months < 24) {
-    return `${months} month${months !== 1 ? "s" : ""} old`;
+    return months === 1 ? t("baby.ageMonth", { n: months }) : t("baby.ageMonths", { n: months });
   }
   const years = Math.floor(months / 12);
-  return `${years} year${years !== 1 ? "s" : ""} old`;
+  return years === 1 ? t("baby.ageYear", { n: years }) : t("baby.ageYears", { n: years });
 }
 
 function genderIcon(gender) {
@@ -35,6 +36,7 @@ export default function DashboardClient({ babies }) {
   const [showAdd, setShowAdd] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslation();
 
   useEffect(() => {
     if (babies.length === 0) {
@@ -62,16 +64,16 @@ export default function DashboardClient({ babies }) {
     <div className='dashboard'>
       <div className='dashboard-header'>
         <div>
-          <h2>My Babies</h2>
-          <p className='subtitle'>Track growth and milestones</p>
+          <h2>{t("dashboard.title")}</h2>
+          <p className='subtitle'>{t("dashboard.subtitle")}</p>
         </div>
       </div>
 
       {babies.length === 0 ? (
         <div className='empty-state card'>
           <div className='empty-icon'>🍼</div>
-          <h3>No babies yet</h3>
-          <p>Tap the + button to add your first baby.</p>
+          <h3>{t("dashboard.noBabies")}</h3>
+          <p>{t("dashboard.noBabiesHint")}</p>
         </div>
       ) : (
         <div className='babies-grid'>
@@ -87,18 +89,18 @@ export default function DashboardClient({ babies }) {
                 </div>
                 <div className='baby-info'>
                   <h3>{baby.name}</h3>
-                  <span className='baby-age'>{ageLabel(baby.birth_date)}</span>
+                  <span className='baby-age'>{ageLabel(baby.birth_date, t)}</span>
                 </div>
               </div>
               <div className='baby-stats'>
                 {baby.latest_weight ? (
                   <div className='stat'>
-                    <span className='stat-label'>Latest weight</span>
+                    <span className='stat-label'>{t("dashboard.latestWeight")}</span>
                     <span className='stat-value'>{(baby.latest_weight / 1000).toFixed(2)} kg</span>
                     <span className='stat-sub'>{baby.latest_weight_date}</span>
                   </div>
                 ) : (
-                  <div className='stat no-data'>No weight entries yet</div>
+                  <div className='stat no-data'>{t("dashboard.noWeight")}</div>
                 )}
               </div>
             </Link>
@@ -106,7 +108,12 @@ export default function DashboardClient({ babies }) {
         </div>
       )}
 
-      <button type='button' className='fab' onClick={() => setShowAdd(true)} aria-label='Add baby'>
+      <button
+        type='button'
+        className='fab'
+        onClick={() => setShowAdd(true)}
+        aria-label={t("dashboard.addBaby")}
+      >
         +
       </button>
 

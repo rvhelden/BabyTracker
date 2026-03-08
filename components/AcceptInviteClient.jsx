@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { acceptInviteAction } from "../app/actions.js";
 import { formatLocalDate, parseInstant } from "../lib/temporal.js";
-import { useLocale } from "./LocaleContext.jsx";
+import { useLocale, useTranslation } from "./LocaleContext.jsx";
 
 export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
   const locale = useLocale()?.locale;
+  const t = useTranslation();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState(null);
 
@@ -25,29 +26,28 @@ export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
       <div className='auth-card card invite-accept-card'>
         <div className='auth-header'>
           <div className='auth-logo'>🍼</div>
-          <h1>Baby Tracker</h1>
+          <h1>{t("auth.appName")}</h1>
         </div>
 
         <div className='invite-ready'>
           <p className='invite-desc'>
-            <strong>{invite.invitedBy}</strong> has invited you to track{" "}
-            <strong>{invite.babyName}</strong>'s growth.
+            {t("acceptInvite.invitedTo", { invitedBy: invite.invitedBy, babyName: invite.babyName })}
           </p>
           <div className='invite-details'>
             <div className='invite-detail-row'>
-              <span>Baby</span>
+              <span>{t("acceptInvite.baby")}</span>
               <strong>{invite.babyName}</strong>
             </div>
             <div className='invite-detail-row'>
-              <span>Born</span>
+              <span>{t("acceptInvite.born")}</span>
               <strong>{invite.birthDate}</strong>
             </div>
             <div className='invite-detail-row'>
-              <span>Invited by</span>
+              <span>{t("acceptInvite.invitedBy")}</span>
               <strong>{invite.invitedBy}</strong>
             </div>
             <div className='invite-detail-row'>
-              <span>Expires</span>
+              <span>{t("acceptInvite.expires")}</span>
               <strong>
                 {formatLocalDate(
                   parseInstant(invite.expiresAt)?.toZonedDateTimeISO().toPlainDate(),
@@ -67,31 +67,29 @@ export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
                 onClick={handleAccept}
                 disabled={pending}
               >
-                {pending ? <span className='spinner' /> : `Accept Invite`}
+                {pending ? <span className='spinner' /> : t("acceptInvite.accept")}
               </button>
               <Link href='/' className='btn btn-secondary auth-btn' style={{ textAlign: "center" }}>
-                Decline
+                {t("acceptInvite.decline")}
               </Link>
             </div>
           ) : (
             <>
-              <p className='invite-login-hint'>
-                Sign in or create an account to accept this invite.
-              </p>
+              <p className='invite-login-hint'>{t("acceptInvite.loginHint")}</p>
               <div className='invite-actions'>
                 <Link
                   href={`/login?from=/invite/${token}`}
                   className='btn btn-primary auth-btn'
                   style={{ textAlign: "center" }}
                 >
-                  Sign In
+                  {t("acceptInvite.signIn")}
                 </Link>
                 <Link
                   href='/signup'
                   className='btn btn-secondary auth-btn'
                   style={{ textAlign: "center" }}
                 >
-                  Create Account
+                  {t("acceptInvite.createAccount")}
                 </Link>
               </div>
             </>

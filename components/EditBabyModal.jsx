@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { updateBabyAction } from "../app/actions.js";
 import { toLocalDateInput } from "../lib/temporal.js";
+import { useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
 export default function EditBabyModal({ baby, onClose, onUpdated }) {
@@ -11,6 +12,7 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [photoUrl, setPhotoUrl] = useState(baby.photo_url || "");
+  const t = useTranslation();
 
   useEffect(() => {
     if (state?.success) {
@@ -36,23 +38,23 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setPhotoError(data?.error || "Failed to upload photo");
+        setPhotoError(data?.error || t("editBaby.failedUpload"));
       } else {
         setPhotoUrl(data.photo_url || "");
       }
     } catch {
-      setPhotoError("Failed to upload photo");
+      setPhotoError(t("editBaby.failedUpload"));
     } finally {
       setPhotoUploading(false);
     }
   }
 
   return (
-    <Modal title='Edit Baby' onClose={onClose}>
+    <Modal title={t("editBaby.title")} onClose={onClose}>
       <form action={action}>
         <input type='hidden' name='photo_url' value={photoUrl} />
         <div className='form-group'>
-          <label htmlFor='baby_photo'>Photo</label>
+          <label htmlFor='baby_photo'>{t("editBaby.photo")}</label>
           <div className='photo-picker'>
             <div className='photo-preview'>
               {photoUrl ? (
@@ -70,17 +72,17 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
                 onChange={handlePhotoChange}
                 disabled={photoUploading}
               />
-              <span className='photo-hint'>JPG, PNG, or WebP up to 5MB.</span>
+              <span className='photo-hint'>{t("editBaby.photoHint")}</span>
             </div>
           </div>
           {photoError && <p className='error-msg'>{photoError}</p>}
         </div>
         <div className='form-group'>
-          <label htmlFor='edit_baby_name'>Name</label>
+          <label htmlFor='edit_baby_name'>{t("editBaby.name")}</label>
           <input id='edit_baby_name' type='text' name='name' defaultValue={baby.name} required />
         </div>
         <div className='form-group'>
-          <label htmlFor='edit_baby_birth_date'>Date of Birth</label>
+          <label htmlFor='edit_baby_birth_date'>{t("editBaby.dateOfBirth")}</label>
           <input
             id='edit_baby_birth_date'
             type='date'
@@ -91,20 +93,20 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
           />
         </div>
         <div className='form-group'>
-          <label htmlFor='edit_baby_gender'>Gender</label>
+          <label htmlFor='edit_baby_gender'>{t("editBaby.gender")}</label>
           <select id='edit_baby_gender' name='gender' defaultValue={baby.gender || ""}>
-            <option value=''>Prefer not to say</option>
-            <option value='female'>Girl</option>
-            <option value='male'>Boy</option>
+            <option value=''>{t("editBaby.preferNotToSay")}</option>
+            <option value='female'>{t("editBaby.girl")}</option>
+            <option value='male'>{t("editBaby.boy")}</option>
           </select>
         </div>
         {state?.error && <p className='error-msg'>{state.error}</p>}
         <div className='modal-actions'>
           <button type='button' className='btn btn-secondary' onClick={onClose}>
-            Cancel
+            {t("editBaby.cancel")}
           </button>
           <button type='submit' className='btn btn-primary' disabled={pending}>
-            {pending ? <span className='spinner' /> : "Save Changes"}
+            {pending ? <span className='spinner' /> : t("editBaby.save")}
           </button>
         </div>
       </form>
