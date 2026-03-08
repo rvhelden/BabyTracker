@@ -27,6 +27,7 @@ import { useLocale } from "./LocaleContext.jsx";
 import MilkChart from "./MilkChart.jsx";
 import MilkList from "./MilkList.jsx";
 import WeightChart from "./WeightChart.jsx";
+import WeightGainChart from "./WeightGainChart.jsx";
 import WeightList from "./WeightList.jsx";
 
 function ageLabel(birthDate) {
@@ -358,9 +359,24 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             )}
           </div>
 
+          <div className='chart-card card'>
+            <div className='section-header'>
+              <h3>Gain / Loss per Measurement</h3>
+            </div>
+            <WeightGainChart weights={weights} />
+          </div>
+
           <div className='history-card card'>
             <div className='section-header'>
               <h3>Weight History</h3>
+              <a
+                href={`/api/export/${baby.id}`}
+                download
+                className='btn btn-secondary btn-sm'
+                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
+              >
+                ⬇ Export
+              </a>
             </div>
             <WeightList weights={weights} babyId={baby.id} onMutated={handleMutated} />
           </div>
