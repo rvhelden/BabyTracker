@@ -18,6 +18,8 @@ export default function SettingsClient({ locale }) {
   const [previewing, setPreviewing] = useState(false);
   const [importPreview, setImportPreview] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
 
   const LOCALE_OPTIONS = [
     { value: "", label: t("settings.browserDefault") },
@@ -145,6 +147,48 @@ export default function SettingsClient({ locale }) {
     }
   }
 
+  async function handleExport() {
+    setExportError("");
+    setExporting(true);
+    try {
+      const res = await fetch("/api/export", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        let message = t("settings.exportFailed");
+        try {
+          const data = await res.json();
+          if (data?.error) {
+            message = data.error;
+          }
+        } catch {
+          // fall back to translated message
+        }
+        setExportError(message);
+        return;
+      }
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") || "";
+      const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+      const filename = filenameMatch?.[1] || "babytracker_export.zip";
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setExportError(t("settings.exportFailed"));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className='settings-page'>
       <div className='settings-card card'>
@@ -203,6 +247,28 @@ export default function SettingsClient({ locale }) {
             ))}
           </select>
         </div>
+      </div>
+
+      <div className='settings-card card'>
+        <div className='section-header'>
+          <h3>{t("settings.exportData")}</h3>
+        </div>
+        <p className='settings-help' style={{ marginBottom: "0.75rem" }}>
+          {t("settings.exportHelp")}
+        </p>
+        <button
+          type='button'
+          className='btn btn-secondary'
+          onClick={handleExport}
+          disabled={exporting || importing || previewing}
+        >
+          {exporting ? <span className='spinner' /> : t("settings.exportNow")}
+        </button>
+        {exportError && (
+          <p className='error-msg' style={{ marginTop: "0.75rem" }}>
+            {exportError}
+          </p>
+        )}
       </div>
 
       <div className='settings-card card'>

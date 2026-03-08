@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { updateBabyAction } from "../app/actions.js";
 import { toLocalDateInput } from "../lib/temporal.js";
 import { useTranslation } from "./LocaleContext.jsx";
@@ -12,13 +12,31 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [photoUrl, setPhotoUrl] = useState(baby.photo_url || "");
+  const [birthDateValue, setBirthDateValue] = useState(baby.birth_date || "");
   const t = useTranslation();
+
+  const initialBirthDate = useMemo(() => {
+    const raw = String(baby.birth_date || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      return raw;
+    }
+    const withTime = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s].+$/)?.[1];
+    if (withTime) {
+      return withTime;
+    }
+    return "";
+  }, [baby.birth_date]);
+
+  useEffect(() => {
+    setPhotoUrl(baby.photo_url || "");
+    setBirthDateValue(initialBirthDate);
+  }, [baby.id, baby.photo_url, initialBirthDate]);
 
   useEffect(() => {
     if (state?.success) {
-      onUpdated();
+      onUpdated(state?.baby || null);
     }
-  }, [state?.success, onUpdated]);
+  }, [state?.baby, state?.success, onUpdated]);
 
   const today = toLocalDateInput();
 
@@ -87,7 +105,8 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
             id='edit_baby_birth_date'
             type='date'
             name='birth_date'
-            defaultValue={baby.birth_date}
+            value={birthDateValue}
+            onChange={(event) => setBirthDateValue(event.target.value)}
             required
             max={today}
           />

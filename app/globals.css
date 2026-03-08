@@ -13,6 +13,7 @@
   --primary-light: #e8f0fb;
   --primary-rgb: 108, 142, 191;
   --accent: #f5a623;
+  --accent-rgb: 245, 166, 35;
   --danger: #e55353;
   --danger-rgb: 229, 83, 83;
   --success: #4caf50;
@@ -40,6 +41,7 @@ html[data-theme="dark"] {
   --primary-light: #1f2b3c;
   --primary-rgb: 139, 178, 230;
   --accent: #f0b347;
+  --accent-rgb: 240, 179, 71;
   --danger: #f26b6b;
   --danger-rgb: 242, 107, 107;
   --success: #6dd08b;
@@ -1256,7 +1258,7 @@ button.history-row {
   font-size: 1.8rem;
   line-height: 1;
   cursor: pointer;
-  color: #fff;
+  color: var(--text);
 }
 .day-nav:disabled {
   opacity: 0.4;
@@ -1967,4 +1969,17 @@ button.history-row {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* ── Dark-mode overrides for hardcoded colours ── */
+html[data-theme="dark"] .baby-action-btn.danger:hover,
+html[data-theme="dark"] .baby-action-btn.danger:active {
+  background: #3a1a1a;
+}
+html[data-theme="dark"] .maction-btn.danger:hover,
+html[data-theme="dark"] .maction-btn.danger:active {
+  background: #3a1a1a;
+}
+html[data-theme="dark"] .error-msg {
+  background: #3a1a1a;
 }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createInviteAction } from "../app/actions.js";
-import { formatLocalDate, parseInstant } from "../lib/temporal.js";
+import { formatLocalDate, parseInstant, timeZone } from "../lib/temporal.js";
 import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
@@ -32,8 +32,9 @@ export default function InviteModal({ babyId, babyName, onClose }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const expiresLabel = invite
-    ? formatLocalDate(parseInstant(invite.expiresAt)?.toZonedDateTimeISO().toPlainDate(), locale)
+  const inviteExpiresInstant = parseInstant(invite?.expiresAt);
+  const expiresLabel = inviteExpiresInstant
+    ? formatLocalDate(inviteExpiresInstant.toZonedDateTimeISO(timeZone).toPlainDate(), locale)
     : "";
 
   return (
@@ -41,9 +42,7 @@ export default function InviteModal({ babyId, babyName, onClose }) {
       <div className='invite-modal'>
         {!invite ? (
           <>
-            <p className='invite-info'>
-              {t("invite.generateInfo", { name: babyName })}
-            </p>
+            <p className='invite-info'>{t("invite.generateInfo", { name: babyName })}</p>
             {error && <p className='error-msg'>{error}</p>}
             <div className='modal-actions'>
               <button type='button' className='btn btn-secondary' onClick={onClose}>
@@ -61,9 +60,7 @@ export default function InviteModal({ babyId, babyName, onClose }) {
           </>
         ) : (
           <>
-            <p className='invite-info'>
-              {t("invite.scanInfo", { date: expiresLabel })}
-            </p>
+            <p className='invite-info'>{t("invite.scanInfo", { date: expiresLabel })}</p>
             <div className='qr-container'>
               <img src={invite.qrDataUrl} alt='QR Code invite' className='qr-image' />
             </div>

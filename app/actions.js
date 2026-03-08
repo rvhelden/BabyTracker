@@ -7,9 +7,39 @@ import QRCode from "qrcode";
 import { v4 as uuidv4 } from "uuid";
 import * as dal from "../lib/dal.js";
 import { getSession, getUser } from "../lib/session.js";
-import { nowInstant, nowZoned, parsePlainDateTime, toLocalDateTimeInput } from "../lib/temporal.js";
+import {
+  nowInstant,
+  nowZoned,
+  parsePlainDate,
+  parsePlainDateTime,
+  toLocalDateTimeInput,
+} from "../lib/temporal.js";
 
 const { hash, compare } = bcrypt;
+
+function normalizeBirthDateInput(value) {
+  if (!value) {
+    return null;
+  }
+
+  const raw = String(value).trim();
+  const dateOnly = raw.match(/^\d{4}-\d{2}-\d{2}$/)?.[0];
+  if (dateOnly) {
+    return parsePlainDate(dateOnly)?.toString() || null;
+  }
+
+  const isoWithTime = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s].+$/)?.[1];
+  if (isoWithTime) {
+    return parsePlainDate(isoWithTime)?.toString() || null;
+  }
+
+  const slashIso = raw.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+  if (slashIso) {
+    return parsePlainDate(`${slashIso[1]}-${slashIso[2]}-${slashIso[3]}`)?.toString() || null;
+  }
+
+  return null;
+}
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 
@@ -98,11 +128,15 @@ export async function createBabyAction(_prevState, formData) {
   }
 
   const name = formData.get("name")?.toString().trim();
-  const birth_date = formData.get("birth_date")?.toString();
+  const birthDateRaw = formData.get("birth_date")?.toString();
+  const birth_date = normalizeBirthDateInput(birthDateRaw);
   const gender = formData.get("gender")?.toString();
 
-  if (!name || !birth_date) {
+  if (!name || !birthDateRaw) {
     return { error: "Name and birth date are required" };
+  }
+  if (!birth_date) {
+    return { error: "Birth date is invalid" };
   }
 
   dal.createBaby(name, birth_date, gender, user.id);
@@ -117,9 +151,14 @@ export async function updateBabyAction(babyId, _prevState, formData) {
   }
 
   const name = formData.get("name")?.toString().trim();
-  const birth_date = formData.get("birth_date")?.toString();
+  const birthDateRaw = formData.get("birth_date")?.toString();
+  const birth_date = normalizeBirthDateInput(birthDateRaw);
   const gender = formData.get("gender")?.toString();
   const photo_url = formData.get("photo_url")?.toString();
+
+  if (birthDateRaw && !birth_date) {
+    return { error: "Birth date is invalid" };
+  }
 
   const updated = dal.updateBaby(babyId, user.id, { name, birth_date, gender, photo_url });
   if (!updated) {
@@ -127,7 +166,7 @@ export async function updateBabyAction(babyId, _prevState, formData) {
   }
 
   revalidatePath(`/baby/${babyId}`);
-  return { success: true };
+  return { success: true, baby: updated };
 }
 
 export async function deleteBabyAction(babyId) {
@@ -350,7 +389,9 @@ export async function createInviteAction(babyId) {
   }
 
   const token = uuidv4();
-  const expiresAt = nowInstant().add({ days: 7 }).toString();
+  const expiresAt = nowInstant()
+    .add({ hours: 24 * 7 })
+    .toString();
 
   dal.createInvite(babyId, user.id, token, expiresAt);
 

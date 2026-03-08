@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { acceptInviteAction } from "../app/actions.js";
-import { formatLocalDate, parseInstant } from "../lib/temporal.js";
+import { formatLocalDate, parseInstant, timeZone } from "../lib/temporal.js";
 import { useLocale, useTranslation } from "./LocaleContext.jsx";
 
 export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
@@ -11,6 +11,7 @@ export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
   const t = useTranslation();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState(null);
+  const inviteExpiresInstant = parseInstant(invite?.expiresAt);
 
   function handleAccept() {
     startTransition(async () => {
@@ -31,7 +32,10 @@ export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
 
         <div className='invite-ready'>
           <p className='invite-desc'>
-            {t("acceptInvite.invitedTo", { invitedBy: invite.invitedBy, babyName: invite.babyName })}
+            {t("acceptInvite.invitedTo", {
+              invitedBy: invite.invitedBy,
+              babyName: invite.babyName,
+            })}
           </p>
           <div className='invite-details'>
             <div className='invite-detail-row'>
@@ -49,10 +53,12 @@ export default function AcceptInviteClient({ token, invite, isLoggedIn }) {
             <div className='invite-detail-row'>
               <span>{t("acceptInvite.expires")}</span>
               <strong>
-                {formatLocalDate(
-                  parseInstant(invite.expiresAt)?.toZonedDateTimeISO().toPlainDate(),
-                  locale,
-                )}
+                {inviteExpiresInstant
+                  ? formatLocalDate(
+                      inviteExpiresInstant.toZonedDateTimeISO(timeZone).toPlainDate(),
+                      locale,
+                    )
+                  : ""}
               </strong>
             </div>
           </div>

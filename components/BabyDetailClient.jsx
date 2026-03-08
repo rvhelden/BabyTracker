@@ -2,7 +2,7 @@
 
 import Image from "next/image.js";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { deleteBabyAction, leaveBabyAction } from "../app/actions.js";
 import {
   addMinutes,
@@ -126,8 +126,20 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
   const [feedFabAction, setFeedFabAction] = useState("timer");
   const [feedingIntervalHours, setFeedingIntervalHours] = useState("3");
   const [nowTick, setNowTick] = useState(() => nowInstant().epochMilliseconds);
+  const [babyState, setBabyState] = useState(baby);
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const optimisticRef = useRef(false);
+
+  useEffect(() => {
+    // Only sync from server prop when we haven't done an optimistic update.
+    // After an optimistic update, we trust the local state until the server
+    // sends a genuinely different baby (different id).
+    if (optimisticRef.current) {
+      return;
+    }
+    setBabyState(baby);
+  }, [baby]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("feedFabAction");
@@ -146,8 +158,8 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
     if (!baby?.id) {
       return;
     }
-    window.localStorage.setItem("lastViewedBabyId", String(baby.id));
-  }, [baby?.id]);
+    window.localStorage.setItem("lastViewedBabyId", String(babyState.id));
+  }, [babyState?.id]);
 
   const latestMilk = milkEntries.length
     ? [...milkEntries].sort((a, b) => b.fed_at.localeCompare(a.fed_at))[0]
@@ -225,12 +237,28 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
     router.refresh();
   }
 
+  const handleBabyUpdated = useCallback((updatedBaby) => {
+    setModal(null);
+    if (updatedBaby?.id) {
+      optimisticRef.current = true;
+      setBabyState((prev) => ({
+        ...(prev || {}),
+        ...updatedBaby,
+        // Preserve fields only present on the full getBabyForUser result
+        role: prev?.role,
+        parents: prev?.parents,
+        birth_date: updatedBaby.birth_date ?? prev?.birth_date,
+        photo_url: updatedBaby.photo_url ?? prev?.photo_url,
+      }));
+    }
+  }, []);
+
   async function handleDelete() {
-    if (!window.confirm(t("baby.deleteConfirm", { name: baby.name }))) {
+    if (!window.confirm(t("baby.deleteConfirm", { name: babyState.name }))) {
       return;
     }
     startTransition(async () => {
-      const result = await deleteBabyAction(baby.id);
+      const result = await deleteBabyAction(babyState.id);
       if (result?.error) {
         alert(result.error);
       }
@@ -238,11 +266,11 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
   }
 
   async function handleLeave() {
-    if (!window.confirm(t("baby.leaveConfirm", { name: baby.name }))) {
+    if (!window.confirm(t("baby.leaveConfirm", { name: babyState.name }))) {
       return;
     }
     startTransition(async () => {
-      const result = await leaveBabyAction(baby.id);
+      const result = await leaveBabyAction(babyState.id);
       if (result?.error) {
         alert(result.error);
       }
@@ -256,17 +284,17 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
         <div className='baby-hero-main'>
           <div className='baby-hero-info'>
             <div className='baby-detail-avatar'>
-              {baby.photo_url ? (
-                <Image src={baby.photo_url} alt={baby.name} width={100} height={100} />
+              {babyState.photo_url ? (
+                <Image src={babyState.photo_url} alt={babyState.name} width={100} height={100} />
               ) : (
-                genderIcon(baby.gender)
+                genderIcon(babyState.gender)
               )}
             </div>
             <div className='baby-hero-text'>
-              <h2>{baby.name}</h2>
-              <p className='baby-detail-age'>{ageLabel(baby.birth_date, t)}</p>
+              <h2>{babyState.name}</h2>
+              <p className='baby-detail-age'>{ageLabel(babyState.birth_date, t)}</p>
               <p className='baby-born'>
-                {t("baby.born")} {formatLocalDate(parsePlainDate(baby.birth_date), locale)}
+                {t("baby.born")} {formatLocalDate(parsePlainDate(babyState.birth_date), locale)}
               </p>
             </div>
           </div>
@@ -277,7 +305,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             <button type='button' className='baby-action-btn' onClick={() => setModal("invite")}>
               <span>📲</span> {t("baby.share")}
             </button>
-            {baby.role === "owner" ? (
+            {babyState.role === "owner" ? (
               <button type='button' className='baby-action-btn danger' onClick={handleDelete}>
                 <span>🗑️</span> {t("baby.delete")}
               </button>
@@ -325,42 +353,15 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
               📊
             </button>
           </div>
-          <div className='weight-summary'>
-            <div className='summary-card card'>
-              <div className='summary-label'>{t("weight.current")}</div>
-              <div className='summary-value'>
-                {latestWeight ? `${(latestWeight.weight_grams / 1000).toFixed(2)} kg` : "—"}
-              </div>
-              {latestWeight && <div className='summary-sub'>{latestWeight.weight_grams} g</div>}
-            </div>
-            <div className='summary-card card'>
-              <div className='summary-label'>{t("weight.atBirth")}</div>
-              <div className='summary-value'>
-                {firstWeight ? `${(firstWeight.weight_grams / 1000).toFixed(2)} kg` : "—"}
-              </div>
-              {firstWeight && <div className='summary-sub'>{firstWeight.weight_grams} g</div>}
-            </div>
-            <div className='summary-card card'>
-              <div className='summary-label'>{t("weight.gained")}</div>
-              <div
-                className={`summary-value ${gainGrams !== null && gainGrams >= 0 ? "gain-positive" : ""}`}
-              >
-                {gainGrams !== null ? `${gainGrams >= 0 ? "+" : ""}${gainGrams} g` : "—"}
-              </div>
-              {weights.length > 1 && (
-                <div className='summary-sub'>{t("weight.entries", { n: weights.length })}</div>
-              )}
-            </div>
-          </div>
 
-          {showWeightReports && (
+          {showWeightReports ? (
             <>
               <div className='chart-card card'>
                 <div className='section-header'>
                   <h3>{t("weight.growthChart")}</h3>
                 </div>
                 {weights.length > 0 ? (
-                  <WeightChart weights={weights} birthDate={baby.birth_date} />
+                  <WeightChart weights={weights} birthDate={babyState.birth_date} />
                 ) : (
                   <p className='chart-empty'>{t("weight.noEntries")}</p>
                 )}
@@ -373,22 +374,44 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                 <WeightGainChart weights={weights} />
               </div>
             </>
-          )}
+          ) : (
+            <>
+              <div className='weight-summary'>
+                <div className='summary-card card'>
+                  <div className='summary-label'>{t("weight.current")}</div>
+                  <div className='summary-value'>
+                    {latestWeight ? `${(latestWeight.weight_grams / 1000).toFixed(2)} kg` : "—"}
+                  </div>
+                  {latestWeight && <div className='summary-sub'>{latestWeight.weight_grams} g</div>}
+                </div>
+                <div className='summary-card card'>
+                  <div className='summary-label'>{t("weight.atBirth")}</div>
+                  <div className='summary-value'>
+                    {firstWeight ? `${(firstWeight.weight_grams / 1000).toFixed(2)} kg` : "—"}
+                  </div>
+                  {firstWeight && <div className='summary-sub'>{firstWeight.weight_grams} g</div>}
+                </div>
+                <div className='summary-card card'>
+                  <div className='summary-label'>{t("weight.gained")}</div>
+                  <div
+                    className={`summary-value ${gainGrams !== null && gainGrams >= 0 ? "gain-positive" : ""}`}
+                  >
+                    {gainGrams !== null ? `${gainGrams >= 0 ? "+" : ""}${gainGrams} g` : "—"}
+                  </div>
+                  {weights.length > 1 && (
+                    <div className='summary-sub'>{t("weight.entries", { n: weights.length })}</div>
+                  )}
+                </div>
+              </div>
 
-          <div className='history-card card'>
-            <div className='section-header'>
-              <h3>{t("weight.history")}</h3>
-              <a
-                href={`/api/export/${baby.id}`}
-                download
-                className='btn btn-secondary btn-sm'
-                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
-              >
-                ⬇ {t("weight.export")}
-              </a>
-            </div>
-            <WeightList weights={weights} babyId={baby.id} onMutated={handleMutated} />
-          </div>
+              <div className='history-card card'>
+                <div className='section-header'>
+                  <h3>{t("weight.history")}</h3>
+                </div>
+                <WeightList weights={weights} babyId={babyState.id} onMutated={handleMutated} />
+              </div>
+            </>
+          )}
         </section>
       )}
 
@@ -406,94 +429,8 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
               📊
             </button>
           </div>
-          <div className={`feeding-timeline-card card${isFeedingLate ? " late" : ""}`}>
-            <div className='feeding-timeline-row'>
-              <div className='feed-chip feed-chip-last'>
-                <span className='feed-chip-label'>{t("feeding.last")}</span>
-                <span className='feed-chip-value'>
-                  {formatElapsedSince(milkTotals.lastFeedAt, nowTick, t)}
-                </span>
-                {milkTotals.lastFeedAt && (
-                  <span className='feed-chip-sub'>
-                    {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime(), locale)}
-                  </span>
-                )}
-              </div>
 
-              <div className='feed-chip feed-chip-next'>
-                <span className='feed-chip-label'>{t("feeding.next")}</span>
-                {nextFeedings.length > 0 ? (
-                  (() => {
-                    const next = nextFeedings[0];
-                    const eta = formatEtaUntil(next, nowTick, t);
-                    return (
-                      <div className='feed-chip-next-body'>
-                        <div className='feed-chip-next-main'>
-                          <span className='feed-chip-value'>{formatTimeOnly(next, locale)}</span>
-                          <span className={`feed-chip-sub${isFeedingLate ? " late" : ""}`}>
-                            {isFeedingLate ? t("feeding.late") : eta}
-                          </span>
-                        </div>
-                        {nextFeedings.length > 1 && (
-                          <div className='feed-chip-next-rail'>
-                            {nextFeedings.slice(1, 3).map((time) => (
-                              <div key={time.toString()} className='feed-chip-next-mini'>
-                                <span className='feed-chip-next-mini-time'>
-                                  {formatTimeOnly(time, locale)}
-                                </span>
-                                <span className='feed-chip-next-mini-eta'>
-                                  {formatEtaUntil(time, nowTick, t)}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <span className='feed-chip-sub'>{t("feeding.addFeedingSchedule")}</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className='milk-metrics-card card'>
-            <div className='milk-metrics-row'>
-              <div className='milk-chip milk-chip-primary'>
-                <span className='milk-chip-label'>{t("feeding.currentMilk")}</span>
-                <span className='milk-chip-value'>{milkTotals.dayTotal} ml</span>
-                <span className='milk-chip-sub'>{t("feeding.midnightToNow")}</span>
-              </div>
-
-              <div className='milk-chip'>
-                <span className='milk-chip-label'>{t("feeding.milkPast24h")}</span>
-                <span className='milk-chip-value'>{milkTotals.last24hTotal} ml</span>
-                <span className='milk-chip-sub'>{t("feeding.rollingTotal")}</span>
-              </div>
-
-              <div className='milk-chip milk-chip-guidance milk-chip-wide'>
-                <span className='milk-chip-label'>{t("feeding.advisedMax")}</span>
-                {advisedDailyMilk != null ? (
-                  <>
-                    <span className='milk-chip-value'>{advisedDailyMilk} ml</span>
-                    <span className='milk-chip-sub'>{t("feeding.maxPerDay", { n: maxDailyMilk })}</span>
-                  </>
-                ) : (
-                  <span className='milk-chip-sub'>{t("feeding.addWeightForGuidance")}</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className='history-card card'>
-            <div className='section-header'>
-              <h3>{t("feeding.milkHistory")}</h3>
-            </div>
-            <MilkList entries={milkEntries} babyId={baby.id} onMutated={handleMutated} />
-          </div>
-
-          {showFeedingReports && (
+          {showFeedingReports ? (
             <>
               <div className='chart-card card'>
                 <div className='section-header'>
@@ -515,6 +452,99 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                 ) : (
                   <p className='chart-empty'>{t("reports.noFeedingData")}</p>
                 )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={`feeding-timeline-card card${isFeedingLate ? " late" : ""}`}>
+                <div className='feeding-timeline-row'>
+                  <div className='feed-chip feed-chip-last'>
+                    <span className='feed-chip-label'>{t("feeding.last")}</span>
+                    <span className='feed-chip-value'>
+                      {formatElapsedSince(milkTotals.lastFeedAt, nowTick, t)}
+                    </span>
+                    {milkTotals.lastFeedAt && (
+                      <span className='feed-chip-sub'>
+                        {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime(), locale)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className='feed-chip feed-chip-next'>
+                    <span className='feed-chip-label'>{t("feeding.next")}</span>
+                    {nextFeedings.length > 0 ? (
+                      (() => {
+                        const next = nextFeedings[0];
+                        const eta = formatEtaUntil(next, nowTick, t);
+                        return (
+                          <div className='feed-chip-next-body'>
+                            <div className='feed-chip-next-main'>
+                              <span className='feed-chip-value'>
+                                {formatTimeOnly(next, locale)}
+                              </span>
+                              <span className={`feed-chip-sub${isFeedingLate ? " late" : ""}`}>
+                                {isFeedingLate ? t("feeding.late") : eta}
+                              </span>
+                            </div>
+                            {nextFeedings.length > 1 && (
+                              <div className='feed-chip-next-rail'>
+                                {nextFeedings.slice(1, 3).map((time) => (
+                                  <div key={time.toString()} className='feed-chip-next-mini'>
+                                    <span className='feed-chip-next-mini-time'>
+                                      {formatTimeOnly(time, locale)}
+                                    </span>
+                                    <span className='feed-chip-next-mini-eta'>
+                                      {formatEtaUntil(time, nowTick, t)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <span className='feed-chip-sub'>{t("feeding.addFeedingSchedule")}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className='milk-metrics-card card'>
+                <div className='milk-metrics-row'>
+                  <div className='milk-chip milk-chip-primary'>
+                    <span className='milk-chip-label'>{t("feeding.currentMilk")}</span>
+                    <span className='milk-chip-value'>{milkTotals.dayTotal} ml</span>
+                    <span className='milk-chip-sub'>{t("feeding.midnightToNow")}</span>
+                  </div>
+
+                  <div className='milk-chip'>
+                    <span className='milk-chip-label'>{t("feeding.milkPast24h")}</span>
+                    <span className='milk-chip-value'>{milkTotals.last24hTotal} ml</span>
+                    <span className='milk-chip-sub'>{t("feeding.rollingTotal")}</span>
+                  </div>
+
+                  <div className='milk-chip milk-chip-guidance milk-chip-wide'>
+                    <span className='milk-chip-label'>{t("feeding.advisedMax")}</span>
+                    {advisedDailyMilk != null ? (
+                      <>
+                        <span className='milk-chip-value'>{advisedDailyMilk} ml</span>
+                        <span className='milk-chip-sub'>
+                          {t("feeding.maxPerDay", { n: maxDailyMilk })}
+                        </span>
+                      </>
+                    ) : (
+                      <span className='milk-chip-sub'>{t("feeding.addWeightForGuidance")}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className='history-card card'>
+                <div className='section-header'>
+                  <h3>{t("feeding.milkHistory")}</h3>
+                </div>
+                <MilkList entries={milkEntries} babyId={babyState.id} onMutated={handleMutated} />
               </div>
             </>
           )}
@@ -542,11 +572,15 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
       </button>
 
       {modal === "add-weight" && (
-        <AddWeightModal babyId={baby.id} onClose={() => setModal(null)} onAdded={handleMutated} />
+        <AddWeightModal
+          babyId={babyState.id}
+          onClose={() => setModal(null)}
+          onAdded={handleMutated}
+        />
       )}
       {modal === "add-milk" && (
         <AddMilkModal
-          babyId={baby.id}
+          babyId={babyState.id}
           onClose={() => setModal(null)}
           onAdded={handleMutated}
           defaultVolume={latestMilkVolume}
@@ -554,17 +588,25 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
       )}
       {modal === "timer" && (
         <FeedingTimerModal
-          babyId={baby.id}
+          babyId={babyState.id}
           onClose={() => setModal(null)}
           onAdded={handleMutated}
           defaultVolume={latestMilkVolume}
         />
       )}
       {modal === "invite" && (
-        <InviteModal babyId={baby.id} babyName={baby.name} onClose={() => setModal(null)} />
+        <InviteModal
+          babyId={babyState.id}
+          babyName={babyState.name}
+          onClose={() => setModal(null)}
+        />
       )}
       {modal === "edit" && (
-        <EditBabyModal baby={baby} onClose={() => setModal(null)} onUpdated={handleMutated} />
+        <EditBabyModal
+          baby={babyState}
+          onClose={() => setModal(null)}
+          onUpdated={handleBabyUpdated}
+        />
       )}
     </div>
   );

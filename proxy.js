@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
+import { NextResponse } from "next/server";
 
 const SESSION_OPTIONS = {
   password: process.env.SESSION_SECRET || "baby-tracker-session-secret-32chars!!xx",
@@ -31,5 +31,7 @@ export async function proxy(request) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|icons|manifest\\.webmanifest|sw\\.js).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico|icons|manifest\\.webmanifest|sw\\.js|uploads).*)",
+  ],
 };
