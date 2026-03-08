@@ -17,6 +17,7 @@
   --danger: #e55353;
   --danger-rgb: 229, 83, 83;
   --success: #4caf50;
+  --success-rgb: 76, 175, 80;
   --bg: #f0f4f9;
   --surface: #ffffff;
   --border: #dde3ed;
@@ -45,6 +46,7 @@ html[data-theme="dark"] {
   --danger: #f26b6b;
   --danger-rgb: 242, 107, 107;
   --success: #6dd08b;
+  --success-rgb: 109, 208, 139;
   --bg: #0f141b;
   --surface: #171e27;
   --border: #2a3442;
@@ -1024,7 +1026,7 @@ select {
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.35rem;
 }
 .history-empty {
   text-align: center;
@@ -1038,18 +1040,9 @@ select {
   gap: 0.75rem;
   padding: 0.7rem 0.85rem;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  transition: background 0.12s;
-}
-.history-row:first-child {
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-}
-.history-row:last-child {
-  border-bottom: none;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-}
-.history-row:only-child {
+  border: 1px solid rgba(var(--primary-rgb), 0.18);
   border-radius: var(--radius-sm);
+  transition: background 0.12s;
 }
 @media (hover: hover) {
   .history-row:hover {
@@ -1125,7 +1118,6 @@ button.history-row {
   display: flex;
   width: 100%;
   text-align: left;
-  border: none;
   cursor: pointer;
   font: inherit;
   color: inherit;
@@ -1527,6 +1519,10 @@ button.history-row {
   border-color: rgba(var(--accent-rgb), 0.42);
   background: linear-gradient(160deg, rgba(var(--accent-rgb), 0.14), var(--surface-contrast));
 }
+.milk-chip-remaining {
+  border-color: rgba(var(--success-rgb), 0.38);
+  background: linear-gradient(160deg, rgba(var(--success-rgb), 0.12), var(--surface-contrast));
+}
 .milk-chip-wide {
   grid-column: 1 / -1;
 }
@@ -1686,6 +1682,11 @@ button.history-row {
 .milk-edit-form {
   padding: 1rem;
 }
+.milk-edit-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
 .milk-edit-actions {
   display: flex;
   gap: 0.6rem;
@@ -1791,11 +1792,11 @@ button.history-row {
 }
 
 @media (max-width: 640px) {
-  .feeding-timeline-row {
+  .milk-edit-form .form-row {
     grid-template-columns: 1fr;
   }
-  .feed-chip-next-body {
-    flex-direction: column;
+  .feeding-timeline-row {
+    grid-template-columns: 1fr;
   }
   .feed-chip-next-rail {
     align-items: flex-start;

@@ -227,6 +227,13 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
     ? Math.round((latestWeight.weight_grams / 1000) * 150)
     : null;
   const maxDailyMilk = latestWeight ? Math.round((latestWeight.weight_grams / 1000) * 180) : null;
+  const lastBottleAmount = latestMilk?.volume_ml ?? null;
+  const remainingMilk =
+    advisedDailyMilk != null ? Math.max(advisedDailyMilk - milkTotals.dayTotal, 0) : null;
+  const remainingBottles =
+    remainingMilk != null && remainingMilk > 0 && lastBottleAmount > 0
+      ? Math.ceil(remainingMilk / lastBottleAmount)
+      : null;
   const gainGrams =
     latestWeight && firstWeight && weights.length > 1
       ? latestWeight.weight_grams - firstWeight.weight_grams
@@ -524,7 +531,26 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                     <span className='milk-chip-sub'>{t("feeding.rollingTotal")}</span>
                   </div>
 
-                  <div className='milk-chip milk-chip-guidance milk-chip-wide'>
+                  <div className='milk-chip milk-chip-remaining'>
+                    <span className='milk-chip-label'>{t("feeding.remainingMilk")}</span>
+                    <span className='milk-chip-value'>
+                      {remainingMilk != null ? `${remainingMilk} ml` : "—"}
+                    </span>
+                    <span className='milk-chip-sub'>
+                      {advisedDailyMilk == null
+                        ? t("feeding.addWeightForGuidance")
+                        : remainingMilk === 0
+                          ? t("feeding.goalReached")
+                          : lastBottleAmount > 0
+                            ? t("feeding.remainingBottlesEstimate", {
+                                n: remainingBottles,
+                                ml: lastBottleAmount,
+                              })
+                            : t("feeding.addFeedingForBottleEstimate")}
+                    </span>
+                  </div>
+
+                  <div className='milk-chip milk-chip-guidance'>
                     <span className='milk-chip-label'>{t("feeding.advisedMax")}</span>
                     {advisedDailyMilk != null ? (
                       <>
