@@ -290,28 +290,28 @@ export default function TemperatureList({ entries, babyId, onMutated }) {
   return (
     <div>
       <div className='growth-summary'>
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("temperature.latest")}</div>
-          <div className='summary-value'>{toDisplayTemp(summary.latestTemp, locale)}</div>
-          <div className='summary-sub'>
+        <div className='feed-chip'>
+          <div className='feed-chip-label'>{t("temperature.latest")}</div>
+          <div className='feed-chip-value'>{toDisplayTemp(summary.latestTemp, locale)}</div>
+          <div className='feed-chip-sub'>
             {summary.latest
               ? formatLocalTime(parsePlainDateTime(summary.latest.measured_at), locale)
               : "—"}
           </div>
         </div>
 
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("temperature.todayRange")}</div>
-          <div className='summary-value'>
+        <div className='feed-chip'>
+          <div className='feed-chip-label'>{t("temperature.todayRange")}</div>
+          <div className='feed-chip-value'>
             {summary.low == null || summary.high == null
               ? "—"
               : `${toDisplayTemp(summary.low, locale)} - ${toDisplayTemp(summary.high, locale)}`}
           </div>
         </div>
 
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("temperature.status")}</div>
-          <div className={`summary-value temp-status ${summary.status}`}>
+        <div className='feed-chip'>
+          <div className='feed-chip-label'>{t("temperature.status")}</div>
+          <div className={`feed-chip-value temp-status ${summary.status}`}>
             {t(`temperature.statusValues.${summary.status}`)}
           </div>
         </div>

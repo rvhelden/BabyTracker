@@ -118,9 +118,9 @@ function formatElapsedSince(date, nowTick, t) {
   const hours = Math.floor(totalMin / 60);
   const mins = totalMin % 60;
   if (hours > 0) {
-    return `${hours}h ${mins}m ago`;
+    return t("feeding.agoHoursMinutes", { hours, minutes: mins });
   }
-  return `${mins}m ago`;
+  return t("feeding.agoMinutes", { minutes: mins });
 }
 
 function formatEtaUntil(date, nowTick, t) {
@@ -135,9 +135,9 @@ function formatEtaUntil(date, nowTick, t) {
   const hours = Math.floor(totalMin / 60);
   const mins = totalMin % 60;
   if (hours > 0) {
-    return `in ${hours}h ${mins}m`;
+    return t("feeding.inHoursMinutes", { hours, minutes: mins });
   }
-  return `in ${mins}m`;
+  return t("feeding.inMinutes", { minutes: mins });
 }
 
 function formatTimeOnly(date, locale) {
@@ -166,6 +166,7 @@ export default function BabyDetailClient({
   const [activeSection, setActiveSection] = useState("feeding");
   const [showGrowthReports, setShowGrowthReports] = useState(false);
   const [showFeedingReports, setShowFeedingReports] = useState(false);
+  const [showDiaperReports, setShowDiaperReports] = useState(false);
   const [feedFabAction, setFeedFabAction] = useState("timer");
   const [feedingIntervalHours, setFeedingIntervalHours] = useState("3");
   const [nowTick, setNowTick] = useState(() => nowInstant().epochMilliseconds);
@@ -496,45 +497,47 @@ export default function BabyDetailClient({
           ) : (
             <>
               <div className='growth-summary'>
-                <div className='summary-card card'>
-                  <div className='summary-label'>{t("growth.currentWeight")}</div>
-                  <div className='summary-value'>
+                <div className='feed-chip'>
+                  <div className='feed-chip-label'>{t("growth.currentWeight")}</div>
+                  <div className='feed-chip-value'>
                     {latestWeight ? `${(latestWeight.weight_grams / 1000).toFixed(2)} kg` : "—"}
                   </div>
-                  {latestWeight && <div className='summary-sub'>{latestWeight.weight_grams} g</div>}
+                  {latestWeight && (
+                    <div className='feed-chip-sub'>{latestWeight.weight_grams} g</div>
+                  )}
                 </div>
-                <div className='summary-card card'>
-                  <div className='summary-label'>{t("growth.currentLength")}</div>
-                  <div className='summary-value'>
+                <div className='feed-chip'>
+                  <div className='feed-chip-label'>{t("growth.currentLength")}</div>
+                  <div className='feed-chip-value'>
                     {formatLengthFromCm(latestLength?.length_cm, locale)}
                   </div>
                   {latestLength && (
-                    <div className='summary-sub'>
+                    <div className='feed-chip-sub'>
                       {formatLocalDate(parsePlainDate(latestLength.measured_at), locale)}
                     </div>
                   )}
                 </div>
-                <div className='summary-card card'>
-                  <div className='summary-label'>{t("growth.gained")}</div>
+                <div className='feed-chip'>
+                  <div className='feed-chip-label'>{t("growth.gained")}</div>
                   <div
-                    className={`summary-value ${gainGrams !== null && gainGrams >= 0 ? "gain-positive" : ""}`}
+                    className={`feed-chip-value ${gainGrams !== null && gainGrams >= 0 ? "gain-positive" : ""}`}
                   >
                     {gainGrams !== null ? `${gainGrams >= 0 ? "+" : ""}${gainGrams} g` : "—"}
                   </div>
                   {growthEntries.length > 1 && (
-                    <div className='summary-sub'>
+                    <div className='feed-chip-sub'>
                       {t("growth.entries", { n: growthEntries.length })}
                     </div>
                   )}
                 </div>
-                <div className='summary-card card'>
-                  <div className='summary-label'>{t("growth.lengthGained")}</div>
+                <div className='feed-chip'>
+                  <div className='feed-chip-label'>{t("growth.lengthGained")}</div>
                   <div
-                    className={`summary-value ${lengthGainCm !== null && lengthGainCm >= 0 ? "gain-positive" : ""}`}
+                    className={`feed-chip-value ${lengthGainCm !== null && lengthGainCm >= 0 ? "gain-positive" : ""}`}
                   >
                     {formatLengthDeltaFromCm(lengthGainCm, locale)}
                   </div>
-                  {firstLength && <div className='summary-sub'>{t("growth.sinceBirth")}</div>}
+                  {firstLength && <div className='feed-chip-sub'>{t("growth.sinceBirth")}</div>}
                 </div>
               </div>
 
@@ -594,106 +597,100 @@ export default function BabyDetailClient({
             </>
           ) : (
             <>
-              <div className={`feeding-timeline-card card${isFeedingLate ? " late" : ""}`}>
-                <div className='feeding-timeline-row'>
-                  <div className='feed-chip feed-chip-last'>
-                    <span className='feed-chip-label'>{t("feeding.last")}</span>
-                    <span className='feed-chip-value'>
-                      {formatElapsedSince(milkTotals.lastFeedAt, nowTick, t)}
+              <div className={`feeding-timeline-row${isFeedingLate ? " late" : ""}`}>
+                <div className='feed-chip feed-chip-last'>
+                  <span className='feed-chip-label'>{t("feeding.last")}</span>
+                  <span className='feed-chip-value'>
+                    {formatElapsedSince(milkTotals.lastFeedAt, nowTick, t)}
+                  </span>
+                  {milkTotals.lastFeedAt && (
+                    <span className='feed-chip-sub'>
+                      {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime(), locale)}
                     </span>
-                    {milkTotals.lastFeedAt && (
-                      <span className='feed-chip-sub'>
-                        {formatLocalDateTime(milkTotals.lastFeedAt.toPlainDateTime(), locale)}
-                      </span>
-                    )}
-                  </div>
+                  )}
+                </div>
 
-                  <div className='feed-chip feed-chip-next'>
-                    <span className='feed-chip-label'>{t("feeding.next")}</span>
-                    {nextFeedings.length > 0 ? (
-                      (() => {
-                        const next = nextFeedings[0];
-                        const eta = formatEtaUntil(next, nowTick, t);
-                        return (
-                          <div className='feed-chip-next-body'>
-                            <div className='feed-chip-next-main'>
-                              <span className='feed-chip-value'>
-                                {formatTimeOnly(next, locale)}
-                              </span>
-                              <span className={`feed-chip-sub${isFeedingLate ? " late" : ""}`}>
-                                {isFeedingLate ? t("feeding.late") : eta}
-                              </span>
-                            </div>
-                            {nextFeedings.length > 1 && (
-                              <div className='feed-chip-next-rail'>
-                                {nextFeedings.slice(1, 3).map((time) => (
-                                  <div key={time.toString()} className='feed-chip-next-mini'>
-                                    <span className='feed-chip-next-mini-time'>
-                                      {formatTimeOnly(time, locale)}
-                                    </span>
-                                    <span className='feed-chip-next-mini-eta'>
-                                      {formatEtaUntil(time, nowTick, t)}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                <div className='feed-chip feed-chip-next'>
+                  <span className='feed-chip-label'>{t("feeding.next")}</span>
+                  {nextFeedings.length > 0 ? (
+                    (() => {
+                      const next = nextFeedings[0];
+                      const eta = formatEtaUntil(next, nowTick, t);
+                      return (
+                        <div className='feed-chip-next-body'>
+                          <div className='feed-chip-next-main'>
+                            <span className='feed-chip-value'>{formatTimeOnly(next, locale)}</span>
+                            <span className={`feed-chip-sub${isFeedingLate ? " late" : ""}`}>
+                              {isFeedingLate ? t("feeding.late") : eta}
+                            </span>
                           </div>
-                        );
-                      })()
-                    ) : (
-                      <span className='feed-chip-sub'>{t("feeding.addFeedingSchedule")}</span>
-                    )}
-                  </div>
+                          {nextFeedings.length > 1 && (
+                            <div className='feed-chip-next-rail'>
+                              {nextFeedings.slice(1, 3).map((time) => (
+                                <div key={time.toString()} className='feed-chip-next-mini'>
+                                  <span className='feed-chip-next-mini-time'>
+                                    {formatTimeOnly(time, locale)}
+                                  </span>
+                                  <span className='feed-chip-next-mini-eta'>
+                                    {formatEtaUntil(time, nowTick, t)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <span className='feed-chip-sub'>{t("feeding.addFeedingSchedule")}</span>
+                  )}
                 </div>
               </div>
 
-              <div className='milk-metrics-card card'>
-                <div className='milk-metrics-row'>
-                  <div className='milk-chip milk-chip-primary'>
-                    <span className='milk-chip-label'>{t("feeding.currentMilk")}</span>
-                    <span className='milk-chip-value'>{milkTotals.dayTotal} ml</span>
-                    <span className='milk-chip-sub'>{t("feeding.midnightToNow")}</span>
-                  </div>
+              <div className='milk-metrics-row'>
+                <div className='milk-chip milk-chip-primary'>
+                  <span className='milk-chip-label'>{t("feeding.currentMilk")}</span>
+                  <span className='milk-chip-value'>{milkTotals.dayTotal} ml</span>
+                  <span className='milk-chip-sub'>{t("feeding.midnightToNow")}</span>
+                </div>
 
-                  <div className='milk-chip'>
-                    <span className='milk-chip-label'>{t("feeding.milkPast24h")}</span>
-                    <span className='milk-chip-value'>{milkTotals.last24hTotal} ml</span>
-                    <span className='milk-chip-sub'>{t("feeding.rollingTotal")}</span>
-                  </div>
+                <div className='milk-chip'>
+                  <span className='milk-chip-label'>{t("feeding.milkPast24h")}</span>
+                  <span className='milk-chip-value'>{milkTotals.last24hTotal} ml</span>
+                  <span className='milk-chip-sub'>{t("feeding.rollingTotal")}</span>
+                </div>
 
-                  <div className='milk-chip milk-chip-remaining'>
-                    <span className='milk-chip-label'>{t("feeding.remainingMilk")}</span>
-                    <span className='milk-chip-value'>
-                      {remainingMilk != null ? `${remainingMilk} ml` : "—"}
-                    </span>
-                    <span className='milk-chip-sub'>
-                      {advisedDailyMilk == null
-                        ? t("feeding.addWeightForGuidance")
-                        : remainingMilk === 0
-                          ? t("feeding.goalReached")
-                          : lastBottleAmount > 0
-                            ? t("feeding.remainingBottlesEstimate", {
-                                n: remainingBottles,
-                                ml: lastBottleAmount,
-                              })
-                            : t("feeding.addFeedingForBottleEstimate")}
-                    </span>
-                  </div>
+                <div className='milk-chip milk-chip-remaining'>
+                  <span className='milk-chip-label'>{t("feeding.remainingMilk")}</span>
+                  <span className='milk-chip-value'>
+                    {remainingMilk != null ? `${remainingMilk} ml` : "—"}
+                  </span>
+                  <span className='milk-chip-sub'>
+                    {advisedDailyMilk == null
+                      ? t("feeding.addWeightForGuidance")
+                      : remainingMilk === 0
+                        ? t("feeding.goalReached")
+                        : lastBottleAmount > 0
+                          ? t("feeding.remainingBottlesEstimate", {
+                              n: remainingBottles,
+                              ml: lastBottleAmount,
+                            })
+                          : t("feeding.addFeedingForBottleEstimate")}
+                  </span>
+                </div>
 
-                  <div className='milk-chip milk-chip-guidance'>
-                    <span className='milk-chip-label'>{t("feeding.advisedMax")}</span>
-                    {advisedDailyMilk != null ? (
-                      <>
-                        <span className='milk-chip-value'>{advisedDailyMilk} ml</span>
-                        <span className='milk-chip-sub'>
-                          {t("feeding.maxPerDay", { n: maxDailyMilk })}
-                        </span>
-                      </>
-                    ) : (
-                      <span className='milk-chip-sub'>{t("feeding.addWeightForGuidance")}</span>
-                    )}
-                  </div>
+                <div className='milk-chip milk-chip-guidance'>
+                  <span className='milk-chip-label'>{t("feeding.advisedMax")}</span>
+                  {advisedDailyMilk != null ? (
+                    <>
+                      <span className='milk-chip-value'>{advisedDailyMilk} ml</span>
+                      <span className='milk-chip-sub'>
+                        {t("feeding.maxPerDay", { n: maxDailyMilk })}
+                      </span>
+                    </>
+                  ) : (
+                    <span className='milk-chip-sub'>{t("feeding.addWeightForGuidance")}</span>
+                  )}
                 </div>
               </div>
 
@@ -712,10 +709,22 @@ export default function BabyDetailClient({
         <section className='detail-section' role='tabpanel'>
           <div className='section-title'>
             <h3>{t("diaper.title")}</h3>
+            <button
+              type='button'
+              className={`reports-icon-btn${showDiaperReports ? " active" : ""}`}
+              onClick={() => setShowDiaperReports((v) => !v)}
+              aria-label={t("reports.title")}
+              title={t("reports.title")}
+            >
+              📊
+            </button>
           </div>
-          <div className='history-card card'>
-            <DiaperList entries={diaperEntries} babyId={babyState.id} onMutated={handleMutated} />
-          </div>
+          <DiaperList
+            entries={diaperEntries}
+            babyId={babyState.id}
+            onMutated={handleMutated}
+            showReports={showDiaperReports}
+          />
         </section>
       )}
 
@@ -724,13 +733,11 @@ export default function BabyDetailClient({
           <div className='section-title'>
             <h3>{t("temperature.title")}</h3>
           </div>
-          <div className='history-card card'>
-            <TemperatureList
-              entries={temperatureEntries}
-              babyId={babyState.id}
-              onMutated={handleMutated}
-            />
-          </div>
+          <TemperatureList
+            entries={temperatureEntries}
+            babyId={babyState.id}
+            onMutated={handleMutated}
+          />
         </section>
       )}
 

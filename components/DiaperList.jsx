@@ -22,7 +22,7 @@ function typeEmoji(type) {
   return "💧";
 }
 
-function elapsedLabel(entryDateTime, nowDateTime) {
+function elapsedLabel(entryDateTime, nowDateTime, t) {
   if (!entryDateTime || !nowDateTime) {
     return "—";
   }
@@ -39,14 +39,14 @@ function elapsedLabel(entryDateTime, nowDateTime) {
   const hours = totalHours % 24;
 
   if (days > 0) {
-    return `${days}d ${hours}h ago`;
+    return t("diaper.agoDaysHours", { days, hours });
   }
 
   if (totalHours > 0) {
-    return `${totalHours}h ago`;
+    return t("diaper.agoHours", { hours: totalHours });
   }
 
-  return `${totalMinutes}m ago`;
+  return t("diaper.agoMinutes", { minutes: totalMinutes });
 }
 
 function dayKeyFromDateTime(value) {
@@ -181,7 +181,7 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
   );
 }
 
-export default function DiaperList({ entries, babyId, onMutated }) {
+export default function DiaperList({ entries, babyId, onMutated, showReports = false }) {
   const locale = useLocale()?.locale;
   const t = useTranslation();
   const [dialogEntry, setDialogEntry] = useState(null);
@@ -252,8 +252,8 @@ export default function DiaperList({ entries, babyId, onMutated }) {
       todayDirty,
       todayBoth,
       last24h,
-      lastWetAgo: latestWetAt ? elapsedLabel(latestWetAt, now) : t("diaper.never"),
-      lastDirtyAgo: latestDirtyAt ? elapsedLabel(latestDirtyAt, now) : t("diaper.never"),
+      lastWetAgo: latestWetAt ? elapsedLabel(latestWetAt, now, t) : t("diaper.never"),
+      lastDirtyAgo: latestDirtyAt ? elapsedLabel(latestDirtyAt, now, t) : t("diaper.never"),
       lastDirtyType: latestDirtyType,
     };
   }, [entries, sorted, t]);
@@ -399,91 +399,97 @@ export default function DiaperList({ entries, babyId, onMutated }) {
 
   return (
     <div>
-      <div className='growth-summary'>
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("diaper.today")}</div>
-          <div className='summary-value'>{summary.todayTotal}</div>
-          <div className='summary-sub'>
-            {t("diaper.todayBreakdown", {
-              wet: summary.todayWet,
-              dirty: summary.todayDirty,
-              both: summary.todayBoth,
-            })}
+      {!showReports && (
+        <div className='growth-summary'>
+          <div className='feed-chip'>
+            <div className='feed-chip-label'>{t("diaper.today")}</div>
+            <div className='feed-chip-value'>{summary.todayTotal}</div>
+            <div className='feed-chip-sub'>
+              {t("diaper.todayBreakdown", {
+                wet: summary.todayWet,
+                dirty: summary.todayDirty,
+                both: summary.todayBoth,
+              })}
+            </div>
+          </div>
+
+          <div className='feed-chip'>
+            <div className='feed-chip-label'>{t("diaper.last24h")}</div>
+            <div className='feed-chip-value'>{summary.last24h}</div>
+          </div>
+
+          <div className='feed-chip'>
+            <div className='feed-chip-label'>{t("diaper.lastWet")}</div>
+            <div className='feed-chip-value'>{summary.lastWetAgo}</div>
+            <div className='feed-chip-sub'>
+              {t("diaper.lastDirty")}: {summary.lastDirtyAgo}
+            </div>
+          </div>
+
+          <div className='feed-chip'>
+            <div className='feed-chip-label'>{t("diaper.lastDirty")}</div>
+            <div className='feed-chip-value'>{summary.lastDirtyAgo}</div>
+            <div className='feed-chip-sub'>
+              {summary.lastDirtyType
+                ? t(`diaper.types.${summary.lastDirtyType}`)
+                : t("diaper.never")}
+            </div>
           </div>
         </div>
+      )}
 
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("diaper.last24h")}</div>
-          <div className='summary-value'>{summary.last24h}</div>
-        </div>
+      {showReports && (
+        <div className='history-card card'>
+          <div className='section-header'>
+            <h3>{t("diaper.fortnightReport")}</h3>
+          </div>
 
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("diaper.lastWet")}</div>
-          <div className='summary-value'>{summary.lastWetAgo}</div>
-          <div className='summary-sub'>
-            {t("diaper.lastDirty")}: {summary.lastDirtyAgo}
+          <div className='diaper-report-grid'>
+            <div className='diaper-report-kpi'>
+              <div className='feed-chip-label'>{t("diaper.total14d")}</div>
+              <div className='feed-chip-value'>{report14d.total}</div>
+            </div>
+            <div className='diaper-report-kpi'>
+              <div className='feed-chip-label'>{t("diaper.wet14d")}</div>
+              <div className='feed-chip-value'>{report14d.wet}</div>
+            </div>
+            <div className='diaper-report-kpi'>
+              <div className='feed-chip-label'>{t("diaper.dirty14d")}</div>
+              <div className='feed-chip-value'>{report14d.dirty + report14d.both}</div>
+            </div>
+            <div className='diaper-report-kpi'>
+              <div className='feed-chip-label'>{t("diaper.dry14d")}</div>
+              <div className='feed-chip-value'>{report14d.dry}</div>
+            </div>
           </div>
-        </div>
 
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("diaper.lastDirty")}</div>
-          <div className='summary-value'>{summary.lastDirtyAgo}</div>
-          <div className='summary-sub'>
-            {summary.lastDirtyType ? t(`diaper.types.${summary.lastDirtyType}`) : t("diaper.never")}
-          </div>
-        </div>
-      </div>
-
-      <div className='history-card card'>
-        <div className='section-header'>
-          <h3>{t("diaper.fortnightReport")}</h3>
-        </div>
-
-        <div className='diaper-report-grid'>
-          <div className='diaper-report-kpi'>
-            <div className='summary-label'>{t("diaper.total14d")}</div>
-            <div className='summary-value'>{report14d.total}</div>
-          </div>
-          <div className='diaper-report-kpi'>
-            <div className='summary-label'>{t("diaper.wet14d")}</div>
-            <div className='summary-value'>{report14d.wet}</div>
-          </div>
-          <div className='diaper-report-kpi'>
-            <div className='summary-label'>{t("diaper.dirty14d")}</div>
-            <div className='summary-value'>{report14d.dirty + report14d.both}</div>
-          </div>
-          <div className='diaper-report-kpi'>
-            <div className='summary-label'>{t("diaper.dry14d")}</div>
-            <div className='summary-value'>{report14d.dry}</div>
-          </div>
-        </div>
-
-        {report14d.topHours.length > 0 && (
-          <div className='diaper-report-peaks'>
-            <div className='summary-label'>{t("diaper.peakWindows")}</div>
-            {report14d.topHours.map((slot) => (
-              <div key={slot.hour} className='history-row diaper-report-row'>
-                <span className='history-row-icon'>🕒</span>
-                <div className='history-row-body'>
-                  <div className='history-row-title'>{`${String(slot.hour).padStart(2, "0")}:00 - ${String((slot.hour + 1) % 24).padStart(2, "0")}:00`}</div>
-                  <div className='history-row-sub'>
-                    {t("diaper.todayBreakdown", {
-                      wet: slot.bucket.wet,
-                      dirty: slot.bucket.dirty,
-                      both: slot.bucket.both,
-                    })}
+          {report14d.topHours.length > 0 && (
+            <div className='diaper-report-peaks'>
+              <div className='feed-chip-label'>{t("diaper.peakWindows")}</div>
+              {report14d.topHours.map((slot) => (
+                <div key={slot.hour} className='history-row diaper-report-row'>
+                  <span className='history-row-icon'>🕒</span>
+                  <div className='history-row-body'>
+                    <div className='history-row-title'>{`${String(slot.hour).padStart(2, "0")}:00 - ${String((slot.hour + 1) % 24).padStart(2, "0")}:00`}</div>
+                    <div className='history-row-sub'>
+                      {t("diaper.todayBreakdown", {
+                        wet: slot.bucket.wet,
+                        dirty: slot.bucket.dirty,
+                        both: slot.bucket.both,
+                      })}
+                    </div>
+                  </div>
+                  <div className='history-row-value'>
+                    <div className='history-row-primary'>{slot.total}</div>
                   </div>
                 </div>
-                <div className='history-row-value'>
-                  <div className='history-row-primary'>{slot.total}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-      {openDialogEntry && (
+      {!showReports && openDialogEntry && (
         <Modal title={t("diaperList.editTitle")} onClose={() => setDialogEntry(null)}>
           <EditForm
             entry={openDialogEntry}
@@ -498,74 +504,77 @@ export default function DiaperList({ entries, babyId, onMutated }) {
         </Modal>
       )}
 
-      {sorted.length === 0 ? (
-        <p className='history-empty'>{t("diaperList.empty")}</p>
-      ) : (
-        <>
-          <div className='milk-day-header single'>
-            <button
-              type='button'
-              className='day-nav'
-              onClick={handlePrevDay}
-              disabled={safeIndex >= days.length - 1}
-              aria-label={t("milkList.prevDay")}
-            >
-              ‹
-            </button>
-
-            <button
-              type='button'
-              className='day-title'
-              onClick={openDatePicker}
-              aria-label={t("milkList.pickDate")}
-            >
-              <div>{activeDay}</div>
-              <div className='day-total'>{dayEntries.length}</div>
-              <input
-                ref={dateInputRef}
-                type='date'
-                className='day-picker'
-                value={activeDay || ""}
-                onChange={handlePickDate}
-              />
-            </button>
-
-            <button
-              type='button'
-              className='day-nav'
-              onClick={handleNextDay}
-              disabled={safeIndex === 0}
-              aria-label={t("milkList.nextDay")}
-            >
-              ›
-            </button>
+      {!showReports &&
+        (sorted.length === 0 ? (
+          <div className='history-card card'>
+            <p className='history-empty'>{t("diaperList.empty")}</p>
           </div>
-
-          <div className='history-list'>
-            {dayEntries.map((entry) => (
+        ) : (
+          <div className='history-card card'>
+            <div className='milk-day-header single'>
               <button
-                key={entry.id}
                 type='button'
-                className='history-row'
-                onClick={() => setDialogEntry(entry.id)}
+                className='day-nav'
+                onClick={handlePrevDay}
+                disabled={safeIndex >= days.length - 1}
+                aria-label={t("milkList.prevDay")}
               >
-                <span className='history-row-icon'>{typeEmoji(entry.diaper_type)}</span>
-                <div className='history-row-body'>
-                  <div className='history-row-title'>
-                    {t(`diaper.types.${entry.diaper_type || "wet"}`)}
-                  </div>
-                  <div className='history-row-sub'>{entry.notes || ""}</div>
-                </div>
-                <div className='history-row-value'>
-                  <div className='history-row-secondary'>
-                    {formatLocalTime(parsePlainDateTime(entry.changed_at), locale)}
-                  </div>
-                </div>
+                ‹
               </button>
-            ))}
+
+              <button
+                type='button'
+                className='day-title'
+                onClick={openDatePicker}
+                aria-label={t("milkList.pickDate")}
+              >
+                <div>{activeDay}</div>
+                <div className='day-total'>{dayEntries.length}</div>
+                <input
+                  ref={dateInputRef}
+                  type='date'
+                  className='day-picker'
+                  value={activeDay || ""}
+                  onChange={handlePickDate}
+                />
+              </button>
+
+              <button
+                type='button'
+                className='day-nav'
+                onClick={handleNextDay}
+                disabled={safeIndex === 0}
+                aria-label={t("milkList.nextDay")}
+              >
+                ›
+              </button>
+            </div>
+
+            <div className='history-list'>
+              {dayEntries.map((entry) => (
+                <button
+                  key={entry.id}
+                  type='button'
+                  className='history-row'
+                  onClick={() => setDialogEntry(entry.id)}
+                >
+                  <span className='history-row-icon'>{typeEmoji(entry.diaper_type)}</span>
+                  <div className='history-row-body'>
+                    <div className='history-row-title'>
+                      {t(`diaper.types.${entry.diaper_type || "wet"}`)}
+                    </div>
+                    <div className='history-row-sub'>{entry.notes || ""}</div>
+                  </div>
+                  <div className='history-row-value'>
+                    <div className='history-row-secondary'>
+                      {formatLocalTime(parsePlainDateTime(entry.changed_at), locale)}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-        </>
-      )}
+        ))}
     </div>
   );
 }

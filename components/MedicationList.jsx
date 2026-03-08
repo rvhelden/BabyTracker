@@ -738,34 +738,34 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
   return (
     <div className='medication-list'>
       <div className='growth-summary'>
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("medication.today")}</div>
-          <div className='summary-value'>{summary.todayCount}</div>
+        <div className='feed-chip'>
+          <div className='feed-chip-label'>{t("medication.today")}</div>
+          <div className='feed-chip-value'>{summary.todayCount}</div>
         </div>
 
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("medication.lastGiven")}</div>
-          <div className='summary-value'>{summary.latest?.medication_name || "—"}</div>
-          <div className='summary-sub'>{summary.latestElapsed}</div>
+        <div className='feed-chip'>
+          <div className='feed-chip-label'>{t("medication.lastGiven")}</div>
+          <div className='feed-chip-value'>{summary.latest?.medication_name || "—"}</div>
+          <div className='feed-chip-sub'>{summary.latestElapsed}</div>
         </div>
 
         {nextDueMed ? (
-          <div className='summary-card card'>
-            <div className='summary-label'>
+          <div className='feed-chip'>
+            <div className='feed-chip-label'>
               {nextDueMed.status.status === "overdue"
                 ? t("medication.overdue")
                 : t("medication.dueSoon")}
             </div>
-            <div className='summary-value'>{nextDueMed.name}</div>
-            <div className='summary-sub'>
+            <div className='feed-chip-value'>{nextDueMed.name}</div>
+            <div className='feed-chip-sub'>
               <span className={nextDueMed.status.className}>{nextDueMed.status.label}</span>
             </div>
           </div>
         ) : (
-          <div className='summary-card card'>
-            <div className='summary-label'>{t("medication.activeMeds")}</div>
-            <div className='summary-value'>{summary.activeMeds}</div>
-            <div className='summary-sub'>
+          <div className='feed-chip'>
+            <div className='feed-chip-label'>{t("medication.activeMeds")}</div>
+            <div className='feed-chip-value'>{summary.activeMeds}</div>
+            <div className='feed-chip-sub'>
               {t("medication.interval")}: {intervalLabel(summary.latestInterval, t)}
             </div>
           </div>
@@ -794,7 +794,7 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
               <button
                 key={template.id}
                 type='button'
-                className='history-row'
+                className={`history-row${status.status === "too-early" ? " too-early-template" : ""}`}
                 onClick={() => setTemplateDialog(template.id)}
               >
                 <span className='history-row-icon'>📌</span>
