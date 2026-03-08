@@ -27,8 +27,8 @@
     "subtitle": "Volg groei en mijlpalen",
     "noBabies": "Nog geen baby's",
     "noBabiesHint": "Tik op de + knop om je eerste baby toe te voegen.",
-    "latestWeight": "Laatste gewicht",
-    "noWeight": "Nog geen gewicht ingevoerd",
+    "latestGrowth": "Laatste groei",
+    "noGrowth": "Nog geen groeimetingen",
     "addBaby": "Baby toevoegen"
   },
   "baby": {
@@ -47,21 +47,23 @@
     "ageYears": "{n} jaar oud"
   },
   "tabs": {
-    "weight": "Gewicht",
+    "growth": "Groei",
     "feeding": "Voeding"
   },
-  "weight": {
-    "title": "Gewicht",
-    "current": "Huidig",
-    "atBirth": "Bij geboorte",
+  "growth": {
+    "title": "Groei",
+    "currentWeight": "Huidig gewicht",
+    "currentLength": "Huidige lengte",
     "gained": "Toegenomen",
+    "lengthGained": "Lengte toegenomen",
+    "sinceBirth": "Sinds eerste meting",
     "entries": "{n} metingen",
     "growthChart": "Groeigrafiek",
     "gainLossChart": "Gewichtsverandering per meting",
-    "history": "Gewichtsgeschiedenis",
+    "history": "Groeigeschiedenis",
     "export": "Exporteren",
-    "noEntries": "Nog geen gewichtmetingen.",
-    "addWeight": "Gewicht toevoegen"
+    "noEntries": "Nog geen groeimetingen.",
+    "addEntry": "Groeimeting toevoegen"
   },
   "feeding": {
     "title": "Voeding",
@@ -130,11 +132,13 @@
     "cancel": "Annuleren",
     "save": "Opslaan"
   },
-  "addWeight": {
-    "title": "Gewicht toevoegen",
+  "addGrowthEntry": {
+    "title": "Groeimeting toevoegen",
     "date": "Datum",
     "weight": "Gewicht (gram)",
     "weightPlaceholder": "bijv. 3500",
+    "length": "Lengte ({unit})",
+    "lengthPlaceholder": "bijv. 52,5",
     "notes": "Notities (optioneel)",
     "notesPlaceholder": "bijv. Na voeding",
     "cancel": "Annuleren",
@@ -202,10 +206,10 @@
     "browserDefault": "Standaard browser",
     "importData": "Gegevens importeren",
     "exportData": "Gegevens exporteren",
-    "exportHelp": "Download een zip met alle baby's, inclusief voedings- en gewichtsgeschiedenis.",
+    "exportHelp": "Download een zip met alle baby's, inclusief voedings- en groeigeschiedenis.",
     "exportNow": "Exporteer alle gegevens",
     "exportFailed": "Exporteren mislukt. Probeer opnieuw.",
-    "importHelp": "Importeer Formule (melk) en Groei (gewicht) gegevens uit Baby Tracker CSV-exports.",
+    "importHelp": "Importeer Formule (melk) en Groei gegevens uit Baby Tracker CSV-exports.",
     "zipFile": "Zip-bestand",
     "previewImport": "Importvoorbeeld",
     "failedLocale": "Taal opslaan mislukt. Probeer opnieuw.",
@@ -213,14 +217,14 @@
     "importFailed": "Importeren mislukt. Probeer opnieuw.",
     "babiesCreated": "Baby's aangemaakt: {n}",
     "milkEntries": "Voedingen: {n}",
-    "weightEntries": "Gewichtmetingen: {n}",
+    "growthEntries": "Groeimetingen: {n}",
     "skippedDuplicates": "Duplicaten overgeslagen: {n}",
     "reviewImport": "Importoverzicht",
     "reviewInfo": "Bekijk wat er wordt aangemaakt of hergebruikt voordat je importeert.",
     "babiesToCreate": "Aan te maken baby's",
     "babiesToReuse": "Te hergebruiken baby's",
     "milkEntriesPreview": "Voedingen",
-    "weightEntriesPreview": "Gewichtmetingen",
+    "growthEntriesPreview": "Groeimetingen",
     "duplicatesSkipped": "Duplicaten overgeslagen",
     "create": "Aanmaken",
     "reuse": "Hergebruiken",
@@ -243,10 +247,12 @@
     "nextDay": "Volgende dag",
     "pickDate": "Kies een datum"
   },
-  "weightList": {
+  "growthList": {
     "editTitle": "Meting bewerken",
     "date": "Datum",
     "weight": "Gewicht (gram)",
+    "length": "Lengte ({unit})",
+    "lengthPlaceholder": "Optionele lengte…",
     "notes": "Notities",
     "noteOptional": "Optionele notitie…",
     "cancel": "Annuleren",

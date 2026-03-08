@@ -19,6 +19,8 @@ function CustomTooltip({ active, payload, locale }) {
     return null;
   }
   const d = payload[0].payload;
+  const isEnglish = (locale || "").toLowerCase().startsWith("en");
+
   return (
     <div
       style={{
@@ -36,7 +38,9 @@ function CustomTooltip({ active, payload, locale }) {
         }) || d.measured_at}
       </p>
       <p style={{ color: "var(--text-muted)", marginBottom: 2 }}>
-        {d.weight_grams} g ({(d.weight_grams / 1000).toFixed(3)} kg)
+        {d.weight_grams != null
+          ? `${d.weight_grams} g (${(d.weight_grams / 1000).toFixed(3)} kg)`
+          : "—"}
       </p>
       <p
         style={{
@@ -47,31 +51,52 @@ function CustomTooltip({ active, payload, locale }) {
         {d.gain >= 0 ? "+" : ""}
         {d.gain} g vs previous
       </p>
+      {d.length_gain_display != null && (
+        <p style={{ color: "var(--accent)", marginTop: 2 }}>
+          {d.length_gain_display >= 0 ? "+" : ""}
+          {d.length_gain_display.toFixed(2)} {isEnglish ? "in" : "cm"} length vs previous
+        </p>
+      )}
       {d.notes && <p style={{ color: "var(--text-muted)", marginTop: 2 }}>{d.notes}</p>}
     </div>
   );
 }
 
-export default function WeightGainChart({ weights }) {
+export default function GrowthGainChart({ entries }) {
   const locale = useLocale()?.locale;
+  const isEnglish = (locale || "").toLowerCase().startsWith("en");
 
-  const sorted = [...weights].sort((a, b) => a.measured_at.localeCompare(b.measured_at));
+  const sorted = [...entries].sort((a, b) => a.measured_at.localeCompare(b.measured_at));
 
-  const data = sorted.slice(1).map((w, i) => {
-    const prev = sorted[i];
-    return {
-      ...w,
-      gain: w.weight_grams - prev.weight_grams,
-      label:
-        parsePlainDate(w.measured_at)?.toLocaleString(locale || undefined, {
-          month: "short",
-          day: "numeric",
-        }) || w.measured_at,
-    };
-  });
+  const data = sorted
+    .slice(1)
+    .map((w, i) => {
+      const prev = sorted[i];
+      const lengthGainCm =
+        Number.isFinite(w.length_cm) && Number.isFinite(prev.length_cm)
+          ? w.length_cm - prev.length_cm
+          : null;
+      const weightGain =
+        Number.isFinite(w.weight_grams) && Number.isFinite(prev.weight_grams)
+          ? w.weight_grams - prev.weight_grams
+          : null;
+
+      return {
+        ...w,
+        gain: weightGain,
+        length_gain_display:
+          lengthGainCm == null ? null : isEnglish ? lengthGainCm / 2.54 : lengthGainCm,
+        label:
+          parsePlainDate(w.measured_at)?.toLocaleString(locale || undefined, {
+            month: "short",
+            day: "numeric",
+          }) || w.measured_at,
+      };
+    })
+    .filter((row) => Number.isFinite(row.gain));
 
   if (data.length === 0) {
-    return <p className='chart-empty'>Add at least 2 measurements to see gains.</p>;
+    return <p className='chart-empty'>Add at least 2 growth entries to see gains.</p>;
   }
 
   const absMax = Math.max(...data.map((d) => Math.abs(d.gain)), 1);
@@ -100,10 +125,7 @@ export default function WeightGainChart({ weights }) {
           <Tooltip content={<CustomTooltip locale={locale} />} />
           <Bar dataKey='gain' radius={[4, 4, 0, 0]}>
             {data.map((entry) => (
-              <Cell
-                key={entry.id}
-                fill={entry.gain >= 0 ? "var(--success)" : "var(--danger)"}
-              />
+              <Cell key={entry.id} fill={entry.gain >= 0 ? "var(--success)" : "var(--danger)"} />
             ))}
           </Bar>
         </BarChart>

@@ -17,18 +17,47 @@ import {
   todayPlainDate,
   zonedFromPlainDateTime,
 } from "../lib/temporal.js";
+import AddGrowthEntryModal from "./AddGrowthEntryModal.jsx";
 import AddMilkModal from "./AddMilkModal.jsx";
-import AddWeightModal from "./AddWeightModal.jsx";
 import EditBabyModal from "./EditBabyModal.jsx";
 import FeedingHourChart from "./FeedingHourChart.jsx";
 import FeedingTimerModal from "./FeedingTimerModal.jsx";
+import GrowthChart from "./GrowthChart.jsx";
+import GrowthGainChart from "./GrowthGainChart.jsx";
+import GrowthList from "./GrowthList.jsx";
 import InviteModal from "./InviteModal.jsx";
 import { useLocale, useTranslation } from "./LocaleContext.jsx";
 import MilkChart from "./MilkChart.jsx";
 import MilkList from "./MilkList.jsx";
-import WeightChart from "./WeightChart.jsx";
-import WeightGainChart from "./WeightGainChart.jsx";
-import WeightList from "./WeightList.jsx";
+
+function isEnglishLocale(locale) {
+  return (locale || "").toLowerCase().startsWith("en");
+}
+
+function formatLengthFromCm(lengthCm, locale, fractionDigits = 1) {
+  if (!Number.isFinite(lengthCm)) {
+    return "—";
+  }
+
+  if (isEnglishLocale(locale)) {
+    return `${(lengthCm / 2.54).toFixed(2)} in`;
+  }
+
+  return `${lengthCm.toFixed(fractionDigits)} cm`;
+}
+
+function formatLengthDeltaFromCm(lengthCm, locale, fractionDigits = 2) {
+  if (!Number.isFinite(lengthCm)) {
+    return "—";
+  }
+
+  const sign = lengthCm >= 0 ? "+" : "";
+  if (isEnglishLocale(locale)) {
+    return `${sign}${(lengthCm / 2.54).toFixed(fractionDigits)} in`;
+  }
+
+  return `${sign}${lengthCm.toFixed(fractionDigits)} cm`;
+}
 
 function ageLabel(birthDate, t) {
   const birth = parsePlainDate(birthDate);
@@ -116,12 +145,12 @@ function formatDayKey(date) {
   return date.toPlainDate().toString();
 }
 
-export default function BabyDetailClient({ baby, weights, milkEntries }) {
+export default function BabyDetailClient({ baby, growthEntries, milkEntries }) {
   const locale = useLocale()?.locale;
   const t = useTranslation();
-  const [modal, setModal] = useState(null); // 'add-weight' | 'invite' | 'edit' | 'add-milk' | 'timer'
+  const [modal, setModal] = useState(null); // 'add-growth' | 'invite' | 'edit' | 'add-milk' | 'timer'
   const [activeSection, setActiveSection] = useState("feeding");
-  const [showWeightReports, setShowWeightReports] = useState(false);
+  const [showGrowthReports, setShowGrowthReports] = useState(false);
   const [showFeedingReports, setShowFeedingReports] = useState(false);
   const [feedFabAction, setFeedFabAction] = useState("timer");
   const [feedingIntervalHours, setFeedingIntervalHours] = useState("3");
@@ -159,7 +188,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
       return;
     }
     window.localStorage.setItem("lastViewedBabyId", String(babyState.id));
-  }, [babyState?.id]);
+  }, [babyState?.id, baby?.id]);
 
   const latestMilk = milkEntries.length
     ? [...milkEntries].sort((a, b) => b.fed_at.localeCompare(a.fed_at))[0]
@@ -221,8 +250,14 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
     return nowTick > dueAt.epochMilliseconds;
   }, [milkTotals.lastFeedAt, feedingIntervalMinutes, nowTick]);
 
-  const latestWeight = weights.length > 0 ? weights[weights.length - 1] : null;
-  const firstWeight = weights.length > 0 ? weights[0] : null;
+  const latestGrowthEntry =
+    growthEntries.length > 0 ? growthEntries[growthEntries.length - 1] : null;
+  const firstGrowthEntry = growthEntries.length > 0 ? growthEntries[0] : null;
+  const latestWeight = latestGrowthEntry?.weight_grams != null ? latestGrowthEntry : null;
+  const firstWeight = firstGrowthEntry?.weight_grams != null ? firstGrowthEntry : null;
+  const latestLength = latestGrowthEntry?.length_cm != null ? latestGrowthEntry : null;
+  const firstLength = firstGrowthEntry?.length_cm != null ? firstGrowthEntry : null;
+
   const advisedDailyMilk = latestWeight
     ? Math.round((latestWeight.weight_grams / 1000) * 150)
     : null;
@@ -234,9 +269,14 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
     remainingMilk != null && remainingMilk > 0 && lastBottleAmount > 0
       ? Math.ceil(remainingMilk / lastBottleAmount)
       : null;
+
   const gainGrams =
-    latestWeight && firstWeight && weights.length > 1
+    latestWeight && firstWeight && growthEntries.length > 1
       ? latestWeight.weight_grams - firstWeight.weight_grams
+      : null;
+  const lengthGainCm =
+    latestLength && firstLength && growthEntries.length > 1
+      ? latestLength.length_cm - firstLength.length_cm
       : null;
 
   function handleMutated() {
@@ -328,12 +368,12 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
       <div className='section-tabs' role='tablist' aria-label='Detail sections'>
         <button
           type='button'
-          className={`tab-btn${activeSection === "weight" ? " active" : ""}`}
-          onClick={() => setActiveSection("weight")}
+          className={`tab-btn${activeSection === "growth" ? " active" : ""}`}
+          onClick={() => setActiveSection("growth")}
           role='tab'
-          aria-selected={activeSection === "weight"}
+          aria-selected={activeSection === "growth"}
         >
-          {t("tabs.weight")}
+          {t("tabs.growth")}
         </button>
         <button
           type='button'
@@ -346,14 +386,14 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
         </button>
       </div>
 
-      {activeSection === "weight" && (
+      {activeSection === "growth" && (
         <section className='detail-section' role='tabpanel'>
           <div className='section-title'>
-            <h3>{t("weight.title")}</h3>
+            <h3>{t("growth.title")}</h3>
             <button
               type='button'
-              className={`reports-icon-btn${showWeightReports ? " active" : ""}`}
-              onClick={() => setShowWeightReports((v) => !v)}
+              className={`reports-icon-btn${showGrowthReports ? " active" : ""}`}
+              onClick={() => setShowGrowthReports((v) => !v)}
               aria-label={t("reports.title")}
               title={t("reports.title")}
             >
@@ -361,61 +401,80 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             </button>
           </div>
 
-          {showWeightReports ? (
+          {showGrowthReports ? (
             <>
               <div className='chart-card card'>
                 <div className='section-header'>
-                  <h3>{t("weight.growthChart")}</h3>
+                  <h3>{t("growth.growthChart")}</h3>
                 </div>
-                {weights.length > 0 ? (
-                  <WeightChart weights={weights} birthDate={babyState.birth_date} />
+                {growthEntries.length > 0 ? (
+                  <GrowthChart entries={growthEntries} birthDate={babyState.birth_date} />
                 ) : (
-                  <p className='chart-empty'>{t("weight.noEntries")}</p>
+                  <p className='chart-empty'>{t("growth.noEntries")}</p>
                 )}
               </div>
 
               <div className='chart-card card'>
                 <div className='section-header'>
-                  <h3>{t("weight.gainLossChart")}</h3>
+                  <h3>{t("growth.gainLossChart")}</h3>
                 </div>
-                <WeightGainChart weights={weights} />
+                <GrowthGainChart entries={growthEntries} />
               </div>
             </>
           ) : (
             <>
-              <div className='weight-summary'>
+              <div className='growth-summary'>
                 <div className='summary-card card'>
-                  <div className='summary-label'>{t("weight.current")}</div>
+                  <div className='summary-label'>{t("growth.currentWeight")}</div>
                   <div className='summary-value'>
                     {latestWeight ? `${(latestWeight.weight_grams / 1000).toFixed(2)} kg` : "—"}
                   </div>
                   {latestWeight && <div className='summary-sub'>{latestWeight.weight_grams} g</div>}
                 </div>
                 <div className='summary-card card'>
-                  <div className='summary-label'>{t("weight.atBirth")}</div>
+                  <div className='summary-label'>{t("growth.currentLength")}</div>
                   <div className='summary-value'>
-                    {firstWeight ? `${(firstWeight.weight_grams / 1000).toFixed(2)} kg` : "—"}
+                    {formatLengthFromCm(latestLength?.length_cm, locale)}
                   </div>
-                  {firstWeight && <div className='summary-sub'>{firstWeight.weight_grams} g</div>}
+                  {latestLength && (
+                    <div className='summary-sub'>
+                      {formatLocalDate(parsePlainDate(latestLength.measured_at), locale)}
+                    </div>
+                  )}
                 </div>
                 <div className='summary-card card'>
-                  <div className='summary-label'>{t("weight.gained")}</div>
+                  <div className='summary-label'>{t("growth.gained")}</div>
                   <div
                     className={`summary-value ${gainGrams !== null && gainGrams >= 0 ? "gain-positive" : ""}`}
                   >
                     {gainGrams !== null ? `${gainGrams >= 0 ? "+" : ""}${gainGrams} g` : "—"}
                   </div>
-                  {weights.length > 1 && (
-                    <div className='summary-sub'>{t("weight.entries", { n: weights.length })}</div>
+                  {growthEntries.length > 1 && (
+                    <div className='summary-sub'>
+                      {t("growth.entries", { n: growthEntries.length })}
+                    </div>
                   )}
+                </div>
+                <div className='summary-card card'>
+                  <div className='summary-label'>{t("growth.lengthGained")}</div>
+                  <div
+                    className={`summary-value ${lengthGainCm !== null && lengthGainCm >= 0 ? "gain-positive" : ""}`}
+                  >
+                    {formatLengthDeltaFromCm(lengthGainCm, locale)}
+                  </div>
+                  {firstLength && <div className='summary-sub'>{t("growth.sinceBirth")}</div>}
                 </div>
               </div>
 
               <div className='history-card card'>
                 <div className='section-header'>
-                  <h3>{t("weight.history")}</h3>
+                  <h3>{t("growth.history")}</h3>
                 </div>
-                <WeightList weights={weights} babyId={babyState.id} onMutated={handleMutated} />
+                <GrowthList
+                  entries={growthEntries}
+                  babyId={babyState.id}
+                  onMutated={handleMutated}
+                />
               </div>
             </>
           )}
@@ -444,7 +503,7 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
                   <h3>{t("reports.milkIntake")}</h3>
                 </div>
                 {milkEntries.length > 0 ? (
-                  <MilkChart entries={milkEntries} weights={weights} />
+                  <MilkChart entries={milkEntries} growthEntries={growthEntries} />
                 ) : (
                   <p className='chart-empty'>{t("reports.noMilkEntries")}</p>
                 )}
@@ -581,8 +640,8 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
         type='button'
         className='fab'
         onClick={() => {
-          if (activeSection === "weight") {
-            setModal("add-weight");
+          if (activeSection === "growth") {
+            setModal("add-growth");
           }
           if (activeSection === "feeding") {
             if (feedFabAction === "manual") {
@@ -592,13 +651,13 @@ export default function BabyDetailClient({ baby, weights, milkEntries }) {
             }
           }
         }}
-        aria-label={activeSection === "weight" ? t("weight.addWeight") : t("feeding.startFeeding")}
+        aria-label={activeSection === "growth" ? t("growth.addEntry") : t("feeding.startFeeding")}
       >
         +
       </button>
 
-      {modal === "add-weight" && (
-        <AddWeightModal
+      {modal === "add-growth" && (
+        <AddGrowthEntryModal
           babyId={babyState.id}
           onClose={() => setModal(null)}
           onAdded={handleMutated}

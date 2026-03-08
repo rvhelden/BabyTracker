@@ -148,20 +148,21 @@ function splitDateTime(value) {
   return { date: datePart, time: timePart.slice(0, 5) };
 }
 
-function buildGrowthCsv(babyName, weights) {
+function buildGrowthCsv(babyName, growthEntries) {
   const header = "baby_name,timestamp,length,weight_kg,head_circumference,notes\r\n";
-  const rows = weights.map((w) => {
-    const weightKg = (w.weight_grams / 1000).toFixed(3);
+  const rows = growthEntries.map((w) => {
+    const weightKg = Number.isFinite(w.weight_grams) ? (w.weight_grams / 1000).toFixed(3) : "";
+    const lengthCm = Number.isFinite(w.length_cm) ? w.length_cm.toFixed(1) : "";
     return [
       escapeCsv(babyName),
       toExportDateTime(w.measured_at),
-      "", // length not tracked
+      lengthCm,
       weightKg,
       "", // head circumference not tracked
       escapeCsv(w.notes || ""),
     ].join(",");
   });
-  return header + rows.join("\r\n") + "\r\n";
+  return `${header + rows.join("\r\n")}\r\n`;
 }
 
 function buildFormulaCsv(babyName, milkEntries) {
@@ -175,7 +176,7 @@ function buildFormulaCsv(babyName, milkEntries) {
       escapeCsv(e.notes || ""),
     ].join(",");
   });
-  return header + rows.join("\r\n") + "\r\n";
+  return `${header + rows.join("\r\n")}\r\n`;
 }
 
 // ── Route handler ──────────────────────────────────────────────────────────
@@ -192,13 +193,13 @@ export async function GET(_request, { params }) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const weights = dal.getWeightsForBaby(id, user.id) ?? [];
+  const growthEntries = dal.getGrowthEntriesForBaby(id, user.id) ?? [];
   const milkEntries = dal.getMilkForBaby(id, user.id) ?? [];
 
   const safeName = baby.name.replace(/[^a-z0-9_-]/gi, "_");
 
   const files = [
-    { name: `${safeName}_growth.csv`, content: buildGrowthCsv(baby.name, weights) },
+    { name: `${safeName}_growth.csv`, content: buildGrowthCsv(baby.name, growthEntries) },
     { name: `${safeName}_formula.csv`, content: buildFormulaCsv(baby.name, milkEntries) },
   ];
 

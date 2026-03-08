@@ -134,20 +134,21 @@ function splitDateTime(value) {
   return { date: datePart, time: timePart.slice(0, 5) };
 }
 
-function buildGrowthCsv(babyName, weights) {
+function buildGrowthCsv(babyName, growthEntries) {
   const header = "baby_name,timestamp,length,weight_kg,head_circumference,notes\r\n";
-  const rows = weights.map((w) => {
-    const weightKg = (w.weight_grams / 1000).toFixed(3);
+  const rows = growthEntries.map((w) => {
+    const weightKg = Number.isFinite(w.weight_grams) ? (w.weight_grams / 1000).toFixed(3) : "";
+    const lengthCm = Number.isFinite(w.length_cm) ? w.length_cm.toFixed(1) : "";
     return [
       escapeCsv(babyName),
       toExportDateTime(w.measured_at),
-      "",
+      lengthCm,
       weightKg,
       "",
       escapeCsv(w.notes || ""),
     ].join(",");
   });
-  return header + rows.join("\r\n") + "\r\n";
+  return `${header + rows.join("\r\n")}\r\n`;
 }
 
 function buildFormulaCsv(babyName, milkEntries) {
@@ -161,7 +162,7 @@ function buildFormulaCsv(babyName, milkEntries) {
       escapeCsv(e.notes || ""),
     ].join(",");
   });
-  return header + rows.join("\r\n") + "\r\n";
+  return `${header + rows.join("\r\n")}\r\n`;
 }
 
 export async function GET() {
@@ -177,13 +178,13 @@ export async function GET() {
 
   const files = [];
   for (const baby of babies) {
-    const weights = dal.getWeightsForBaby(baby.id, user.id) ?? [];
+    const growthEntries = dal.getGrowthEntriesForBaby(baby.id, user.id) ?? [];
     const milkEntries = dal.getMilkForBaby(baby.id, user.id) ?? [];
     const safeName = String(baby.name || `baby_${baby.id}`).replace(/[^a-z0-9_-]/gi, "_");
 
     files.push({
       name: `${safeName}_growth.csv`,
-      content: buildGrowthCsv(baby.name, weights),
+      content: buildGrowthCsv(baby.name, growthEntries),
     });
     files.push({
       name: `${safeName}_formula.csv`,

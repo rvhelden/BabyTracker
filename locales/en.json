@@ -27,8 +27,8 @@
     "subtitle": "Track growth and milestones",
     "noBabies": "No babies yet",
     "noBabiesHint": "Tap the + button to add your first baby.",
-    "latestWeight": "Latest weight",
-    "noWeight": "No weight entries yet",
+    "latestGrowth": "Latest growth",
+    "noGrowth": "No growth entries yet",
     "addBaby": "Add baby"
   },
   "baby": {
@@ -47,21 +47,23 @@
     "ageYears": "{n} years old"
   },
   "tabs": {
-    "weight": "Weight",
+    "growth": "Growth",
     "feeding": "Feeding"
   },
-  "weight": {
-    "title": "Weight",
-    "current": "Current",
-    "atBirth": "At birth",
+  "growth": {
+    "title": "Growth",
+    "currentWeight": "Current Weight",
+    "currentLength": "Current Length",
     "gained": "Gained",
+    "lengthGained": "Length Gained",
+    "sinceBirth": "Since first entry",
     "entries": "{n} entries",
     "growthChart": "Growth Chart",
     "gainLossChart": "Gain / Loss per Measurement",
-    "history": "Weight History",
+    "history": "Growth History",
     "export": "Export",
-    "noEntries": "No weight entries yet.",
-    "addWeight": "Add weight"
+    "noEntries": "No growth entries yet.",
+    "addEntry": "Add growth entry"
   },
   "feeding": {
     "title": "Feeding",
@@ -130,11 +132,13 @@
     "cancel": "Cancel",
     "save": "Save"
   },
-  "addWeight": {
-    "title": "Add Weight Entry",
+  "addGrowthEntry": {
+    "title": "Add Growth Entry",
     "date": "Date",
     "weight": "Weight (grams)",
     "weightPlaceholder": "e.g. 3500",
+    "length": "Length ({unit})",
+    "lengthPlaceholder": "e.g. 52.5",
     "notes": "Notes (optional)",
     "notesPlaceholder": "e.g. After feeding",
     "cancel": "Cancel",
@@ -202,10 +206,10 @@
     "browserDefault": "Browser default",
     "importData": "Import Data",
     "exportData": "Export Data",
-    "exportHelp": "Download a zip with all babies, including feeding and weight history.",
+    "exportHelp": "Download a zip with all babies, including feeding and growth history.",
     "exportNow": "Export all data",
     "exportFailed": "Export failed. Please try again.",
-    "importHelp": "Import Formula (milk) and Growth (weight) entries from Baby Tracker CSV exports.",
+    "importHelp": "Import Formula (milk) and Growth entries from Baby Tracker CSV exports.",
     "zipFile": "Zip file",
     "previewImport": "Preview import",
     "failedLocale": "Failed to save locale. Please try again.",
@@ -213,14 +217,14 @@
     "importFailed": "Import failed. Please try again.",
     "babiesCreated": "Babies created: {n}",
     "milkEntries": "Milk entries: {n}",
-    "weightEntries": "Weight entries: {n}",
+    "growthEntries": "Growth entries: {n}",
     "skippedDuplicates": "Skipped duplicates: {n}",
     "reviewImport": "Review import",
     "reviewInfo": "Review what will be created or reused before importing.",
     "babiesToCreate": "Babies to create",
     "babiesToReuse": "Babies to reuse",
     "milkEntriesPreview": "Milk entries",
-    "weightEntriesPreview": "Weight entries",
+    "growthEntriesPreview": "Growth entries",
     "duplicatesSkipped": "Duplicates skipped",
     "create": "Create",
     "reuse": "Reuse",
@@ -243,10 +247,12 @@
     "nextDay": "Next day",
     "pickDate": "Pick a date"
   },
-  "weightList": {
+  "growthList": {
     "editTitle": "Edit measurement",
     "date": "Date",
     "weight": "Weight (grams)",
+    "length": "Length ({unit})",
+    "lengthPlaceholder": "Optional length…",
     "notes": "Notes",
     "noteOptional": "Optional note…",
     "cancel": "Cancel",

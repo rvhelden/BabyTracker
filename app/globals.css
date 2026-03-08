@@ -889,9 +889,9 @@ select {
 .baby-action-btn.danger:active {
   background: #fdecea;
 }
-.weight-summary {
+.growth-summary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.6rem;
   margin-bottom: 0.85rem;
 }
@@ -1022,7 +1022,7 @@ select {
   margin-top: 0.35rem;
 }
 
-/* ── History List (shared flat-UI rows for feed, weight, etc.) ── */
+/* ── History List (shared flat-UI rows for feed, growth, etc.) ── */
 .history-list {
   display: flex;
   flex-direction: column;
@@ -1199,7 +1199,7 @@ button.history-row {
 
 /* Legacy clickable row buttons — kept for any remaining usage */
 .milk-row-btn,
-.weight-card-btn {
+.growth-card-btn {
   display: block;
   width: 100%;
   text-align: left;
@@ -1228,7 +1228,7 @@ button.history-row {
   flex: 1;
 }
 .milk-row-actions .maction-btn,
-.weight-row-actions .maction-btn {
+.growth-row-actions .maction-btn {
   border: 1px solid var(--border);
   border-radius: 8px;
   min-width: 36px;
@@ -1870,15 +1870,15 @@ button.history-row {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
-.weight-edit-form {
+.growth-edit-form {
   padding: 1rem;
 }
-.weight-edit-actions {
+.growth-edit-actions {
   display: flex;
   gap: 0.6rem;
   margin-top: 1rem;
 }
-.weight-edit-actions .btn {
+.growth-edit-actions .btn {
   flex: 1;
 }
 

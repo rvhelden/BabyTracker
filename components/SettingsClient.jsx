@@ -306,7 +306,7 @@ export default function SettingsClient({ locale }) {
               <div>{t("settings.babiesCreated", { n: importResult.babiesToCreate.length })}</div>
             )}
             <div>{t("settings.milkEntries", { n: importResult.countsByType?.formula || 0 })}</div>
-            <div>{t("settings.weightEntries", { n: importResult.countsByType?.growth || 0 })}</div>
+            <div>{t("settings.growthEntries", { n: importResult.countsByType?.growth || 0 })}</div>
             {importResult.skipped > 0 && (
               <div>{t("settings.skippedDuplicates", { n: importResult.skipped })}</div>
             )}
@@ -332,7 +332,7 @@ export default function SettingsClient({ locale }) {
                 <div className='import-preview-label'>
                   {item.key === "formula"
                     ? t("settings.milkEntriesPreview")
-                    : t("settings.weightEntriesPreview")}
+                    : t("settings.growthEntriesPreview")}
                 </div>
                 <div className='import-preview-value'>{item.count}</div>
               </div>

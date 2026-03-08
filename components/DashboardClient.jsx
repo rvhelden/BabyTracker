@@ -95,12 +95,12 @@ export default function DashboardClient({ babies }) {
               <div className='baby-stats'>
                 {baby.latest_weight ? (
                   <div className='stat'>
-                    <span className='stat-label'>{t("dashboard.latestWeight")}</span>
+                    <span className='stat-label'>{t("dashboard.latestGrowth")}</span>
                     <span className='stat-value'>{(baby.latest_weight / 1000).toFixed(2)} kg</span>
                     <span className='stat-sub'>{baby.latest_weight_date}</span>
                   </div>
                 ) : (
-                  <div className='stat no-data'>{t("dashboard.noWeight")}</div>
+                  <div className='stat no-data'>{t("dashboard.noGrowth")}</div>
                 )}
               </div>
             </Link>

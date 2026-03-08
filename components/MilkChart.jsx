@@ -71,33 +71,43 @@ function getLastDays(count) {
   return days.filter(Boolean);
 }
 
-function expectedForDay(date, weights) {
-  if (!weights.length) {
+function expectedForDay(date, growthEntries) {
+  if (!growthEntries.length) {
     return null;
   }
-  const dayWeights = weights.filter((w) => normalizeDate(w.measured_at) === date);
+  const weightedEntries = growthEntries.filter((w) => Number.isFinite(w.weight_grams));
+  if (!weightedEntries.length) {
+    return null;
+  }
+
+  const dayWeights = weightedEntries.filter((w) => normalizeDate(w.measured_at) === date);
   if (dayWeights.length > 0) {
     const latest = dayWeights[dayWeights.length - 1];
     return Math.round((latest.weight_grams / 1000) * 150);
   }
-  const latestWeight = weights[weights.length - 1];
+  const latestWeight = weightedEntries[weightedEntries.length - 1];
   return Math.round((latestWeight.weight_grams / 1000) * 150);
 }
 
-function maxForDay(date, weights) {
-  if (!weights.length) {
+function maxForDay(date, growthEntries) {
+  if (!growthEntries.length) {
     return null;
   }
-  const dayWeights = weights.filter((w) => normalizeDate(w.measured_at) === date);
+  const weightedEntries = growthEntries.filter((w) => Number.isFinite(w.weight_grams));
+  if (!weightedEntries.length) {
+    return null;
+  }
+
+  const dayWeights = weightedEntries.filter((w) => normalizeDate(w.measured_at) === date);
   if (dayWeights.length > 0) {
     const latest = dayWeights[dayWeights.length - 1];
     return Math.round((latest.weight_grams / 1000) * 180);
   }
-  const latestWeight = weights[weights.length - 1];
+  const latestWeight = weightedEntries[weightedEntries.length - 1];
   return Math.round((latestWeight.weight_grams / 1000) * 180);
 }
 
-export default function MilkChart({ entries, weights }) {
+export default function MilkChart({ entries, growthEntries }) {
   const locale = useLocale()?.locale;
   const daily = new Map();
   entries.forEach((entry) => {
@@ -114,8 +124,8 @@ export default function MilkChart({ entries, weights }) {
     day,
     label: formatDayLabel(day, locale),
     total_ml: daily.get(day) || 0,
-    suggested_ml: expectedForDay(day, weights),
-    max_ml: maxForDay(day, weights),
+    suggested_ml: expectedForDay(day, growthEntries),
+    max_ml: maxForDay(day, growthEntries),
   }));
 
   const maxTotal = data.length ? Math.max(...data.map((d) => d.total_ml)) : 0;

@@ -44,30 +44,33 @@ const importTypes = [
     label: "Growth",
     matcher: (name) => name.toLowerCase().endsWith("_growth.csv"),
     parseRow: (row) => {
-      const [babyNameRaw, timeRaw, _lengthRaw, weightRaw, _headRaw, noteRaw] = row;
+      const [babyNameRaw, timeRaw, lengthRaw, weightRaw, _headRaw, noteRaw] = row;
       const babyName = normalizeBabyName(babyNameRaw);
       if (!babyName) {
         return null;
       }
       const measured_at = parseDateTime(timeRaw)?.split("T")[0];
       const weightKg = parseFloat(weightRaw || "0");
-      if (!measured_at || !weightKg) {
+      const length_cm = parseFloat(lengthRaw || "0") || null;
+
+      if (!measured_at || (!weightKg && !length_cm)) {
         return null;
       }
-      const weight_grams = Math.round(weightKg * 1000);
+      const weight_grams = weightKg ? Math.round(weightKg * 1000) : null;
       const notes = normalizeNote(noteRaw);
       return {
         babyName,
         payload: {
           weight_grams,
+          length_cm,
           measured_at,
           notes,
         },
       };
     },
     isDuplicate: (babyId, payload) =>
-      dal.hasWeightEntry(babyId, payload.measured_at, payload.weight_grams),
-    insert: (babyId, userId, payload) => dal.addWeight(babyId, userId, payload),
+      dal.hasGrowthEntry(babyId, payload.measured_at, payload.weight_grams, payload.length_cm),
+    insert: (babyId, userId, payload) => dal.addGrowthEntry(babyId, userId, payload),
   },
 ];
 
