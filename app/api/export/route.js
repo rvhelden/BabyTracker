@@ -224,7 +224,8 @@ function splitMedicationDosage(dosage) {
 }
 
 function buildMedicationCsv(babyName, medicationEntries) {
-  const header = "Baby,Time,Medication name,Amount,,Min interval (minutes),Note\r\n";
+  const header =
+    "Baby,Time,Medication name,Amount,,Min interval (minutes),Max interval (minutes),Note\r\n";
   const rows = medicationEntries.map((entry) => {
     const { date, time } = splitDateTime(entry.given_at);
     const dosage = splitMedicationDosage(entry.dosage);
@@ -235,6 +236,7 @@ function buildMedicationCsv(babyName, medicationEntries) {
       escapeCsv(dosage.amount),
       escapeCsv(dosage.unit),
       escapeCsv(entry.interval_minutes ?? ""),
+      escapeCsv(entry.max_interval_minutes ?? ""),
       escapeCsv(entry.notes || ""),
     ].join(",");
   });

@@ -6,7 +6,7 @@ import { toLocalDateInput } from "../lib/temporal.js";
 import { useTranslation } from "./LocaleContext.jsx";
 import Modal from "./Modal.jsx";
 
-export default function EditBabyModal({ baby, onClose, onUpdated }) {
+export default function EditBabyModal({ baby, canDelete = false, onDelete, onClose, onUpdated }) {
   const boundAction = updateBabyAction.bind(null, baby.id);
   const [state, action, pending] = useActionState(boundAction, null);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -120,7 +120,12 @@ export default function EditBabyModal({ baby, onClose, onUpdated }) {
           </select>
         </div>
         {state?.error && <p className='error-msg'>{state.error}</p>}
-        <div className='modal-actions'>
+        <div className='modal-actions edit-baby-actions'>
+          {canDelete && (
+            <button type='button' className='btn btn-danger' onClick={onDelete}>
+              {t("editBaby.delete")}
+            </button>
+          )}
           <button type='button' className='btn btn-secondary' onClick={onClose}>
             {t("editBaby.cancel")}
           </button>

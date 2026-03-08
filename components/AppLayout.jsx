@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTranslation } from "./LocaleContext.jsx";
 
-export default function AppLayout({ user, showBack, children }) {
+export default function AppLayout({ user, showBack, backHref, children }) {
   const pathname = usePathname();
   const router = useRouter();
   const [theme, setTheme] = useState("light");
@@ -27,6 +27,14 @@ export default function AppLayout({ user, showBack, children }) {
     setTheme(next);
   }
 
+  function handleBack() {
+    if (backHref) {
+      router.push(backHref);
+    } else {
+      router.back();
+    }
+  }
+
   return (
     <div className='layout'>
       <header className='navbar'>
@@ -35,7 +43,7 @@ export default function AppLayout({ user, showBack, children }) {
             <button
               type='button'
               className='navbar-back'
-              onClick={() => router.back()}
+              onClick={handleBack}
               aria-label={t("nav.goBack")}
             >
               ←

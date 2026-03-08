@@ -32,7 +32,7 @@ export default async function BabyDetailPage({ params }) {
   const predefinedMedications = getPredefinedMedicationsForBaby(id, user.id) ?? [];
 
   return (
-    <AppLayout user={user} showBack>
+    <AppLayout user={user} showBack backHref='/?dashboard=1'>
       <BabyDetailClient
         baby={baby}
         growthEntries={growthEntries}

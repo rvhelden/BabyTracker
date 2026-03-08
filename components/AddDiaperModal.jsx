@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { addDiaperEntryAction } from "../app/diaper-actions.js";
 import { toLocalDateTimeInput } from "../lib/temporal.js";
 import { useTranslation } from "./LocaleContext.jsx";
@@ -9,6 +9,7 @@ import Modal from "./Modal.jsx";
 export default function AddDiaperModal({ babyId, onClose, onAdded }) {
   const boundAction = addDiaperEntryAction.bind(null, babyId);
   const [state, action, pending] = useActionState(boundAction, null);
+  const [diaperType, setDiaperType] = useState("wet");
   const t = useTranslation();
 
   useEffect(() => {
@@ -33,13 +34,28 @@ export default function AddDiaperModal({ babyId, onClose, onAdded }) {
           />
         </div>
         <div className='form-group'>
-          <label htmlFor='diaper_type'>{t("addDiaper.type")}</label>
-          <select id='diaper_type' name='diaper_type' defaultValue='wet' required>
-            <option value='wet'>{t("diaper.types.wet")}</option>
-            <option value='dirty'>{t("diaper.types.dirty")}</option>
-            <option value='both'>{t("diaper.types.both")}</option>
-            <option value='dry'>{t("diaper.types.dry")}</option>
-          </select>
+          <label>{t("addDiaper.type")}</label>
+          <input type='hidden' name='diaper_type' value={diaperType} />
+          <div className='diaper-type-grid' role='radiogroup' aria-label={t("addDiaper.type")}>
+            {[
+              { value: "wet", icon: "💧", label: t("diaper.types.wet") },
+              { value: "dirty", icon: "💩", label: t("diaper.types.dirty") },
+              { value: "both", icon: "💧💩", label: t("diaper.types.both") },
+              { value: "dry", icon: "⬜", label: t("diaper.types.dry") },
+            ].map((option) => (
+              <button
+                key={option.value}
+                type='button'
+                className={`diaper-type-btn${diaperType === option.value ? " active" : ""}`}
+                onClick={() => setDiaperType(option.value)}
+                role='radio'
+                aria-checked={diaperType === option.value}
+              >
+                <span className='diaper-type-icon'>{option.icon}</span>
+                <span className='diaper-type-label'>{option.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
         <div className='form-group'>
           <label htmlFor='diaper_notes'>{t("addDiaper.notes")}</label>

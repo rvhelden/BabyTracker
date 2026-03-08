@@ -58,10 +58,42 @@ function dayKeyFromDateTime(value) {
   return dateTime.toPlainDate().toString();
 }
 
+function DiaperTypePicker({ value, onChange, label }) {
+  const t = useTranslation();
+
+  return (
+    <div className='form-group'>
+      <label>{label}</label>
+      <input type='hidden' name='diaper_type' value={value} />
+      <div className='diaper-type-grid' role='radiogroup' aria-label={label}>
+        {[
+          { key: "wet", icon: "💧", text: t("diaper.types.wet") },
+          { key: "dirty", icon: "💩", text: t("diaper.types.dirty") },
+          { key: "both", icon: "💧💩", text: t("diaper.types.both") },
+          { key: "dry", icon: "⬜", text: t("diaper.types.dry") },
+        ].map((option) => (
+          <button
+            key={option.key}
+            type='button'
+            className={`diaper-type-btn${value === option.key ? " active" : ""}`}
+            onClick={() => onChange(option.key)}
+            role='radio'
+            aria-checked={value === option.key}
+          >
+            <span className='diaper-type-icon'>{option.icon}</span>
+            <span className='diaper-type-label'>{option.text}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
   const boundUpdate = updateDiaperEntryAction.bind(null, babyId, entry.id);
   const [state, action, pending] = useActionState(boundUpdate, null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [diaperType, setDiaperType] = useState(entry.diaper_type || "wet");
   const t = useTranslation();
 
   useEffect(() => {
@@ -86,19 +118,11 @@ function EditForm({ entry, babyId, onDone, onDelete, deleting }) {
           />
         </div>
 
-        <div className='form-group'>
-          <label htmlFor='diaper_edit_type'>{t("diaperList.type")}</label>
-          <select
-            id='diaper_edit_type'
-            name='diaper_type'
-            defaultValue={entry.diaper_type || "wet"}
-          >
-            <option value='wet'>{t("diaper.types.wet")}</option>
-            <option value='dirty'>{t("diaper.types.dirty")}</option>
-            <option value='both'>{t("diaper.types.both")}</option>
-            <option value='dry'>{t("diaper.types.dry")}</option>
-          </select>
-        </div>
+        <DiaperTypePicker
+          value={diaperType}
+          onChange={setDiaperType}
+          label={t("diaperList.type")}
+        />
 
         <div className='form-group' style={{ marginBottom: 0 }}>
           <label htmlFor='diaper_edit_notes'>{t("diaperList.notes")}</label>
@@ -220,6 +244,8 @@ export default function DiaperList({ entries, babyId, onMutated }) {
       ? parsePlainDateTime(latestDirty.changed_at)?.toZonedDateTime(now.timeZoneId)
       : null;
 
+    const latestDirtyType = latestDirty?.diaper_type || null;
+
     return {
       todayTotal,
       todayWet,
@@ -228,8 +254,64 @@ export default function DiaperList({ entries, babyId, onMutated }) {
       last24h,
       lastWetAgo: latestWetAt ? elapsedLabel(latestWetAt, now) : t("diaper.never"),
       lastDirtyAgo: latestDirtyAt ? elapsedLabel(latestDirtyAt, now) : t("diaper.never"),
+      lastDirtyType: latestDirtyType,
     };
   }, [entries, sorted, t]);
+
+  const report14d = useMemo(() => {
+    const now = nowZoned();
+    const since = now.subtract({ days: 14 });
+    const byHour = Array.from({ length: 24 }, () => ({ wet: 0, dirty: 0, both: 0, dry: 0 }));
+    let total = 0;
+    let wet = 0;
+    let dirty = 0;
+    let both = 0;
+    let dry = 0;
+
+    for (const entry of sorted) {
+      const when = parsePlainDateTime(entry.changed_at);
+      if (!when) {
+        continue;
+      }
+
+      const zoned = when.toZonedDateTime(now.timeZoneId);
+      if (zoned.epochMilliseconds < since.epochMilliseconds) {
+        continue;
+      }
+
+      total += 1;
+      const type = entry.diaper_type || "wet";
+      if (type === "wet") {
+        wet += 1;
+      }
+      if (type === "dirty") {
+        dirty += 1;
+      }
+      if (type === "both") {
+        both += 1;
+      }
+      if (type === "dry") {
+        dry += 1;
+      }
+
+      const hour = zoned.hour;
+      if (byHour[hour]) {
+        byHour[hour][type] += 1;
+      }
+    }
+
+    const topHours = byHour
+      .map((bucket, hour) => ({
+        hour,
+        total: bucket.wet + bucket.dirty + bucket.both + bucket.dry,
+        bucket,
+      }))
+      .filter((slot) => slot.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 3);
+
+    return { total, wet, dirty, both, dry, topHours };
+  }, [sorted]);
 
   const days = useMemo(
     () => Array.from(new Set(sorted.map((entry) => dayKeyFromDateTime(entry.changed_at)))),
@@ -342,6 +424,63 @@ export default function DiaperList({ entries, babyId, onMutated }) {
             {t("diaper.lastDirty")}: {summary.lastDirtyAgo}
           </div>
         </div>
+
+        <div className='summary-card card'>
+          <div className='summary-label'>{t("diaper.lastDirty")}</div>
+          <div className='summary-value'>{summary.lastDirtyAgo}</div>
+          <div className='summary-sub'>
+            {summary.lastDirtyType ? t(`diaper.types.${summary.lastDirtyType}`) : t("diaper.never")}
+          </div>
+        </div>
+      </div>
+
+      <div className='history-card card'>
+        <div className='section-header'>
+          <h3>{t("diaper.fortnightReport")}</h3>
+        </div>
+
+        <div className='diaper-report-grid'>
+          <div className='diaper-report-kpi'>
+            <div className='summary-label'>{t("diaper.total14d")}</div>
+            <div className='summary-value'>{report14d.total}</div>
+          </div>
+          <div className='diaper-report-kpi'>
+            <div className='summary-label'>{t("diaper.wet14d")}</div>
+            <div className='summary-value'>{report14d.wet}</div>
+          </div>
+          <div className='diaper-report-kpi'>
+            <div className='summary-label'>{t("diaper.dirty14d")}</div>
+            <div className='summary-value'>{report14d.dirty + report14d.both}</div>
+          </div>
+          <div className='diaper-report-kpi'>
+            <div className='summary-label'>{t("diaper.dry14d")}</div>
+            <div className='summary-value'>{report14d.dry}</div>
+          </div>
+        </div>
+
+        {report14d.topHours.length > 0 && (
+          <div className='diaper-report-peaks'>
+            <div className='summary-label'>{t("diaper.peakWindows")}</div>
+            {report14d.topHours.map((slot) => (
+              <div key={slot.hour} className='history-row diaper-report-row'>
+                <span className='history-row-icon'>🕒</span>
+                <div className='history-row-body'>
+                  <div className='history-row-title'>{`${String(slot.hour).padStart(2, "0")}:00 - ${String((slot.hour + 1) % 24).padStart(2, "0")}:00`}</div>
+                  <div className='history-row-sub'>
+                    {t("diaper.todayBreakdown", {
+                      wet: slot.bucket.wet,
+                      dirty: slot.bucket.dirty,
+                      both: slot.bucket.both,
+                    })}
+                  </div>
+                </div>
+                <div className='history-row-value'>
+                  <div className='history-row-primary'>{slot.total}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {openDialogEntry && (

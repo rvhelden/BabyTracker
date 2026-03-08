@@ -31,13 +31,9 @@ function elapsedLabel(entryDateTime, nowDateTime) {
   return `${minutes}m`;
 }
 
-function intervalLabel(intervalMinutes, t) {
-  if (!Number.isFinite(intervalMinutes) || intervalMinutes <= 0) {
-    return t("medication.none");
-  }
-
-  const hours = Math.floor(intervalMinutes / 60);
-  const mins = intervalMinutes % 60;
+function durationLabel(totalMinutes) {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
   if (hours > 0 && mins > 0) {
     return `${hours}h ${mins}m`;
   }
@@ -45,6 +41,106 @@ function intervalLabel(intervalMinutes, t) {
     return `${hours}h`;
   }
   return `${mins}m`;
+}
+
+function intervalLabel(intervalMinutes, t) {
+  if (!Number.isFinite(intervalMinutes) || intervalMinutes <= 0) {
+    return t("medication.none");
+  }
+
+  return durationLabel(intervalMinutes);
+}
+
+/**
+ * Compute medication status for a given template based on the most recent
+ * entry with the same medication name.
+ *
+ * Returns: { status, className, label }
+ *   status: 'too-early' | 'ok' | 'due-soon' | 'overdue' | 'no-interval' | 'no-prior'
+ */
+function getMedStatus(medicationName, entries, minIntervalMinutes, maxIntervalMinutes, now, t) {
+  const hasMin = Number.isFinite(minIntervalMinutes) && minIntervalMinutes > 0;
+  const hasMax = Number.isFinite(maxIntervalMinutes) && maxIntervalMinutes > 0;
+
+  if (!hasMin && !hasMax) {
+    return {
+      status: "no-interval",
+      className: "med-status no-interval",
+      label: t("medication.noInterval"),
+    };
+  }
+
+  const nameLower = (medicationName || "").trim().toLowerCase();
+  let lastEntry = null;
+
+  for (const entry of entries) {
+    if ((entry.medication_name || "").trim().toLowerCase() === nameLower) {
+      const when = parsePlainDateTime(entry.given_at);
+      if (when) {
+        if (!lastEntry || entry.given_at > lastEntry.given_at) {
+          lastEntry = entry;
+        }
+      }
+    }
+  }
+
+  if (!lastEntry) {
+    return {
+      status: "no-prior",
+      className: "med-status no-prior",
+      label: t("medication.noPriorDose"),
+    };
+  }
+
+  const lastWhen = parsePlainDateTime(lastEntry.given_at);
+  const lastZoned = lastWhen.toZonedDateTime(now.timeZoneId);
+  const elapsedMinutes = Math.round(
+    now.since(lastZoned, { largestUnit: "minutes" }).total({ unit: "minutes" }),
+  );
+
+  if (hasMin && elapsedMinutes < minIntervalMinutes) {
+    const remaining = Math.max(0, minIntervalMinutes - elapsedMinutes);
+    return {
+      status: "too-early",
+      className: "med-status too-early",
+      label: `${t("medication.tooEarly")} (${t("medication.waitMore", { time: durationLabel(remaining) })})`,
+    };
+  }
+
+  if (hasMax && elapsedMinutes > maxIntervalMinutes) {
+    const overdue = elapsedMinutes - maxIntervalMinutes;
+    return {
+      status: "overdue",
+      className: "med-status overdue",
+      label: `${t("medication.overdue")} (${t("medication.overdueBy", { time: durationLabel(overdue) })})`,
+    };
+  }
+
+  if (hasMax && maxIntervalMinutes - elapsedMinutes <= 60) {
+    const remaining = Math.max(0, maxIntervalMinutes - elapsedMinutes);
+    return {
+      status: "due-soon",
+      className: "med-status due-soon",
+      label: `${t("medication.dueSoon")} (${durationLabel(remaining)})`,
+    };
+  }
+
+  // In the safe window
+  if (hasMax) {
+    const remaining = maxIntervalMinutes - elapsedMinutes;
+    return {
+      status: "ok",
+      className: "med-status ok",
+      label: `${t("medication.ok")} (${t("medication.nextIn", { time: durationLabel(remaining) })})`,
+    };
+  }
+
+  // Has min but no max — past the min means OK, no countdown
+  return {
+    status: "ok",
+    className: "med-status ok",
+    label: t("medication.ok"),
+  };
 }
 
 function dayKeyFromDateTime(value) {
@@ -140,6 +236,25 @@ function EditEntryForm({ entry, babyId, predefinedMedications, onDone, onDelete,
                     : ""
                 }
                 placeholder={t("medicationList.intervalPlaceholder")}
+              />
+            </div>
+
+            <div className='form-group'>
+              <label htmlFor='medication_edit_max_interval'>
+                {t("medicationList.maxInterval")}
+              </label>
+              <input
+                type='number'
+                id='medication_edit_max_interval'
+                name='max_interval_hours'
+                min='0'
+                step='0.25'
+                defaultValue={
+                  Number.isFinite(entry.max_interval_minutes)
+                    ? (entry.max_interval_minutes / 60).toFixed(2).replace(/\.00$/, "")
+                    : ""
+                }
+                placeholder={t("medicationList.maxIntervalPlaceholder")}
               />
             </div>
           </>
@@ -251,6 +366,18 @@ function AddTemplateForm({ babyId, onAdded }) {
             placeholder={t("medicationList.intervalPlaceholder")}
           />
         </div>
+
+        <div className='form-group' style={{ flex: 1 }}>
+          <label htmlFor='template_max_interval'>{t("medicationList.maxInterval")}</label>
+          <input
+            id='template_max_interval'
+            type='number'
+            name='max_interval_hours'
+            min='0'
+            step='0.25'
+            placeholder={t("medicationList.maxIntervalPlaceholder")}
+          />
+        </div>
       </div>
 
       {state?.error && <p className='error-msg'>{state.error}</p>}
@@ -318,6 +445,23 @@ function EditTemplateForm({ template, babyId, onDone, onDelete, deleting }) {
           />
         </div>
 
+        <div className='form-group'>
+          <label htmlFor='template_edit_max_interval'>{t("medicationList.maxInterval")}</label>
+          <input
+            id='template_edit_max_interval'
+            type='number'
+            name='max_interval_hours'
+            min='0'
+            step='0.25'
+            defaultValue={
+              Number.isFinite(template.max_interval_minutes)
+                ? (template.max_interval_minutes / 60).toFixed(2).replace(/\.00$/, "")
+                : ""
+            }
+            placeholder={t("medicationList.maxIntervalPlaceholder")}
+          />
+        </div>
+
         {state?.error && <p className='error-msg'>{state.error}</p>}
 
         <div className='growth-edit-actions'>
@@ -374,6 +518,14 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
   const [templateDeleting, setTemplateDeleting] = useState(null);
   const [showAddTemplate, setShowAddTemplate] = useState(false);
   const dateInputRef = useRef(null);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTick((n) => n + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const now = useMemo(() => nowZoned(), []);
 
   const sorted = useMemo(
     () => [...entries].sort((a, b) => (b.given_at || "").localeCompare(a.given_at || "")),
@@ -381,9 +533,9 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
   );
 
   const summary = useMemo(() => {
-    const now = nowZoned();
-    const today = now.toPlainDate().toString();
-    const since24h = now.subtract({ hours: 24 });
+    const currentNow = nowZoned();
+    const today = currentNow.toPlainDate().toString();
+    const since24h = currentNow.subtract({ hours: 24 });
     let todayCount = 0;
     const activeMeds = new Set();
 
@@ -393,7 +545,7 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
         continue;
       }
 
-      const zoned = when.toZonedDateTime(now.timeZoneId);
+      const zoned = when.toZonedDateTime(currentNow.timeZoneId);
       if (zoned.toPlainDate().toString() === today) {
         todayCount += 1;
       }
@@ -406,17 +558,78 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
 
     const latest = sorted[0] || null;
     const latestAt = latest
-      ? parsePlainDateTime(latest.given_at)?.toZonedDateTime(now.timeZoneId)
+      ? parsePlainDateTime(latest.given_at)?.toZonedDateTime(currentNow.timeZoneId)
       : null;
 
     return {
       todayCount,
       latest,
-      latestElapsed: latestAt ? elapsedLabel(latestAt, now) : "—",
+      latestElapsed: latestAt ? elapsedLabel(latestAt, currentNow) : "—",
       activeMeds: activeMeds.size,
       latestInterval: latest?.interval_minutes ?? null,
     };
   }, [sorted]);
+
+  const nextDueMed = useMemo(() => {
+    const currentNow = nowZoned();
+    let closest = null;
+    let closestRemaining = Infinity;
+
+    for (const tmpl of predefinedMedications || []) {
+      const hasMax = Number.isFinite(tmpl.max_interval_minutes) && tmpl.max_interval_minutes > 0;
+      const hasMin = Number.isFinite(tmpl.interval_minutes) && tmpl.interval_minutes > 0;
+      if (!hasMax && !hasMin) {
+        continue;
+      }
+
+      const status = getMedStatus(
+        tmpl.medication_name,
+        entries,
+        tmpl.interval_minutes,
+        tmpl.max_interval_minutes,
+        currentNow,
+        t,
+      );
+
+      if (status.status === "no-prior") {
+        continue;
+      }
+
+      if (status.status === "overdue") {
+        return { name: tmpl.medication_name, status };
+      }
+
+      if (status.status === "due-soon") {
+        return { name: tmpl.medication_name, status };
+      }
+
+      if (status.status === "ok" && hasMax) {
+        const nameLower = (tmpl.medication_name || "").trim().toLowerCase();
+        let lastAt = null;
+        for (const entry of entries) {
+          if ((entry.medication_name || "").trim().toLowerCase() === nameLower) {
+            if (!lastAt || entry.given_at > lastAt) {
+              lastAt = entry.given_at;
+            }
+          }
+        }
+        if (lastAt) {
+          const lastWhen = parsePlainDateTime(lastAt);
+          const lastZoned = lastWhen.toZonedDateTime(currentNow.timeZoneId);
+          const elapsed = Math.round(
+            currentNow.since(lastZoned, { largestUnit: "minutes" }).total({ unit: "minutes" }),
+          );
+          const remaining = tmpl.max_interval_minutes - elapsed;
+          if (remaining < closestRemaining) {
+            closestRemaining = remaining;
+            closest = { name: tmpl.medication_name, status };
+          }
+        }
+      }
+    }
+
+    return closest;
+  }, [predefinedMedications, entries, t]);
 
   const days = useMemo(
     () => Array.from(new Set(sorted.map((entry) => dayKeyFromDateTime(entry.given_at)))),
@@ -520,8 +733,10 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
     ? (predefinedMedications || []).find((entry) => entry.id === templateDialog)
     : null;
 
+  const currentNow = nowZoned();
+
   return (
-    <div>
+    <div className='medication-list'>
       <div className='growth-summary'>
         <div className='summary-card card'>
           <div className='summary-label'>{t("medication.today")}</div>
@@ -534,16 +749,30 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
           <div className='summary-sub'>{summary.latestElapsed}</div>
         </div>
 
-        <div className='summary-card card'>
-          <div className='summary-label'>{t("medication.activeMeds")}</div>
-          <div className='summary-value'>{summary.activeMeds}</div>
-          <div className='summary-sub'>
-            {t("medication.interval")}: {intervalLabel(summary.latestInterval, t)}
+        {nextDueMed ? (
+          <div className='summary-card card'>
+            <div className='summary-label'>
+              {nextDueMed.status.status === "overdue"
+                ? t("medication.overdue")
+                : t("medication.dueSoon")}
+            </div>
+            <div className='summary-value'>{nextDueMed.name}</div>
+            <div className='summary-sub'>
+              <span className={nextDueMed.status.className}>{nextDueMed.status.label}</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className='summary-card card'>
+            <div className='summary-label'>{t("medication.activeMeds")}</div>
+            <div className='summary-value'>{summary.activeMeds}</div>
+            <div className='summary-sub'>
+              {t("medication.interval")}: {intervalLabel(summary.latestInterval, t)}
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className='card' style={{ marginBottom: "1rem" }}>
+      <div className='card medication-templates-card' style={{ marginBottom: "1rem" }}>
         <div className='section-header'>
           <h3>{t("medicationList.templates")}</h3>
         </div>
@@ -551,25 +780,43 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
         <p className='template-help'>{t("medicationList.templatesHelp")}</p>
 
         <div className='history-list'>
-          {(predefinedMedications || []).map((template) => (
-            <button
-              key={template.id}
-              type='button'
-              className='history-row'
-              onClick={() => setTemplateDialog(template.id)}
-            >
-              <span className='history-row-icon'>📌</span>
-              <div className='history-row-body'>
-                <div className='history-row-title'>
-                  {template.medication_name}
-                  {template.dosage ? ` (${template.dosage})` : ""}
+          {(predefinedMedications || []).map((template) => {
+            const status = getMedStatus(
+              template.medication_name,
+              entries,
+              template.interval_minutes,
+              template.max_interval_minutes,
+              currentNow,
+              t,
+            );
+
+            return (
+              <button
+                key={template.id}
+                type='button'
+                className='history-row'
+                onClick={() => setTemplateDialog(template.id)}
+              >
+                <span className='history-row-icon'>📌</span>
+                <div className='history-row-body'>
+                  <div className='history-row-title'>
+                    {template.medication_name}
+                    {template.dosage ? ` (${template.dosage})` : ""}
+                  </div>
+                  <div className='history-row-sub'>
+                    {t("medication.interval")}: {intervalLabel(template.interval_minutes, t)}
+                    {Number.isFinite(template.max_interval_minutes) &&
+                    template.max_interval_minutes > 0
+                      ? ` · ${t("medication.maxInterval")}: ${intervalLabel(template.max_interval_minutes, t)}`
+                      : ""}
+                  </div>
+                  <div className='history-row-sub'>
+                    <span className={status.className}>{status.label}</span>
+                  </div>
                 </div>
-                <div className='history-row-sub'>
-                  {t("medication.interval")}: {intervalLabel(template.interval_minutes, t)}
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
           <button
             type='button'
             className='history-row template-add-row'
@@ -630,11 +877,11 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
       )}
 
       {sorted.length === 0 ? (
-        <div className='history-card card'>
+        <div className='history-card card medication-history-card'>
           <p className='history-empty'>{t("medicationList.empty")}</p>
         </div>
       ) : (
-        <div className='history-card card'>
+        <div className='history-card card medication-history-card'>
           <div className='milk-day-header single'>
             <button
               type='button'
@@ -675,31 +922,52 @@ export default function MedicationList({ entries, predefinedMedications, babyId,
           </div>
 
           <div className='history-list'>
-            {dayEntries.map((entry) => (
-              <button
-                key={entry.id}
-                type='button'
-                className='history-row'
-                onClick={() => setDialogEntry(entry.id)}
-              >
-                <span className='history-row-icon'>💊</span>
-                <div className='history-row-body'>
-                  <div className='history-row-title'>
-                    {entry.medication_name}
-                    {entry.dosage ? ` (${entry.dosage})` : ""}
+            {dayEntries.map((entry) => {
+              const entryStatus = getMedStatus(
+                entry.medication_name,
+                entries,
+                entry.interval_minutes,
+                entry.max_interval_minutes,
+                currentNow,
+                t,
+              );
+              const showDot =
+                entryStatus.status !== "no-interval" && entryStatus.status !== "no-prior";
+
+              return (
+                <button
+                  key={entry.id}
+                  type='button'
+                  className='history-row'
+                  onClick={() => setDialogEntry(entry.id)}
+                >
+                  <span className='history-row-icon'>💊</span>
+                  <div className='history-row-body'>
+                    <div className='history-row-title'>
+                      {entry.medication_name}
+                      {entry.dosage ? ` (${entry.dosage})` : ""}
+                    </div>
+                    <div className='history-row-sub'>
+                      {entry.notes || ""}
+                      {entry.interval_minutes
+                        ? ` · ${intervalLabel(entry.interval_minutes, t)}`
+                        : ""}
+                    </div>
                   </div>
-                  <div className='history-row-sub'>
-                    {entry.notes || ""}
-                    {entry.interval_minutes ? ` · ${intervalLabel(entry.interval_minutes, t)}` : ""}
+                  <div className='history-row-value'>
+                    <div className='history-row-secondary'>
+                      {formatLocalTime(parsePlainDateTime(entry.given_at), locale)}
+                    </div>
+                    {showDot && (
+                      <span
+                        className={`med-status-dot ${entryStatus.status}`}
+                        title={entryStatus.label}
+                      />
+                    )}
                   </div>
-                </div>
-                <div className='history-row-value'>
-                  <div className='history-row-secondary'>
-                    {formatLocalTime(parsePlainDateTime(entry.given_at), locale)}
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

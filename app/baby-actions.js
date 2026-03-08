@@ -90,7 +90,7 @@ export async function deleteBabyAction(babyId) {
   }
 
   revalidatePath("/");
-  redirect("/");
+  redirect("/?dashboard=1");
 }
 
 export async function leaveBabyAction(babyId) {
@@ -105,5 +105,5 @@ export async function leaveBabyAction(babyId) {
   }
 
   revalidatePath("/");
-  redirect("/");
+  redirect("/?dashboard=1");
 }

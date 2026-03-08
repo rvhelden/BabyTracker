@@ -346,6 +346,7 @@ export default function BabyDetailClient({
     if (!window.confirm(t("baby.deleteConfirm", { name: babyState.name }))) {
       return;
     }
+    window.localStorage.removeItem("lastViewedBabyId");
     startTransition(async () => {
       const result = await deleteBabyAction(babyState.id);
       if (result?.error) {
@@ -358,6 +359,7 @@ export default function BabyDetailClient({
     if (!window.confirm(t("baby.leaveConfirm", { name: babyState.name }))) {
       return;
     }
+    window.localStorage.removeItem("lastViewedBabyId");
     startTransition(async () => {
       const result = await leaveBabyAction(babyState.id);
       if (result?.error) {
@@ -394,11 +396,7 @@ export default function BabyDetailClient({
             <button type='button' className='baby-action-btn' onClick={() => setModal("invite")}>
               <span>📲</span> {t("baby.share")}
             </button>
-            {babyState.role === "owner" ? (
-              <button type='button' className='baby-action-btn danger' onClick={handleDelete}>
-                <span>🗑️</span> {t("baby.delete")}
-              </button>
-            ) : (
+            {babyState.role !== "owner" && (
               <button type='button' className='baby-action-btn' onClick={handleLeave}>
                 <span>👋</span> {t("baby.leave")}
               </button>
@@ -415,6 +413,7 @@ export default function BabyDetailClient({
           role='tab'
           aria-selected={activeSection === "growth"}
         >
+          <span className='tab-icon'>📈</span>
           {t("tabs.growth")}
         </button>
         <button
@@ -424,6 +423,7 @@ export default function BabyDetailClient({
           role='tab'
           aria-selected={activeSection === "feeding"}
         >
+          <span className='tab-icon'>🍼</span>
           {t("tabs.feeding")}
         </button>
         <button
@@ -433,6 +433,7 @@ export default function BabyDetailClient({
           role='tab'
           aria-selected={activeSection === "diaper"}
         >
+          <span className='tab-icon'>🧷</span>
           {t("tabs.diaper")}
         </button>
         <button
@@ -442,6 +443,7 @@ export default function BabyDetailClient({
           role='tab'
           aria-selected={activeSection === "temperature"}
         >
+          <span className='tab-icon'>🌡️</span>
           {t("tabs.temperature")}
         </button>
         <button
@@ -451,6 +453,7 @@ export default function BabyDetailClient({
           role='tab'
           aria-selected={activeSection === "medication"}
         >
+          <span className='tab-icon'>💊</span>
           {t("tabs.medication")}
         </button>
       </div>
@@ -817,6 +820,7 @@ export default function BabyDetailClient({
         <AddMedicationModal
           babyId={babyState.id}
           predefinedMedications={predefinedMedications}
+          entries={medicationEntries}
           onClose={() => setModal(null)}
           onAdded={handleMutated}
         />
@@ -839,6 +843,8 @@ export default function BabyDetailClient({
       {modal === "edit" && (
         <EditBabyModal
           baby={babyState}
+          canDelete={babyState.role === "owner"}
+          onDelete={handleDelete}
           onClose={() => setModal(null)}
           onUpdated={handleBabyUpdated}
         />

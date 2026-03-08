@@ -154,7 +154,7 @@ const importTypes = [
     label: "Medication",
     matcher: (name) => name.toLowerCase().endsWith("_medication.csv"),
     parseRow: (row) => {
-      const [babyNameRaw, timeRaw, nameRaw, amountRaw, unitRaw, sixthRaw, seventhRaw] = row;
+      const [babyNameRaw, timeRaw, nameRaw, amountRaw, unitRaw, ...rest] = row;
       const babyName = normalizeBabyName(babyNameRaw);
       if (!babyName) {
         return null;
@@ -167,10 +167,24 @@ const importTypes = [
       }
 
       const dosage = normalizeMedicationDosage(amountRaw, unitRaw);
-      const hasIntervalColumn = row.length >= 7;
-      const intervalRaw = hasIntervalColumn ? sixthRaw : null;
-      const noteRaw = hasIntervalColumn ? seventhRaw : sixthRaw;
+
+      let intervalRaw = null;
+      let maxIntervalRaw = null;
+      let noteRaw = null;
+
+      if (row.length >= 8) {
+        intervalRaw = rest[0];
+        maxIntervalRaw = rest[1];
+        noteRaw = rest[2];
+      } else if (row.length >= 7) {
+        intervalRaw = rest[0];
+        noteRaw = rest[1];
+      } else {
+        noteRaw = rest[0];
+      }
+
       const interval_minutes = parseInt(intervalRaw || "", 10) || null;
+      const max_interval_minutes = parseInt(maxIntervalRaw || "", 10) || null;
       const notes = normalizeNote(noteRaw);
       return {
         babyName,
@@ -178,6 +192,7 @@ const importTypes = [
           medication_name,
           dosage,
           interval_minutes,
+          max_interval_minutes,
           given_at,
           notes,
         },
